@@ -1,0 +1,111 @@
+{
+  "format": "smart-sync-public-source-candidate-1",
+  "sourceCommit": "87295e7ad1c44fc29692615dc06b9971628fa415",
+  "status": "local-candidate-not-approved",
+  "runtimeFiles": [
+    {
+      "path": "assets/boundless-sync.png",
+      "sha256": "fee950ecc66baf4644c75e98eab887a7af40b9cf324e098446bae99817002ff2"
+    },
+    {
+      "path": "src/checkpoint.js",
+      "sha256": "17582229952a63634b147295f07c245319c5bb180879c85d8a70635feb2ac201"
+    },
+    {
+      "path": "src/client.js",
+      "sha256": "73bc1de5ffadee986e950c8b019bcb86dc77d828724979d80c9fcc8d82a2bf0d"
+    },
+    {
+      "path": "src/codec.js",
+      "sha256": "e141f16c3a7c5efb075a9ea745613494decfdaa55c4f5a259b5d9e069e72d892"
+    },
+    {
+      "path": "src/compatibility.js",
+      "sha256": "8e6efbd1b644bf398c6023eb8309871088e85cabd6180a510f96d5421e7a3130"
+    },
+    {
+      "path": "src/configuration.js",
+      "sha256": "933d5b2caa0502b6e00f8ac9b233bf58f1be62577b0835912c821e41d1cf601b"
+    },
+    {
+      "path": "src/desktop.js",
+      "sha256": "e8824ccfd190105c2c8eb523e573669f89a2d73e9d92d1d51538e18da12e4648"
+    },
+    {
+      "path": "src/edition.js",
+      "sha256": "3a6f2e16b9258e9481fc1910fdf5878c87354fdf4f1acb27a78816da4f7c3640"
+    },
+    {
+      "path": "src/i18n.js",
+      "sha256": "d5be5ec05a0e0eeba3fd1114b3917a96e3fb17c502a8b73dd1d1d86d974f3d74"
+    },
+    {
+      "path": "src/merge.js",
+      "sha256": "a3330619395dcae978fa0c01ee6955ddbce0b206425080dafb6221a0666bd331"
+    },
+    {
+      "path": "src/note-crypto.js",
+      "sha256": "b25e96badc567deaa9b1a1c4e2b64f77d1bf7998f394ae3ecd046fcd96fce19a"
+    },
+    {
+      "path": "src/note-encryption.js",
+      "sha256": "c577eae094dc1cb1b73cdb55801511eefb1bef8e6185e81c18e00c1ccec6cd07"
+    },
+    {
+      "path": "src/pairing.js",
+      "sha256": "60bc95a9a58f94fec9d8538bab4833c3df50772b56226e7950e5d9d94f9a33ad"
+    },
+    {
+      "path": "src/peers.js",
+      "sha256": "f0c34ebf0aa60c98588e9b281f4e01bfc2ac5dc4a0c70ce047e83af5b83c0adb"
+    },
+    {
+      "path": "src/pinning.js",
+      "sha256": "761fccd8a5e6fa8e41ed1bd0c6d70ad0257c7b35b5f14f79d282e4583e26da57"
+    },
+    {
+      "path": "src/planning.js",
+      "sha256": "8606d1e95df31d4cb3d4366bb8a76f045dec9154b67b77535bf652e6743ca088"
+    },
+    {
+      "path": "src/plugin.js",
+      "sha256": "abd6d0e53e5006b8f494061514633f636d1fe4de474fa9a726ce70869c9d4b92"
+    },
+    {
+      "path": "src/recovery.js",
+      "sha256": "1bb2e325808be24c05b023c2f393a1ee9787b6d8bc08de1590a26bb42438b574"
+    },
+    {
+      "path": "src/routing.js",
+      "sha256": "eeb9f8246b21d4f229aa086d54a39981caa3775b377060087488bad2c9dfa806"
+    },
+    {
+      "path": "src/search.js",
+      "sha256": "dd61751859653173689f6e94e6d75bf135501ce1030044dab326bee6547ca51c"
+    },
+    {
+      "path": "src/synchronizer.js",
+      "sha256": "3f05282d2348ab15fda65db888cf9f34b515140730306fa1daa1221c1acdc346"
+    },
+    {
+      "path": "src/tasks.js",
+      "sha256": "0ce4d8dc0fece1cd43868d826629b3990619aa9a714607d3da35a60d64a0e4f1"
+    },
+    {
+      "path": "styles.css",
+      "sha256": "e7b5e575bdc6e60f865e8391ace6912cae5aa8e4c569c9c2cf45480eb26dbd47"
+    }
+  ],
+  "transformations": [
+    "package scripts and description",
+    "new bilingual README, minimal read-only CI and ignore rules"
+  ],
+  "excluded": [
+    "internal archives and requirement records",
+    "server source",
+    "private deployment/integration/native operations and evidence",
+    "credentials, populated vaults/databases, logs and artifacts"
+  ],
+  "license": "Apache-2.0",
+  "priorPublishedVersions": "through 0.1.81 retain original MIT terms"
+}
