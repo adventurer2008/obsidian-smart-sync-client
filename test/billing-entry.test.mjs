@@ -1,0 +1,27 @@
+import assert from 'node:assert/strict';
+import { test } from 'node:test';
+import { registerHooks } from 'node:module';
+globalThis.window = { open() {} };
+registerHooks({ resolve(specifier, context, next) {
+    return specifier === 'obsidian' ? { url: new URL('./obsidian-double.mjs', import.meta.url).href, shortCircuit: true } : next(specifier, context);
+} });
+const { default: Plugin } = await import('../src/plugin.js');
+
+test('purchase entry uses account auth, pins HTTPS origin and never opens a late response for another account', async () => {
+    const opened = []; window.open = (...args) => opened.push(args);
+    let key = 'synthetic-key', next;
+    const api = { origin: 'https://sync.example.invalid', request: async (method, path, body) => {
+        assert.equal(method, 'POST'); assert.equal(path, 'billing/entry'); assert.deepEqual(body, {});
+        return next();
+    } };
+    const plugin = { data: { localId: 'one', settings: { origin: api.origin } }, secret: () => key, accountApi: async () => api };
+    next = async () => ({ url: 'https://pay.wujiesync.cc/plans#ticket=' + 'a'.repeat(43) });
+    await Plugin.prototype.openBilling.call(plugin, true);
+    assert.equal(opened[0][0], 'https://pay.wujiesync.cc/orders#ticket=' + 'a'.repeat(43));
+    assert.equal(opened[0][2], 'noopener,noreferrer');
+    next = async () => ({ url: 'https://untrusted.example.invalid/plans#ticket=' + 'a'.repeat(43) });
+    await assert.rejects(Plugin.prototype.openBilling.call(plugin), /Invalid purchase entry/);
+    next = async () => { key = 'changed-account'; return { url: 'https://pay.wujiesync.cc/plans#ticket=' + 'b'.repeat(43) }; };
+    await Plugin.prototype.openBilling.call(plugin);
+    assert.equal(opened.length, 1);
+});

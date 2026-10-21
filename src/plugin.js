@@ -3330,6 +3330,16 @@ export default class IndependentSync extends Plugin {
 			this.connecting = false;
 		}
 	}
+	async openBilling(orders = false) {
+		if (edition.edition !== 'cn') return;
+		const api = await this.accountApi(), localId = this.data.localId, key = this.secret('account');
+		const entry = await api.request('POST', 'billing/entry', {});
+		if (this.stopped || localId !== this.data.localId || key !== this.secret('account') || api.origin !== new URL(this.data.settings.origin).origin) return;
+		const url = new URL(entry.url);
+		if (url.origin !== 'https://pay.wujiesync.cc' || url.pathname !== '/plans' || !/^#ticket=[A-Za-z0-9_-]{43}$/.test(url.hash)) throw Error('Invalid purchase entry');
+		if (orders) url.pathname = '/orders';
+		window.open(url.href, '_blank', 'noopener,noreferrer');
+	}
 	async accountApi() {
 		const key = this.secret('account') || this.secret('access');
 		const localId = this.data.localId;
@@ -4539,6 +4549,24 @@ class IndependentSettings extends PluginSettingTab {
 		const notebook = identityRow('overview.notebook', 'label', 'overview.notebookUnavailable', [
 			['overview.manageNotebooks', 'manageNotebooks'],
 		]);
+		const billing = edition.edition === 'cn' && accountConnected ? row('套餐与续费', setting => {
+			let disposed = false;
+			setting.setDesc('正在读取套餐；购买和订单记录在浏览器打开，无需重复登录。');
+			const refresh = async () => {
+				try {
+					const api = await plugin.accountApi(), key = plugin.secret('account');
+					const data = await api.request('GET', 'billing/entitlement');
+					if (disposed || identityScope() !== scopeKey || key !== plugin.secret('account')) return;
+					const value = data.entitlement;
+					setting.setDesc(value.paid ? `${value.plan} · 逻辑上限 ${formatStorageSize(value.logical)} · 有效期至 ${new Date(value.ends).toLocaleDateString('zh-CN')}` : '当前沿用公测、免费或人工授权权益；购买不会自动扣续费款。');
+				} catch { if (!disposed && identityScope() === scopeKey) setting.setDesc('套餐服务尚未开放或暂时不可用，现有同步权益保持。'); }
+			};
+			bindAction(setting, '购买／续费', () => plugin.openBilling());
+			bindAction(setting, '订单记录', () => plugin.openBilling(true));
+			bindAction(setting, '刷新套餐', refresh);
+			void refresh();
+			return () => { disposed = true; };
+		}) : undefined;
 		const devices = row(
 			t('overview.devices'),
 			(setting) => {
@@ -4595,6 +4623,7 @@ class IndependentSettings extends PluginSettingTab {
 			...header.map(present),
 			present(status),
 			present(account),
+			...(billing ? [present(billing)] : []),
 			...(accountConnected ? [present(notebook)] : []),
 			present(devices),
 			...common.filter((item) => !header.includes(item)).map(present),
