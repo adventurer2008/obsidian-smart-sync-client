@@ -8,7 +8,11 @@ const tools = dirname(fileURLToPath(import.meta.url));
 const root = resolve(tools, '../..');
 process.chdir(root);
 const { default: obsidianmd } = await import('eslint-plugin-obsidianmd');
-const manifest = JSON.parse(await readFile('manifest.json', 'utf8'));
+const edition = process.argv[2];
+if (edition !== undefined && !['cn', 'global'].includes(edition))
+	throw new Error('Unknown regional lint edition');
+const artifactRoot = resolve('artifacts', edition ?? '');
+const manifest = JSON.parse(await readFile(edition ? resolve(artifactRoot, 'manifest.json') : 'manifest.json', 'utf8'));
 if (
 	!/^[a-z]+(?:-[a-z]+)*$/.test(manifest.id) ||
 	manifest.id.includes('obsidian') ||
@@ -16,7 +20,7 @@ if (
 )
 	throw new Error('Plugin ID does not satisfy the Community manifest rules');
 const files = (await readdir('src')).filter((file) => file.endsWith('.js')).sort();
-const map = JSON.parse(await readFile('artifacts/dependency-map.json', 'utf8'));
+const map = JSON.parse(await readFile(resolve(artifactRoot, 'dependency-map.json'), 'utf8'));
 const bundled = Object.keys(map.inputs)
 	.filter((file) => file.startsWith('src/'))
 	.sort();

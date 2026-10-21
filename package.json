@@ -15,7 +15,7 @@
     "build:all": "node scripts/build.mjs --all",
     "check:isolation": "node scripts/check-isolation.mjs",
     "check:editions": "node scripts/check-isolation.mjs cn && node scripts/check-isolation.mjs global",
-    "check:community": "node tools/community-lint/run.mjs"
+    "check:community": "node tools/community-lint/run.mjs cn"
   },
   "devDependencies": {
     "@codemirror/state": "6.7.6",
