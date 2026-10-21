@@ -4,7 +4,7 @@
 	max-height: 60vh;
 	overflow: auto;
 }
-.smart-sync-common { display: flex; flex-wrap: wrap; column-gap: 0.5rem; }
+.smart-sync-common { display: flex; flex-wrap: wrap; }
 .setting-items.smart-sync-common > .setting-item { width: 100%; min-width: 0; box-sizing: border-box; order: 4; }
 .setting-items.smart-sync-common > .setting-item.smart-sync-title { border: 0; padding-bottom: 0; order: 0; }
 .smart-sync-title .setting-item-name { font-size: var(--h2-size); }
@@ -13,7 +13,7 @@
 .smart-sync-version .setting-item-description { white-space: pre-line; }
 .setting-items.smart-sync-common > .setting-item.smart-sync-overview-status { border: 0; padding: 0.5rem 0 0.75rem; order: 2; }
 .smart-sync-overview-status .setting-item-name { font-weight: var(--font-semibold); }
-.setting-items.smart-sync-common > .setting-item.smart-sync-overview-action { border: 0; padding: 0; flex: 0 1 auto; width: auto; margin: 0 0 0.75rem; order: 3; }
+.setting-items.smart-sync-common > .setting-item.smart-sync-overview-action { border: 0; padding: 0; flex: 0 1 auto; width: auto; margin: 0 0 0.75rem; margin-inline-end: 0.5rem; order: 3; }
 .smart-sync-common .smart-sync-overview-action .setting-item-info { display: none; }
 .smart-sync-common .smart-sync-overview-action .setting-item-control { padding: 0; justify-content: flex-start; }
 .smart-sync-section {
@@ -78,19 +78,19 @@
 .setting-items.smart-sync-common > .setting-item.smart-sync-identity-row { order: 2; padding: 0.6rem 0; }
 .smart-sync-identity-row .setting-item-info { min-width: 0; }
 .smart-sync-identity-row .setting-item-description { overflow-wrap: anywhere; }
-.smart-sync-pairing-code {
- color: #2563eb !important;
+.modal-content span.smart-sync-pairing-code {
+ color: #2563eb;
  display: inline-block;
- font-size: 1.6em !important;
- font-weight: 800 !important;
+ font-size: 1.6em;
+ font-weight: 800;
  letter-spacing: 0.14em;
  line-height: 1.2;
  text-align: center;
 }
-.setting-item-control input.smart-sync-pairing-code {
- color: #2563eb !important;
- font-size: 1.6em !important;
- font-weight: 800 !important;
+.modal-content .setting-item-control input.smart-sync-pairing-code {
+ color: #2563eb;
+ font-size: 1.6em;
+ font-weight: 800;
  letter-spacing: 0.14em;
  min-width: 12rem;
  text-align: center;
