@@ -14,7 +14,8 @@
     "build:global": "node scripts/build.mjs --edition=global",
     "build:all": "node scripts/build.mjs --all",
     "check:isolation": "node scripts/check-isolation.mjs",
-    "check:editions": "node scripts/check-isolation.mjs cn && node scripts/check-isolation.mjs global"
+    "check:editions": "node scripts/check-isolation.mjs cn && node scripts/check-isolation.mjs global",
+    "check:community": "node tools/community-lint/run.mjs"
   },
   "devDependencies": {
     "@codemirror/state": "6.7.6",
@@ -27,5 +28,9 @@
     "fflate": "0.8.3",
     "node-diff3": "3.2.1"
   },
-  "description": "Shared Client source for Wujie Sync and Smart Sync regional builds."
+  "description": "Shared Client source for Wujie Sync and Smart Sync regional builds.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/adventurer2008/obsidian-smart-sync-client.git"
+  }
 }

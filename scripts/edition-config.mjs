@@ -3,8 +3,8 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 export const identities = Object.freeze({
-  cn: { id: 'wujie-sync', name: 'Wujie Sync', locale: 'zh-CN', repository: 'adventurer2008/obsidian-smart-release', channel: 'brat' },
-  global: { id: 'smart-sync-global', name: 'Smart Sync', locale: 'en', repository: 'adventurer2008/smart-sync-global-release', channel: 'community' },
+  cn: { id: 'wujie-sync', name: 'Wujie Sync', locale: 'zh-CN', repository: 'adventurer2008/obsidian-smart-sync-release-cn', channel: 'brat' },
+  global: { id: 'smart-sync-global', name: 'Smart Sync', locale: 'en', repository: 'adventurer2008/obsidian-smart-sync-release-global', channel: 'community' },
 });
 export function publicUrl(value, originOnly = false) {
   assert.equal(typeof value, 'string', 'A public HTTPS URL is required');
@@ -26,7 +26,7 @@ export function validateEdition(config, selected) {
     assert.equal(config.stagingOrigin, 'http://127.0.0.1:24819', 'Wrong fixed China staging tunnel');
   }
   if (config.website !== null) assert.ok((selected === 'cn'
-    ? ['https://wujiesync.cc', 'https://github.com/adventurer2008/obsidian-smart-release']
+    ? ['https://wujiesync.cc', 'https://github.com/adventurer2008/obsidian-smart-sync-release-cn']
     : ['https://smartsync.cc']).includes(config.website), 'Wrong regional website');
   if (config.mailFrom !== null) assert.match(config.mailFrom, /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/);
   assert.ok(selected === 'cn' ? config.hostingRegion === 'china' : config.hostingRegion === null || ['singapore', 'united-states'].includes(config.hostingRegion));

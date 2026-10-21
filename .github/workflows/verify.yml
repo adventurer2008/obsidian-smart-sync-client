@@ -19,3 +19,6 @@ jobs:
       - run: npm test
       - run: npm run build:all
       - run: npm run check:editions
+      - run: npm ci --prefix tools/community-lint --ignore-scripts
+      - run: npm run build:cn
+      - run: npm run check:community

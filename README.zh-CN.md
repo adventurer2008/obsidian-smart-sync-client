@@ -1,17 +1,17 @@
-# Smart Sync 客户端源码候选
+# Smart Sync 客户端
 
-中外版本共用的Client。本目录是待确认的本地候选，尚未上传GitHub；计划仓库名obsidian-smart-sync-client。[English](README.md)。
+无界同步（国内）和 Smart Sync（海外）共用的客户端源码主线。[English](README.md)。
 
-## 范围与构建
+## 范围
 
-21个运行模块、样式、资源和中外配置按固定提交原样导出；选入12份合成测试及2份测试替身。内部档案、Server、私有运维/集成/现场控制工具与凭据不进入本目录。package仅调整公开脚本和说明。
-Node26.11.1下运行 npm ci --ignore-scripts、npm test、npm run build:all、npm run check:editions。仅本机构建，不安装或部署。公开测试子集不替代私有配对回归、社区审核及真实设备验收。
+同步核心共用，插件身份和服务地区独立。国内现有申请、登录和使用流程保持；海外服务及完整英文资源尚未齐备。外部统一登录、扫码和付费仅预留设计，本次不开发。语言不改变服务地区或账号，加密口令仍由用户保管。
 
-## 产品和许可
+这里保留21个运行模块、样式、资源、中外配置及合成测试。内部历史、运维发布工具和跨端验收资料保留在私有 obsidian-smart-sync-internal；Server 保留在私有 obsidian-smart-sync-server。公开测试不代表社区审核、预发、生产或真实设备验收通过。
 
-国内现有申请、登录及公测流程不变；海外服务和英文资源未齐备。Google、扫码、支付暂不开发。语言不改变服务地区或账号，加密口令由用户保管。
-Copyright (c) 2026 lihy。后续Client候选使用Apache-2.0，允许商业复用；已发0.1.81及更早版本保留原MIT授权和资产。依赖按THIRD-PARTY-NOTICES.md保留许可；Server继续私有专有，托管服务另有访问条件。
+## 构建
 
-## 待确认的切换
+使用 Node 26.11.1，具体命令见英文 README。国内产物为 artifacts/cn，海外产物为 artifacts/global；构建不代表海外可发行。公开 CI 覆盖 Windows 和 Linux，不负责部署或发布。国内发行入口为 [obsidian-smart-sync-release-cn](https://github.com/adventurer2008/obsidian-smart-sync-release-cn)。
 
-公开前当前国内开发/发行仍沿用现有私有主线。确认公开后，obsidian-smart-sync-client才成为唯一Client源码主线；现有私有Client保留完整旧历史、内部档案和跨端工具；私有Server保持原职责；公开发行库只保留发行资料和附件。本次不改远端、仓库名、生产或现有安装。
+## 许可和版本
+
+Copyright (c) 2026 lihy。后续 Client 候选采用 Apache-2.0，允许商业复用；已发0.1.81及更早版本保留原MIT许可和附件。依赖许可见 THIRD-PARTY-NOTICES.md。Server 仍私有专有，托管服务按独立访问条件提供。本次公开源码和调整仓库名称，不发新版本，不替换现有安装包。

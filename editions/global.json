@@ -3,7 +3,7 @@
   "id": "smart-sync-global",
   "name": "Smart Sync",
   "locale": "en",
-  "repository": "adventurer2008/smart-sync-global-release",
+  "repository": "adventurer2008/obsidian-smart-sync-release-global",
   "channel": "community",
   "serviceOrigin": "https://sync.smartsync.cc",
   "website": "https://smartsync.cc",

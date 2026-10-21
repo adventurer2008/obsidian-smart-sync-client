@@ -1,7 +1,7 @@
 {
   "format": "smart-sync-public-source-candidate-1",
   "sourceCommit": "87295e7ad1c44fc29692615dc06b9971628fa415",
-  "status": "local-candidate-not-approved",
+  "status": "approved-source-publication",
   "runtimeFiles": [
     {
       "path": "assets/boundless-sync.png",
@@ -107,5 +107,9 @@
     "credentials, populated vaults/databases, logs and artifacts"
   ],
   "license": "Apache-2.0",
-  "priorPublishedVersions": "through 0.1.81 retain original MIT terms"
+  "priorPublishedVersions": "through 0.1.81 retain original MIT terms",
+  "publicationChange": "CHG-20261021-06",
+  "configurationChanges": [
+    "Regional distribution repository names updated; plugin IDs, service domains and runtime source unchanged."
+  ]
 }
