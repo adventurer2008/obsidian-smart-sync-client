@@ -51,3 +51,8 @@ Requirement: U318/R328; DEC309. Pin China purchase links to /pay-test for stagin
 ## CHG-20261022-12
 
 Requirements: U327/R337. Purchase and renewal actions open plan selection rather than silently resuming an old checkout. Preserve explicit owned-order entry and existing unpaid orders; do not cancel or duplicate provider charges. Verified with 102 Client tests; local simulation only, no release or production deployment.
+
+
+## CHG-20261022-15
+
+Requirements: U330/R340. Show an explicit review state for verified conflicting payments rather than claiming another package was activated. No release or production deployment.

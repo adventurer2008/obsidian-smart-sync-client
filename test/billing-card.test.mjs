@@ -15,6 +15,7 @@ test('purchase and renewal states use one calendar month, including short months
 	const signedOut = billingCard(paid(Date.UTC(2027,0,1)), false, at);
 	assert.equal(signedOut.usage, ''); assert.equal(signedOut.ratio, null);
 	const pending = billingCard({entitlement:{paid:false,logical:10*gb},currentOrder:{id:'a'.repeat(32),title:'10GB',status:'pending',purpose:'purchase'}},true,at);
+	assert.match(billingCard({currentOrder:{status:'paid',failureCode:'paid_plan_conflict'}},false,at).order,/待核对/);
 	assert.equal(pending.order,'等待付款'); assert.equal(pending.title,''); assert.equal(pending.usage,''); assert.equal(pending.label,'购买'); assert.equal(pending.resume,'a'.repeat(32));
 	const active = billingCard(paid(Date.UTC(2027,0,1)), true, at);
 	assert.equal(active.label, '续费'); assert.equal(active.prominent, false); assert.equal(active.title, '5GB 年付'); assert.equal(active.ratio, .24);
