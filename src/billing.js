@@ -12,6 +12,7 @@ export function renewalReminderAt(ends) {
 }
 export function billingCard(data, connected, now = Date.now()) {
 	const rights = data?.entitlement, order = data?.currentOrder;
+	const showOrder = order && (order.status !== 'paid' || order.purpose === 'test' || order.failureCode === 'paid_plan_conflict');
 	const free = rights?.plan === 'cn-free' && rights?.paid !== true;
 	const purchased = !free && (rights?.paid === true || data?.everPurchased === true);
 	const ends = rights?.ends ?? data?.lastPurchase?.ends;
@@ -33,7 +34,7 @@ export function billingCard(data, connected, now = Date.now()) {
 		expires: free && rights.starts ? `开通日期：${new Date(rights.starts).toLocaleDateString('zh-CN')}` : purchased && ends && !refunded ? `到期时间：${new Date(ends).toLocaleDateString('zh-CN')}` : '',
 		help: free ? connected ? '账号下所有笔记库共用100MB容量，免费套餐规则以届时公布为准。' : ['failed','uncertain','purchase_conflict'].includes(data?.registration) ? '免费套餐已开通，登录信息发送待处理，请联系支持。' : '免费套餐已开通，请使用邮件中的登录信息登录。' : !purchased ? '' : renewed ? '续费成功，原账号及登录信息继续有效。' : !connected ? ['failed','uncertain','purchase_conflict'].includes(data?.registration) ? '付款已确认，登录信息发送待处理，请联系支持。' : '付款已确认，请使用邮件中的登录信息登录。'
 			: refunded ? '套餐已退款，可重新购买开通。' : expired ? '套餐已到期，续费后继续使用。' : due ? '距离到期不足一个月，可提前续费，不自动扣款。' : '账号下所有笔记库共用套餐容量，不自动扣款。',
-		order: order ? [purchased ? order.title : '', order.purpose === 'test' ? '1分钱测试' : '', order.failureCode === 'paid_plan_conflict' ? '付款已收到，待核对' : statuses[order.status] ?? '订单处理中'].filter(Boolean).join(' · ') + (order.status === 'paid' && order.purpose === 'test' ? '，套餐权益未改变' : '') : '',
+		order: showOrder ? [purchased ? order.title : '', order.purpose === 'test' ? '1分钱测试' : '', order.failureCode === 'paid_plan_conflict' ? '付款已收到，待核对' : statuses[order.status] ?? '订单处理中'].filter(Boolean).join(' · ') + (order.status === 'paid' && order.purpose === 'test' ? '，套餐权益未改变' : '') : '',
 		resume: order && pending.has(order.status) ? order.id : undefined,
 	};
 }

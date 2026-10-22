@@ -81,3 +81,8 @@ Requirements: U343/R353; U344/R354; DEC334/335. Show an activated 100MB free pla
 ## Unreleased — CHG-20261023-14 — Remove redundant CN signup button
 
 Requirement: U345/R355; DEC336. Remove the CN account row's New user application button now that free account opening is available from the plan page. Keep existing account login, free and paid plan entry, historical applications and administrator management. Other edition entry points remain unchanged. Local test installation only; no release or service deployment.
+
+
+## Unreleased — CHG-20261023-15 — Hide persistent successful-order text
+
+Requirement: U346/R356; DEC337. Stop showing a completed normal payment as a permanent extra row on the plan card. Keep the checkout success result and updated package details, along with pending, refund, payment-conflict and isolated test-order feedback. No order, entitlement or payment behavior changes; local test installation only.
