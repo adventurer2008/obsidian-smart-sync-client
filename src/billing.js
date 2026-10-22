@@ -27,6 +27,7 @@ export function billingCard(data, connected, now = Date.now()) {
 		title: purchased ? titles[rights?.paid ? rights.plan : data?.lastPurchase?.plan] ?? '年度套餐' : '',
 		usage: connected && Number.isFinite(capacity) ? Number.isFinite(usage) ? `已用 ${formatStorageSize(usage)} / ${formatStorageSize(capacity)}` : `套餐容量 ${formatStorageSize(capacity)} · 用量待核算` : '',
 		ratio: Number.isFinite(usage) && capacity > 0 ? Math.max(0, Math.min(1, usage / capacity)) : null,
+		upcoming: rights?.upcoming ? `下期套餐：${titles[rights.upcoming.plan] ?? '年度套餐'}，${new Date(rights.upcoming.starts).toLocaleDateString('zh-CN')}生效` : '',
 		expires: purchased && ends && !refunded ? `到期时间：${new Date(ends).toLocaleDateString('zh-CN')}` : '',
 		help: !purchased ? '' : !connected ? ['failed','uncertain','purchase_conflict'].includes(data?.registration) ? '付款已确认，登录信息发送待处理，请联系支持。' : '付款已确认，请使用邮件中的登录信息登录。'
 			: refunded ? '套餐已退款，可重新购买开通。' : expired ? '套餐已到期，续费后继续使用。' : due ? '距离到期不足一个月，可提前续费，不自动扣款。' : '账号下所有笔记库共用套餐容量，不自动扣款。',
@@ -48,6 +49,7 @@ export function mountBillingCard(setting, { connected, load, open, live, onError
 	const usage = add(setting.infoEl, 'div', 'smart-sync-plan-usage');
 	const progress = add(setting.infoEl, 'progress', 'smart-sync-plan-progress'); progress.max = 1; progress.setAttribute('aria-label', '套餐容量使用情况');
 	const expires = add(setting.infoEl, 'div', 'smart-sync-plan-expiry');
+	const upcoming = add(setting.infoEl, 'div', 'smart-sync-plan-help');
 	const help = add(setting.infoEl, 'div', 'smart-sync-plan-help');
 	const status = add(setting.infoEl, 'div', 'smart-sync-plan-order'); status.setAttribute('role', 'status'); status.setAttribute('aria-live', 'polite');
 	const button = add(setting.controlEl, 'button', 'smart-sync-plan-action'); button.type = 'button';
@@ -59,6 +61,7 @@ export function mountBillingCard(setting, { connected, load, open, live, onError
 		badge.hidden = !model.badge;
 		title.hidden = !model.title;
 		setting.settingEl.classList.toggle('is-compact', !model.title && !model.order);
+		upcoming.textContent = model.upcoming; upcoming.hidden = !model.upcoming;
 		help.textContent = model.help; status.textContent = model.order;
 		usage.hidden = !model.usage; expires.hidden = !model.expires; help.hidden = !model.help;
 		progress.hidden = model.ratio === null; progress.value = model.ratio ?? 0;

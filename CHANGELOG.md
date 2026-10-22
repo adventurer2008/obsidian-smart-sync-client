@@ -61,3 +61,8 @@ Requirements: U330/R340. Show an explicit review state for verified conflicting 
 ## CHG-20261022-16
 
 Requirements: U331/R341. Hide renewal outside the final calendar month; show the prominent purchase-sized action when due or expired. Local preview only; no entitlement dates changed.
+
+
+## CHG-20261023-01
+
+Requirements: U332/R342. Display the scheduled next package and its effective date separately from the current package when renewing into another tier. No release or production deployment.

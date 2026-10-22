@@ -57,3 +57,9 @@ test('renewal action is hidden for a healthy plan and uses the purchase CTA with
         dispose();dom.window.close();
     }
 });
+
+
+test('current and scheduled packages are distinct in the account card',()=>{
+    const value=paid(Date.UTC(2028,9,22));value.entitlement.upcoming={plan:'cn-20gb-year',starts:Date.UTC(2027,9,22)};
+    const card=billingCard(value,true,at);assert.equal(card.title,'5GB 年付');assert.match(card.upcoming,/20GB 年付/);assert.match(card.upcoming,/生效/);
+});
