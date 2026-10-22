@@ -4,7 +4,7 @@ Shared Client source for Wujie Sync (China) and Smart Sync (Global). [简体中�
 
 ## Scope
 
-This is the Client development repository. Regional builds share the synchronization runtime, with separate identities and service configuration. China uses the existing approval and account flow. The Global service and complete English catalog are not ready for distribution. External login and billing are design-only and are not implemented here.
+This is the Client development repository. Regional builds share the synchronization runtime, with separate identities and service configuration. China includes account login, free-plan enrollment, purchase and renewal entry with server-verified payment status. The Global service and complete English catalog are not ready for distribution; Global billing remains disabled.
 
 Server source, internal archives, deployment tools and private acceptance evidence are maintained privately. The public synthetic tests do not replace Client/Server integration, production, official Community review or physical-device acceptance.
 
@@ -26,7 +26,7 @@ Regional outputs are in artifacts/cn and artifacts/global. The default build is 
 
 ## Accounts, network and privacy
 
-Synchronization needs an approved account and the matching regional service. Content and paths are encrypted on the client; the service handles account/workspace identifiers, enrollment email, notebook/device labels, timestamps, ciphertext sizes and opaque identifiers. Keep the encryption passphrase safe; external login does not replace it. No prices or recurring charges are introduced. Avoid running multiple sync providers on the same vault without resolving their interaction.
+Synchronization needs an approved account and the matching regional service. Content and paths are encrypted on the client; the service handles account/workspace identifiers, enrollment email, notebook/device labels, timestamps, ciphertext sizes and opaque identifiers. Keep the encryption passphrase safe; external login does not replace it. China plan prices and purchase notices appear at checkout; renewal is manual and does not enable automatic charges. Avoid running multiple sync providers on the same vault without resolving their interaction.
 
 [China installation and distribution](https://github.com/adventurer2008/obsidian-smart-sync-release-cn) · [Privacy](https://github.com/adventurer2008/obsidian-smart-sync-release-cn/blob/main/PRIVACY.md). The Global distribution repository is a placeholder until its release gates pass.
 
