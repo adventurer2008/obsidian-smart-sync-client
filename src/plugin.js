@@ -3337,10 +3337,11 @@ export default class IndependentSync extends Plugin {
 		if (this.stopped || localId !== this.data.localId || key !== this.secret('account') || api.origin !== new URL(this.data.settings.origin).origin) return;
 		const url = new URL(entry.url);
 		const service = new URL(api.origin);
-		const purchaseOrigin = api.origin === edition.stagingOrigin ? 'https://pay-staging.wujiesync.cc'
-			: edition.development && service.protocol === 'http:' && ['127.0.0.1','localhost'].includes(service.hostname) ? api.origin : 'https://pay.wujiesync.cc';
-		if (url.origin !== purchaseOrigin || url.pathname !== '/plans' || !/^#ticket=[A-Za-z0-9_-]{43}$/.test(url.hash)) throw Error('Invalid purchase entry');
-		if (orders) url.pathname = '/orders';
+		const purchaseBase = api.origin === edition.stagingOrigin ? 'https://sync.wujiesync.cc/pay-test'
+			: edition.development && service.protocol === 'http:' && ['127.0.0.1','localhost'].includes(service.hostname) ? api.origin : 'https://sync.wujiesync.cc/pay';
+		const expected = new URL(purchaseBase + '/plans');
+		if (url.origin !== expected.origin || url.pathname !== expected.pathname || url.search || !/^#ticket=[A-Za-z0-9_-]{43}$/.test(url.hash)) throw Error('Invalid purchase entry');
+		if (orders) url.pathname = expected.pathname.replace(/plans$/, 'orders');
 		window.open(url.href, '_blank', 'noopener,noreferrer');
 	}
 	async accountApi() {

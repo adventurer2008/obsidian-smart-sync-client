@@ -26,3 +26,7 @@ Requirement U316/R326: add China purchase, renewal and order entry using a short
 ## Unreleased — CHG-20261022-02 — Purchase environment isolation
 
 Requirement: U317/R327; DEC308. Pin purchase entry to the matching production or staging payment origin; allow the same loopback origin only for development simulation. Keep account authorization and late-response checks. Synthetic tests cover cross-environment rejection. No plugin release or service deployment is performed.
+
+## Unreleased — CHG-20261022-03 — Purchase subdirectories on shared service host
+
+Requirement: U318/R328; DEC309. Pin China purchase links to /pay-test for staging and /pay for production on the service HTTPS host, while keeping loopback development simulation. Preserve account checks, order navigation and one-time tickets; reject the other environment path and query parameters. Source tests and CN/Global builds are local validation; no deployment or release is performed.
