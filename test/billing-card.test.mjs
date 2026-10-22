@@ -29,17 +29,17 @@ test('purchase and renewal states use one calendar month, including short months
 	assert.equal(billingCard({...paid(at+1),usage:{logicalBytes:null}}, true, at).ratio, null);
 	assert.match(billingCard({currentOrder:{title:'联调',purpose:'test',status:'paid'}}, true, at).order, /权益未改变/);
 });
-test('the mounted card resumes a pending order, refreshes on return and discards responses after identity change/disposal', async () => {
+test('the mounted purchase action opens plans despite a pending order, refreshes on return and discards responses after identity change/disposal', async () => {
 	const dom = new JSDOM('<div id="setting"><div id="info"></div><div id="controls"></div></div>', {pretendToBeVisual:true});
 	const doc = dom.window.document;
 	const setting = {settingEl:doc.querySelector('#setting'),infoEl:doc.querySelector('#info'),controlEl:doc.querySelector('#controls'),setName() {}};
-	let live = true, calls = 0, resolve, opened;
+	let live = true, calls = 0, resolve, opened = 'not-called';
 	const value = {...paid(Date.UTC(2027,0,1)),currentOrder:{id:'a'.repeat(32),title:'5GB',status:'pending'}};
 	const dispose = mountBillingCard(setting, {connected:true,live:()=>live,now:()=>at,target:dom.window,
 		load:async()=>{calls++; if(calls===1) return value; return new Promise(done=>{resolve=done;});}, open:async id=>{opened=id;},onError:error=>{throw error;}});
 	await new Promise(done=>setImmediate(done));
 	const button = doc.querySelector('button'); assert.equal(button.textContent, '续费'); assert.equal(button.classList.contains('is-prominent'), false);
-	button.click(); await new Promise(done=>setImmediate(done)); assert.equal(opened, 'a'.repeat(32)); assert.equal(calls,2);
+	button.click(); await new Promise(done=>setImmediate(done)); assert.equal(opened, undefined); assert.equal(calls,2);
 	live = false; resolve({entitlement:{paid:false}}); await new Promise(done=>setImmediate(done)); assert.equal(button.textContent,'续费');
 	dispose(); dom.window.dispatchEvent(new dom.window.Event('focus')); assert.equal(calls,2);
 	assert.doesNotMatch(doc.body.textContent, /订单记录|刷新套餐|压缩|逻辑/); dom.window.close();

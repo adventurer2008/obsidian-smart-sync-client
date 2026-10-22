@@ -3381,8 +3381,7 @@ export default class IndependentSync extends Plugin {
 		const expected = new URL(purchaseBase + '/plans');
 		const checkout = expected.pathname.replace(/plans$/, 'checkout/');
 		const allowedPath = typeof orderId === 'string' && /^[a-f0-9]{32}$/.test(orderId) ? checkout + orderId : expected.pathname;
-		const guestResume = guest && url.pathname.startsWith(checkout) && /^[a-f0-9]{32}$/.test(url.pathname.slice(checkout.length));
-		if (url.origin !== expected.origin || (url.pathname !== allowedPath && !guestResume) || url.search || !/^#ticket=[A-Za-z0-9_-]{43}$/.test(url.hash)) throw Error('Invalid purchase entry');
+		if (url.origin !== expected.origin || url.pathname !== allowedPath || url.search || !/^#ticket=[A-Za-z0-9_-]{43}$/.test(url.hash)) throw Error('Invalid purchase entry');
 		if (orderId === true) url.pathname = expected.pathname.replace(/plans$/, 'orders');
 		window.open(url.href, '_blank', 'noopener,noreferrer');
 	}

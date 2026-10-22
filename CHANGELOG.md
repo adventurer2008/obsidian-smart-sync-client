@@ -46,3 +46,8 @@ Requirement: U317/R327; DEC308. Pin purchase entry to the matching production or
 ## Unreleased — CHG-20261022-03 — Purchase subdirectories on shared service host
 
 Requirement: U318/R328; DEC309. Pin China purchase links to /pay-test for staging and /pay for production on the service HTTPS host, while keeping loopback development simulation. Preserve account checks, order navigation and one-time tickets; reject the other environment path and query parameters. Source tests and CN/Global builds are local validation; no deployment or release is performed.
+
+
+## CHG-20261022-12
+
+Requirements: U327/R337. Purchase and renewal actions open plan selection rather than silently resuming an old checkout. Preserve explicit owned-order entry and existing unpaid orders; do not cancel or duplicate provider charges. Verified with 102 Client tests; local simulation only, no release or production deployment.

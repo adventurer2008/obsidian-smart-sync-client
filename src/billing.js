@@ -78,7 +78,7 @@ export function mountBillingCard(setting, { connected, load, open, live, onError
 	const click = async () => {
 		if (!current() || acting) return;
 		acting = true; render();
-		try { await open(billingCard(data, connected, now()).resume); }
+		try { await open(); }
 		catch (error) { if (current()) onError(error); }
 		finally { acting = false; if (current()) { render(); focus(); } }
 	};
