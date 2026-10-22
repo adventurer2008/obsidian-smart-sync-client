@@ -1,4 +1,5 @@
 import { edition, assertEditionOrigin, logViewType } from './edition.js';
+import { mountBillingCard } from './billing.js';
 import { t, locale, formatStorageSize, localizedFailure as failureMessage } from './i18n.js';
 import { ConnectionCheckpoints } from './checkpoint.js';
 import { notePinState, queueNotePin, moveNotePins, pinPathSet, synchronizeNotePins } from './pinning.js';
@@ -3330,18 +3331,59 @@ export default class IndependentSync extends Plugin {
 			this.connecting = false;
 		}
 	}
-	async openBilling(orders = false) {
+	purchaseSession() {
+		try {
+			const value = JSON.parse(this.secret('purchase'));
+			return value.origin === new URL(this.data.settings.origin).origin && /^[A-Za-z0-9_-]{43}$/.test(value.capability) ? value : undefined;
+		} catch { return undefined; }
+	}
+	async billingSummary() {
+		if (this.secret('account') || this.secret('access')) {
+			const api = await this.accountApi(), key = this.secret('account');
+			const data = await api.request('GET', 'billing/entitlement');
+			if (key !== this.secret('account')) throw pairingFault('PAIRING_CHANGED');
+			return data;
+		}
+		const purchase = this.purchaseSession();
+		if (!purchase) return undefined;
+		try { return await this.workspaceApi(purchase.origin, purchase.capability).request('GET', 'billing/guest'); }
+		catch (error) {
+			if (error.status === 401 && this.purchaseSession()?.capability === purchase.capability) {
+				this.app.secretStorage.setSecret(`${this.manifest.id}-${this.data.localId}-purchase`, '');
+				return undefined;
+			}
+			throw error;
+		}
+	}
+	async openBilling(orderId) {
 		if (edition.edition !== 'cn') return;
-		const api = await this.accountApi(), localId = this.data.localId, key = this.secret('account');
-		const entry = await api.request('POST', 'billing/entry', {});
-		if (this.stopped || localId !== this.data.localId || key !== this.secret('account') || api.origin !== new URL(this.data.settings.origin).origin) return;
+		const localId = this.data.localId, origin = new URL(this.data.settings.origin).origin;
+		const guest = !this.secret('account') && !this.secret('access');
+		const live = () => !this.stopped && localId === this.data.localId && origin === new URL(this.data.settings.origin).origin && guest === (!this.secret('account') && !this.secret('access'));
+		if (guest && !this.purchaseSession()) {
+			formWindow(this.app, '购买套餐', [{key:'email', label:'账号邮箱', description:'付款确认后，登录信息将发送到此邮箱。请仔细核对；已有账号请先登录。', maxLength:254}], async ({email}) => {
+				const result = await this.workspaceApi(origin, '').request('POST', 'billing/guest', {email:email.trim()});
+				if (!live()) return;
+				if (!/^[A-Za-z0-9_-]{43}$/.test(result.capability)) throw Error('Invalid purchase capability');
+				this.app.secretStorage.setSecret(`${this.manifest.id}-${localId}-purchase`, JSON.stringify({origin,capability:result.capability}));
+				await this.openBilling();
+			}, '选择套餐');
+			return;
+		}
+		const purchase = guest ? this.purchaseSession() : undefined;
+		const api = guest ? this.workspaceApi(origin, purchase.capability) : await this.accountApi(), key = this.secret('account');
+		const entry = await api.request('POST', guest ? 'billing/guest/entry' : 'billing/entry', typeof orderId === 'string' ? {orderId} : {});
+		if (!live() || key !== this.secret('account') || (guest && purchase.capability !== this.purchaseSession()?.capability)) return;
 		const url = new URL(entry.url);
 		const service = new URL(api.origin);
 		const purchaseBase = api.origin === edition.stagingOrigin ? 'https://sync.wujiesync.cc/pay-test'
 			: edition.development && service.protocol === 'http:' && ['127.0.0.1','localhost'].includes(service.hostname) ? api.origin : 'https://sync.wujiesync.cc/pay';
 		const expected = new URL(purchaseBase + '/plans');
-		if (url.origin !== expected.origin || url.pathname !== expected.pathname || url.search || !/^#ticket=[A-Za-z0-9_-]{43}$/.test(url.hash)) throw Error('Invalid purchase entry');
-		if (orders) url.pathname = expected.pathname.replace(/plans$/, 'orders');
+		const checkout = expected.pathname.replace(/plans$/, 'checkout/');
+		const allowedPath = typeof orderId === 'string' && /^[a-f0-9]{32}$/.test(orderId) ? checkout + orderId : expected.pathname;
+		const guestResume = guest && url.pathname.startsWith(checkout) && /^[a-f0-9]{32}$/.test(url.pathname.slice(checkout.length));
+		if (url.origin !== expected.origin || (url.pathname !== allowedPath && !guestResume) || url.search || !/^#ticket=[A-Za-z0-9_-]{43}$/.test(url.hash)) throw Error('Invalid purchase entry');
+		if (orderId === true) url.pathname = expected.pathname.replace(/plans$/, 'orders');
 		window.open(url.href, '_blank', 'noopener,noreferrer');
 	}
 	async accountApi() {
@@ -4553,23 +4595,13 @@ class IndependentSettings extends PluginSettingTab {
 		const notebook = identityRow('overview.notebook', 'label', 'overview.notebookUnavailable', [
 			['overview.manageNotebooks', 'manageNotebooks'],
 		]);
-		const billing = edition.edition === 'cn' && accountConnected ? row('套餐与续费', setting => {
-			let disposed = false;
-			setting.setDesc('正在读取套餐；购买和订单记录在浏览器打开，无需重复登录。');
-			const refresh = async () => {
-				try {
-					const api = await plugin.accountApi(), key = plugin.secret('account');
-					const data = await api.request('GET', 'billing/entitlement');
-					if (disposed || identityScope() !== scopeKey || key !== plugin.secret('account')) return;
-					const value = data.entitlement;
-					setting.setDesc(value.paid ? `${value.plan} · 逻辑上限 ${formatStorageSize(value.logical)} · 有效期至 ${new Date(value.ends).toLocaleDateString('zh-CN')}` : '当前沿用公测、免费或人工授权权益；购买不会自动扣续费款。');
-				} catch { if (!disposed && identityScope() === scopeKey) setting.setDesc('套餐服务尚未开放或暂时不可用，现有同步权益保持。'); }
-			};
-			bindAction(setting, '购买／续费', () => plugin.openBilling());
-			bindAction(setting, '订单记录', () => plugin.openBilling(true));
-			bindAction(setting, '刷新套餐', refresh);
-			void refresh();
-			return () => { disposed = true; };
+		const billing = edition.edition === 'cn' ? row('我的套餐', setting => {
+			const credential = plugin.secret('account') || plugin.secret('access');
+			return mountBillingCard(setting, {
+				connected: accountConnected, load: () => plugin.billingSummary(), open: orderId => plugin.openBilling(orderId),
+				live: () => !plugin.stopped && identityScope() === scopeKey && credential === (plugin.secret('account') || plugin.secret('access')),
+				onError: error => plugin.notify(failureMessage(error)),
+			});
 		}) : undefined;
 		const devices = row(
 			t('overview.devices'),
