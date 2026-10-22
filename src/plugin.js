@@ -3336,7 +3336,10 @@ export default class IndependentSync extends Plugin {
 		const entry = await api.request('POST', 'billing/entry', {});
 		if (this.stopped || localId !== this.data.localId || key !== this.secret('account') || api.origin !== new URL(this.data.settings.origin).origin) return;
 		const url = new URL(entry.url);
-		if (url.origin !== 'https://pay.wujiesync.cc' || url.pathname !== '/plans' || !/^#ticket=[A-Za-z0-9_-]{43}$/.test(url.hash)) throw Error('Invalid purchase entry');
+		const service = new URL(api.origin);
+		const purchaseOrigin = api.origin === edition.stagingOrigin ? 'https://pay-staging.wujiesync.cc'
+			: edition.development && service.protocol === 'http:' && ['127.0.0.1','localhost'].includes(service.hostname) ? api.origin : 'https://pay.wujiesync.cc';
+		if (url.origin !== purchaseOrigin || url.pathname !== '/plans' || !/^#ticket=[A-Za-z0-9_-]{43}$/.test(url.hash)) throw Error('Invalid purchase entry');
 		if (orders) url.pathname = '/orders';
 		window.open(url.href, '_blank', 'noopener,noreferrer');
 	}

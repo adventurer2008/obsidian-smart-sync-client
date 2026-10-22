@@ -22,3 +22,7 @@ Requirement: U299/R309; DEC290. The user authorizes delivering all maintained, u
 ## Unreleased - CHG-20261022-01
 
 Requirement U316/R326: add China purchase, renewal and order entry using a short-lived single-use billing ticket. Account-only authorization, pinned payment origin and stale-account guards preserve existing sync and encryption behavior. Global billing remains disabled. No release or service deployment.
+
+## Unreleased — CHG-20261022-02 — Purchase environment isolation
+
+Requirement: U317/R327; DEC308. Pin purchase entry to the matching production or staging payment origin; allow the same loopback origin only for development simulation. Keep account authorization and late-response checks. Synthetic tests cover cross-environment rejection. No plugin release or service deployment is performed.
