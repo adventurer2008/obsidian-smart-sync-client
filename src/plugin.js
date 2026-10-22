@@ -3349,7 +3349,6 @@ export default class IndependentSync extends Plugin {
 		try { return await this.workspaceApi(purchase.origin, purchase.capability).request('GET', 'billing/guest'); }
 		catch (error) {
 			if (error.status === 401 && this.purchaseSession()?.capability === purchase.capability) {
-				this.app.secretStorage.setSecret(`${this.manifest.id}-${this.data.localId}-purchase`, '');
 				return undefined;
 			}
 			throw error;
@@ -3360,24 +3359,25 @@ export default class IndependentSync extends Plugin {
 		const localId = this.data.localId, origin = new URL(this.data.settings.origin).origin;
 		const guest = !this.secret('account') && !this.secret('access');
 		const live = () => !this.stopped && localId === this.data.localId && origin === new URL(this.data.settings.origin).origin && guest === (!this.secret('account') && !this.secret('access'));
+		const service = new URL(origin);
+		const purchaseBase = origin === edition.stagingOrigin ? 'https://sync.wujiesync.cc/pay-test'
+			: edition.development && service.protocol === 'http:' && ['127.0.0.1','localhost'].includes(service.hostname) ? origin : 'https://sync.wujiesync.cc/pay';
 		if (guest && !this.purchaseSession()) {
-			formWindow(this.app, '购买套餐', [{key:'email', label:'账号邮箱', description:'付款确认后，登录信息将发送到此邮箱。请仔细核对；已有账号请先登录。', maxLength:254}], async ({email}) => {
-				const result = await this.workspaceApi(origin, '').request('POST', 'billing/guest', {email:email.trim()});
-				if (!live()) return;
-				if (!/^[A-Za-z0-9_-]{43}$/.test(result.capability)) throw Error('Invalid purchase capability');
-				this.app.secretStorage.setSecret(`${this.manifest.id}-${localId}-purchase`, JSON.stringify({origin,capability:result.capability}));
-				await this.openBilling();
-			}, '选择套餐');
+			const capability = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32)))).replaceAll('+','-').replaceAll('/','_').replace(/=+$/, '');
+			this.app.secretStorage.setSecret(`${this.manifest.id}-${localId}-purchase`, JSON.stringify({origin,capability}));
+			if (live()) window.open(purchaseBase + '/plans#register=' + capability, '_blank', 'noopener,noreferrer');
 			return;
 		}
 		const purchase = guest ? this.purchaseSession() : undefined;
 		const api = guest ? this.workspaceApi(origin, purchase.capability) : await this.accountApi(), key = this.secret('account');
-		const entry = await api.request('POST', guest ? 'billing/guest/entry' : 'billing/entry', typeof orderId === 'string' ? {orderId} : {});
+		let entry;
+		try { entry = await api.request('POST', guest ? 'billing/guest/entry' : 'billing/entry', typeof orderId === 'string' ? {orderId} : {}); }
+		catch (error) {
+			if (guest && error.status === 401 && live()) { window.open(purchaseBase + '/plans#register=' + purchase.capability, '_blank', 'noopener,noreferrer'); return; }
+			throw error;
+		}
 		if (!live() || key !== this.secret('account') || (guest && purchase.capability !== this.purchaseSession()?.capability)) return;
 		const url = new URL(entry.url);
-		const service = new URL(api.origin);
-		const purchaseBase = api.origin === edition.stagingOrigin ? 'https://sync.wujiesync.cc/pay-test'
-			: edition.development && service.protocol === 'http:' && ['127.0.0.1','localhost'].includes(service.hostname) ? api.origin : 'https://sync.wujiesync.cc/pay';
 		const expected = new URL(purchaseBase + '/plans');
 		const checkout = expected.pathname.replace(/plans$/, 'checkout/');
 		const allowedPath = typeof orderId === 'string' && /^[a-f0-9]{32}$/.test(orderId) ? checkout + orderId : expected.pathname;

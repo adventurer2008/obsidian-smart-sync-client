@@ -8,6 +8,24 @@ registerHooks({ resolve(specifier, context, next) {
 globalThis.__SMART_SYNC_EDITION__ = { edition: 'cn', development: true, stagingOrigin: 'http://127.0.0.1:24819' };
 const { default: Plugin } = await import('../src/plugin.js');
 
+test('guest entry opens plans directly and keeps its scoped handoff while the browser collects matching emails', async () => {
+    const opened = []; window.open = url => opened.push(url);
+    const secrets = new Map(), origin = 'http://127.0.0.1:43519';
+    let requests = 0;
+    const plugin = { data:{localId:'guest',settings:{origin}}, manifest:{id:'wujie-sync'},
+        app:{secretStorage:{setSecret:(key,value)=>secrets.set(key,value)}},
+        secret:name=>secrets.get('wujie-sync-guest-'+name)??'',
+        purchaseSession:()=>Plugin.prototype.purchaseSession.call(plugin),
+        workspaceApi:()=>({origin,request:async()=>{requests++;throw Object.assign(Error('not registered yet'),{status:401});}}) };
+    await Plugin.prototype.openBilling.call(plugin);
+    assert.equal(requests,0); assert.match(opened[0],/^http:\/\/127\.0\.0\.1:43519\/plans#register=[A-Za-z0-9_-]{43}$/);
+    const capability = plugin.purchaseSession().capability;
+    assert.equal(await Plugin.prototype.billingSummary.call(plugin),undefined);
+    assert.equal(plugin.purchaseSession().capability,capability);
+    await Plugin.prototype.openBilling.call(plugin);
+    assert.equal(opened[1],opened[0]); assert.equal(requests,2);
+});
+
 test('purchase entry uses account auth, pins HTTPS origin and never opens a late response for another account', async () => {
     const opened = []; window.open = (...args) => opened.push(args);
     let key = 'synthetic-key', next;
