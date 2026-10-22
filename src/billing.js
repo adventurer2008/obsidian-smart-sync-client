@@ -12,7 +12,8 @@ export function renewalReminderAt(ends) {
 }
 export function billingCard(data, connected, now = Date.now()) {
 	const rights = data?.entitlement, order = data?.currentOrder;
-	const purchased = rights?.paid === true || data?.everPurchased === true;
+	const free = rights?.plan === 'cn-free' && rights?.paid !== true;
+	const purchased = !free && (rights?.paid === true || data?.everPurchased === true);
 	const ends = rights?.ends ?? data?.lastPurchase?.ends;
 	const renewed = data?.lastPurchase?.status === 'paid' && data.lastPurchase.renewal === true;
 	const refunded = purchased && rights?.paid !== true && data?.lastPurchase?.status === 'refunded';
@@ -20,17 +21,17 @@ export function billingCard(data, connected, now = Date.now()) {
 	const due = purchased && !expired && now >= renewalReminderAt(ends);
 	const titles = { 'cn-5gb-year': '5GB 年付', 'cn-10gb-year': '10GB 年付', 'cn-20gb-year': '20GB 年付' };
 	// A service fallback quota is not an activated subscription owned by this user.
-	const capacity = connected && rights?.paid === true ? rights.logical : undefined;
+	const capacity = connected && (rights?.paid === true || free) ? rights.logical : undefined;
 	const usage = data?.usage?.logicalBytes;
 	return {
-		label: purchased ? '续费' : '购买', prominent: !purchased || due || expired,
+		free, label: free ? '购买更多额度' : purchased ? '续费' : '购买', prominent: !purchased || due || expired,
 		badge: !purchased ? '' : refunded ? '已退款' : expired ? '已到期' : due ? '即将到期' : '已开通',
-		title: purchased ? (rights?.paid ? '当期套餐：' : '') + (titles[rights?.paid ? rights.plan : data?.lastPurchase?.plan] ?? '年度套餐') : '',
+		title: free ? '免费 · 100MB' : purchased ? (rights?.paid ? '当期套餐：' : '') + (titles[rights?.paid ? rights.plan : data?.lastPurchase?.plan] ?? '年度套餐') : '',
 		usage: connected && Number.isFinite(capacity) ? Number.isFinite(usage) ? `已用 ${formatStorageSize(usage)} / ${formatStorageSize(capacity)}` : `套餐容量 ${formatStorageSize(capacity)} · 用量待核算` : '',
 		ratio: Number.isFinite(usage) && capacity > 0 ? Math.max(0, Math.min(1, usage / capacity)) : null,
 		upcoming: rights?.upcoming ? `下期套餐：${titles[rights.upcoming.plan] ?? '年度套餐'}，${new Date(rights.upcoming.starts).toLocaleDateString('zh-CN')}生效` : '',
-		expires: purchased && ends && !refunded ? `到期时间：${new Date(ends).toLocaleDateString('zh-CN')}` : '',
-		help: !purchased ? '' : renewed ? '续费成功，原账号及登录信息继续有效。' : !connected ? ['failed','uncertain','purchase_conflict'].includes(data?.registration) ? '付款已确认，登录信息发送待处理，请联系支持。' : '付款已确认，请使用邮件中的登录信息登录。'
+		expires: free && rights.starts ? `开通日期：${new Date(rights.starts).toLocaleDateString('zh-CN')}` : purchased && ends && !refunded ? `到期时间：${new Date(ends).toLocaleDateString('zh-CN')}` : '',
+		help: free ? connected ? '账号下所有笔记库共用100MB容量，免费套餐规则以届时公布为准。' : ['failed','uncertain','purchase_conflict'].includes(data?.registration) ? '免费套餐已开通，登录信息发送待处理，请联系支持。' : '免费套餐已开通，请使用邮件中的登录信息登录。' : !purchased ? '' : renewed ? '续费成功，原账号及登录信息继续有效。' : !connected ? ['failed','uncertain','purchase_conflict'].includes(data?.registration) ? '付款已确认，登录信息发送待处理，请联系支持。' : '付款已确认，请使用邮件中的登录信息登录。'
 			: refunded ? '套餐已退款，可重新购买开通。' : expired ? '套餐已到期，续费后继续使用。' : due ? '距离到期不足一个月，可提前续费，不自动扣款。' : '账号下所有笔记库共用套餐容量，不自动扣款。',
 		order: order ? [purchased ? order.title : '', order.purpose === 'test' ? '1分钱测试' : '', order.failureCode === 'paid_plan_conflict' ? '付款已收到，待核对' : statuses[order.status] ?? '订单处理中'].filter(Boolean).join(' · ') + (order.status === 'paid' && order.purpose === 'test' ? '，套餐权益未改变' : '') : '',
 		resume: order && pending.has(order.status) ? order.id : undefined,
@@ -62,6 +63,7 @@ export function mountBillingCard(setting, { connected, load, open, live, onError
 		badge.hidden = !model.badge;
 		title.hidden = !model.title;
 		setting.settingEl.classList.toggle('is-compact', !model.title && !model.order);
+		setting.settingEl.classList.toggle('is-free', model.free);
 		upcoming.textContent = model.upcoming; upcoming.hidden = !model.upcoming;
 		help.textContent = model.help; status.textContent = model.order;
 		usage.hidden = !model.usage; expires.hidden = !model.expires; help.hidden = !model.help;

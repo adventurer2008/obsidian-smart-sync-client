@@ -71,3 +71,8 @@ Requirements: U332/R342. Display the scheduled next package and its effective da
 ## Unreleased — CHG-20261023-06/07 — Renewal periods and returning sessions
 
 Requirements: U337/R347; U338/R348; DEC328/329. Label the current package and show the scheduled package on the next row, including same-tier renewals. Refresh on window return, display the extended purchased expiry, and remove the scheduled row when that period becomes current. Confirm paid renewals without asking an existing purchase session to use login mail again. Keep account and session credentials unchanged. Local tests only; no release or service deployment.
+
+
+## Unreleased — CHG-20261023-12/13 — Free plan and upgrade entry
+
+Requirements: U343/R353; U344/R354; DEC334/335. Show an activated 100MB free plan with its opening date and a prominent purchase-more action below it. Do not label it a trial or show an expiry or a permanent-free promise. Preserve the existing account and data when purchasing an annual plan, along with the existing paid renewal behavior. This replaces the proposed two-week paid-plan trial; no remote deployment or release is performed.

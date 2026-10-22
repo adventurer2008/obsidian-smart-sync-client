@@ -197,6 +197,7 @@
 .smart-sync-billing .setting-item-name { display: inline; font-size: var(--font-ui-small); color: var(--text-muted); }
 .smart-sync-billing .setting-item-description:empty { display: none; }
 .smart-sync-billing .setting-item-control { width: auto; justify-content: flex-end; margin: 0 0 0 16px; }
+.smart-sync-billing.is-free .setting-item-control { grid-column: 1 / -1; justify-content: flex-start; margin: 12px 0 0; }
 .setting-item.smart-sync-billing.is-compact { align-items: center; padding-block: 12px; }
 .smart-sync-billing.is-compact .setting-item-name { font-size: var(--font-ui-medium); font-weight: 600; color: var(--text-normal); }
 .smart-sync-plan-badge { float: right; padding: 2px 8px; border-radius: 20px; background: var(--background-modifier-hover); color: var(--text-muted); font-size: var(--font-ui-smaller); }

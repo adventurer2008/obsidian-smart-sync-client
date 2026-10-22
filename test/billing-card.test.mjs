@@ -84,3 +84,13 @@ test('a paid renewal never asks a returning purchase session to use login mail',
  const value={...paid(Date.UTC(2028,9,22)),lastPurchase:{status:'paid',renewal:true}};
  for(const connected of [false,true]){const card=billingCard(value,connected,at);assert.match(card.help,/续费成功/);assert.doesNotMatch(card.help,/邮件|请使用|登录信息登录/);}
 });
+
+
+test('free card shows 100MB, opening date only and a prominent purchase-more action below',async()=>{
+ const value={entitlement:{plan:'cn-free',paid:false,logical:100*1024**2,starts:at,ends:null},usage:{logicalBytes:50*1024**2}};
+ const card=billingCard(value,true,at+60*86400000);assert.equal(card.title,'免费 · 100MB');assert.equal(card.label,'购买更多额度');assert.equal(card.prominent,true);assert.match(card.expires,/开通日期/);assert.equal(card.ratio,.5);assert.doesNotMatch(card.help+card.expires,/体验|到期|永久|不限时间|14天/);
+ const dom=new JSDOM('<div id="setting"><div id="info"></div><div id="controls"></div></div>',{pretendToBeVisual:true}),doc=dom.window.document;
+ const setting={settingEl:doc.querySelector('#setting'),infoEl:doc.querySelector('#info'),controlEl:doc.querySelector('#controls'),setName(){}};let opened=0;
+ const dispose=mountBillingCard(setting,{connected:true,live:()=>true,now:()=>at,target:dom.window,load:async()=>value,open:async()=>{opened++;},onError:e=>{throw e;}});
+ try{await new Promise(done=>setImmediate(done));assert.equal(setting.settingEl.classList.contains('is-free'),true);assert.equal(doc.querySelector('button').textContent,'购买更多额度');doc.querySelector('button').click();await new Promise(done=>setImmediate(done));assert.equal(opened,1);}finally{dispose();dom.window.close();}
+});
