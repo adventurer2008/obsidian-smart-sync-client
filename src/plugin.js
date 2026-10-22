@@ -4588,7 +4588,7 @@ class IndependentSettings extends PluginSettingTab {
 				? [['msg_cd2d74373d', 'signOut']]
 				: [
 						['overview.login', 'enrollment'],
-						['overview.apply', 'requestAccess'],
+						...(edition.edition === 'cn' ? [] : [['overview.apply', 'requestAccess']]),
 					],
 		);
 		const notebook = identityRow('overview.notebook', 'label', 'overview.notebookUnavailable', [

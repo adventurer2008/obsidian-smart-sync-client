@@ -76,3 +76,8 @@ Requirements: U337/R347; U338/R348; DEC328/329. Label the current package and sh
 ## Unreleased — CHG-20261023-12/13 — Free plan and upgrade entry
 
 Requirements: U343/R353; U344/R354; DEC334/335. Show an activated 100MB free plan with its opening date and a prominent purchase-more action below it. Do not label it a trial or show an expiry or a permanent-free promise. Preserve the existing account and data when purchasing an annual plan, along with the existing paid renewal behavior. This replaces the proposed two-week paid-plan trial; no remote deployment or release is performed.
+
+
+## Unreleased — CHG-20261023-14 — Remove redundant CN signup button
+
+Requirement: U345/R355; DEC336. Remove the CN account row's New user application button now that free account opening is available from the plan page. Keep existing account login, free and paid plan entry, historical applications and administrator management. Other edition entry points remain unchanged. Local test installation only; no release or service deployment.
