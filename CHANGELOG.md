@@ -66,3 +66,8 @@ Requirements: U331/R341. Hide renewal outside the final calendar month; show the
 ## CHG-20261023-01
 
 Requirements: U332/R342. Display the scheduled next package and its effective date separately from the current package when renewing into another tier. No release or production deployment.
+
+
+## Unreleased — CHG-20261023-06/07 — Renewal periods and returning sessions
+
+Requirements: U337/R347; U338/R348; DEC328/329. Label the current package and show the scheduled package on the next row, including same-tier renewals. Refresh on window return, display the extended purchased expiry, and remove the scheduled row when that period becomes current. Confirm paid renewals without asking an existing purchase session to use login mail again. Keep account and session credentials unchanged. Local tests only; no release or service deployment.

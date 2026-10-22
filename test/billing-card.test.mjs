@@ -18,7 +18,7 @@ test('purchase and renewal states use one calendar month, including short months
 	assert.match(billingCard({currentOrder:{status:'paid',failureCode:'paid_plan_conflict'}},false,at).order,/待核对/);
 	assert.equal(pending.order,'等待付款'); assert.equal(pending.title,''); assert.equal(pending.usage,''); assert.equal(pending.label,'购买'); assert.equal(pending.resume,'a'.repeat(32));
 	const active = billingCard(paid(Date.UTC(2027,0,1)), true, at);
-	assert.equal(active.label, '续费'); assert.equal(active.prominent, false); assert.equal(active.title, '5GB 年付'); assert.equal(active.ratio, .24);
+	assert.equal(active.label, '续费'); assert.equal(active.prominent, false); assert.equal(active.title, '当期套餐：5GB 年付'); assert.equal(active.ratio, .24);
 	assert.match(active.usage, /1.2.*5/);
 	assert.equal(billingCard(paid(Date.UTC(2026,10,22)), true, at).prominent, true);
 	assert.equal(renewalReminderAt(Date.UTC(2027,2,31)), Date.UTC(2027,1,28));
@@ -61,5 +61,26 @@ test('renewal action is hidden for a healthy plan and uses the purchase CTA with
 
 test('current and scheduled packages are distinct in the account card',()=>{
     const value=paid(Date.UTC(2028,9,22));value.entitlement.upcoming={plan:'cn-20gb-year',starts:Date.UTC(2027,9,22)};
-    const card=billingCard(value,true,at);assert.equal(card.title,'5GB 年付');assert.match(card.upcoming,/20GB 年付/);assert.match(card.upcoming,/生效/);
+    const card=billingCard(value,true,at);assert.equal(card.title,'当期套餐：5GB 年付');assert.match(card.upcoming,/20GB 年付/);assert.match(card.upcoming,/生效/);
+});
+
+
+test('returning after paid renewal refreshes both package rows and the extended expiry',async()=>{
+ const dom=new JSDOM('<div id="setting"><div id="info"></div><div id="controls"></div></div>',{pretendToBeVisual:true}),doc=dom.window.document;
+ const setting={settingEl:doc.querySelector('#setting'),infoEl:doc.querySelector('#info'),controlEl:doc.querySelector('#controls'),setName(){}};
+ const boundary=Date.UTC(2026,10,10),renewed=Date.UTC(2027,10,10);let value=paid(boundary);
+ const dispose=mountBillingCard(setting,{connected:true,live:()=>true,now:()=>at,target:dom.window,load:async()=>value,open:async()=>{},onError:e=>{throw e;}});
+ try{
+  await new Promise(done=>setImmediate(done));assert.equal(doc.querySelector('button').hidden,false);
+  value={...paid(renewed),entitlement:{...paid(renewed).entitlement,upcoming:{plan:'cn-20gb-year',starts:boundary}}};
+  dom.window.dispatchEvent(new dom.window.Event('focus'));await new Promise(done=>setImmediate(done));
+  const current=doc.querySelector('.smart-sync-plan-title');assert.equal(current.textContent,'当期套餐：5GB 年付');assert.match(current.nextElementSibling.textContent,/下期套餐：20GB 年付/);
+  assert.match(doc.querySelector('.smart-sync-plan-expiry').textContent,/2027/);assert.equal(doc.querySelector('button').hidden,true);
+ }finally{dispose();dom.window.close();}
+});
+
+
+test('a paid renewal never asks a returning purchase session to use login mail',()=>{
+ const value={...paid(Date.UTC(2028,9,22)),lastPurchase:{status:'paid',renewal:true}};
+ for(const connected of [false,true]){const card=billingCard(value,connected,at);assert.match(card.help,/续费成功/);assert.doesNotMatch(card.help,/邮件|请使用|登录信息登录/);}
 });
