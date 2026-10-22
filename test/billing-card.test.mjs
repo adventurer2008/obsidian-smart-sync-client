@@ -10,7 +10,7 @@ test('purchase and renewal states use one calendar month, including short months
 	for (const connected of [false, true]) {
 		const unpaid = billingCard({entitlement:{paid:false,logical:10*gb},usage:{logicalBytes:0}}, connected, at);
 		assert.equal(unpaid.prominent, true); assert.equal(unpaid.usage, ''); assert.equal(unpaid.ratio, null);
-		assert.equal(unpaid.title, '尚未购买套餐'); assert.equal(unpaid.help, ''); assert.equal(unpaid.badge, '');
+		assert.equal(unpaid.title, ''); assert.equal(unpaid.help, ''); assert.equal(unpaid.badge, '');
 	}
 	const signedOut = billingCard(paid(Date.UTC(2027,0,1)), false, at);
 	assert.equal(signedOut.usage, ''); assert.equal(signedOut.ratio, null);

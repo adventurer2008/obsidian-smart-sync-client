@@ -24,7 +24,7 @@ export function billingCard(data, connected, now = Date.now()) {
 	return {
 		label: purchased ? '续费' : '购买', prominent: !purchased || due || expired,
 		badge: !purchased ? '' : refunded ? '已退款' : expired ? '已到期' : due ? '即将到期' : '已开通',
-		title: purchased ? titles[rights?.paid ? rights.plan : data?.lastPurchase?.plan] ?? '年度套餐' : '尚未购买套餐',
+		title: purchased ? titles[rights?.paid ? rights.plan : data?.lastPurchase?.plan] ?? '年度套餐' : '',
 		usage: connected && Number.isFinite(capacity) ? Number.isFinite(usage) ? `已用 ${formatStorageSize(usage)} / ${formatStorageSize(capacity)}` : `套餐容量 ${formatStorageSize(capacity)} · 用量待核算` : '',
 		ratio: Number.isFinite(usage) && capacity > 0 ? Math.max(0, Math.min(1, usage / capacity)) : null,
 		expires: purchased && ends && !refunded ? `到期时间：${new Date(ends).toLocaleDateString('zh-CN')}` : '',
@@ -57,12 +57,14 @@ export function mountBillingCard(setting, { connected, load, open, live, onError
 		const model = billingCard(data, connected, now());
 		badge.textContent = model.badge; title.textContent = model.title; usage.textContent = model.usage; expires.textContent = model.expires;
 		badge.hidden = !model.badge;
+		title.hidden = !model.title;
+		setting.settingEl.classList.toggle('is-compact', !model.title && !model.order);
 		help.textContent = model.help; status.textContent = model.order;
 		usage.hidden = !model.usage; expires.hidden = !model.expires; help.hidden = !model.help;
 		progress.hidden = model.ratio === null; progress.value = model.ratio ?? 0;
 		button.textContent = model.label; button.disabled = acting;
 		button.classList.toggle('mod-cta', model.prominent); button.classList.toggle('is-prominent', model.prominent);
-		if (connected && !data) { badge.textContent = '读取中'; badge.hidden = false; title.textContent = '正在读取套餐信息'; button.textContent = '读取中…'; button.disabled = true; }
+		if (connected && !data) { badge.textContent = '读取中'; badge.hidden = false; title.textContent = '正在读取套餐信息'; title.hidden = false; button.textContent = '读取中…'; button.disabled = true; }
 	}
 	async function refresh() {
 		view.clearTimeout(timer);
