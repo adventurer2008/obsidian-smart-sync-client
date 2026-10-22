@@ -56,3 +56,8 @@ Requirements: U327/R337. Purchase and renewal actions open plan selection rather
 ## CHG-20261022-15
 
 Requirements: U330/R340. Show an explicit review state for verified conflicting payments rather than claiming another package was activated. No release or production deployment.
+
+
+## CHG-20261022-16
+
+Requirements: U331/R341. Hide renewal outside the final calendar month; show the prominent purchase-sized action when due or expired. Local preview only; no entitlement dates changed.

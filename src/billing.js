@@ -62,7 +62,7 @@ export function mountBillingCard(setting, { connected, load, open, live, onError
 		help.textContent = model.help; status.textContent = model.order;
 		usage.hidden = !model.usage; expires.hidden = !model.expires; help.hidden = !model.help;
 		progress.hidden = model.ratio === null; progress.value = model.ratio ?? 0;
-		button.textContent = model.label; button.disabled = acting;
+		button.textContent = model.label; button.disabled = acting; button.hidden = !model.prominent;
 		button.classList.toggle('mod-cta', model.prominent); button.classList.toggle('is-prominent', model.prominent);
 		if (connected && !data) { badge.textContent = '读取中'; badge.hidden = false; title.textContent = '正在读取套餐信息'; title.hidden = false; button.textContent = '读取中…'; button.disabled = true; }
 	}
@@ -76,7 +76,7 @@ export function mountBillingCard(setting, { connected, load, open, live, onError
 	}
 	const focus = () => { if (current()) { deadline = now() + 15 * 60000; void refresh(); } };
 	const click = async () => {
-		if (!current() || acting) return;
+		if (!current() || acting || !billingCard(data, connected, now()).prominent) return;
 		acting = true; render();
 		try { await open(); }
 		catch (error) { if (current()) onError(error); }

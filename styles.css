@@ -211,3 +211,5 @@
 @media (max-width: 600px) {
   .setting-item.smart-sync-billing { padding: 16px; }
 }
+
+.smart-sync-billing button.smart-sync-plan-action[hidden] { display: none !important; }

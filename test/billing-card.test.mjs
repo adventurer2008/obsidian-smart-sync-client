@@ -35,13 +35,25 @@ test('the mounted purchase action opens plans despite a pending order, refreshes
 	const doc = dom.window.document;
 	const setting = {settingEl:doc.querySelector('#setting'),infoEl:doc.querySelector('#info'),controlEl:doc.querySelector('#controls'),setName() {}};
 	let live = true, calls = 0, resolve, opened = 'not-called';
-	const value = {...paid(Date.UTC(2027,0,1)),currentOrder:{id:'a'.repeat(32),title:'5GB',status:'pending'}};
+	const value = {...paid(Date.UTC(2026,10,10)),currentOrder:{id:'a'.repeat(32),title:'5GB',status:'pending'}};
 	const dispose = mountBillingCard(setting, {connected:true,live:()=>live,now:()=>at,target:dom.window,
 		load:async()=>{calls++; if(calls===1) return value; return new Promise(done=>{resolve=done;});}, open:async id=>{opened=id;},onError:error=>{throw error;}});
 	await new Promise(done=>setImmediate(done));
-	const button = doc.querySelector('button'); assert.equal(button.textContent, '续费'); assert.equal(button.classList.contains('is-prominent'), false);
+	const button = doc.querySelector('button'); assert.equal(button.textContent, '续费'); assert.equal(button.classList.contains('is-prominent'), true);
 	button.click(); await new Promise(done=>setImmediate(done)); assert.equal(opened, undefined); assert.equal(calls,2);
 	live = false; resolve({entitlement:{paid:false}}); await new Promise(done=>setImmediate(done)); assert.equal(button.textContent,'续费');
 	dispose(); dom.window.dispatchEvent(new dom.window.Event('focus')); assert.equal(calls,2);
 	assert.doesNotMatch(doc.body.textContent, /订单记录|刷新套餐|压缩|逻辑/); dom.window.close();
+});
+
+
+test('renewal action is hidden for a healthy plan and uses the purchase CTA within one calendar month', async () => {
+    for (const [ends,visible] of [[Date.UTC(2027,0,1),false],[Date.UTC(2026,10,22),true],[at-1,true]]) {
+        const dom=new JSDOM('<div id="setting"><div id="info"></div><div id="controls"></div></div>',{pretendToBeVisual:true}),doc=dom.window.document;
+        const setting={settingEl:doc.querySelector('#setting'),infoEl:doc.querySelector('#info'),controlEl:doc.querySelector('#controls'),setName(){}};
+        const dispose=mountBillingCard(setting,{connected:true,live:()=>true,now:()=>at,target:dom.window,load:async()=>paid(ends),open:async()=>{},onError:error=>{throw error;}});
+        await new Promise(done=>setImmediate(done));const button=doc.querySelector('button');
+        assert.equal(button.hidden,!visible);assert.equal(button.classList.contains('is-prominent'),visible);assert.equal(button.textContent,'续费');
+        dispose();dom.window.close();
+    }
 });
