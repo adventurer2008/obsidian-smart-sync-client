@@ -18,17 +18,18 @@ export function billingCard(data, connected, now = Date.now()) {
 	const expired = purchased && (rights?.paid !== true || !ends || ends <= now);
 	const due = purchased && !expired && now >= renewalReminderAt(ends);
 	const titles = { 'cn-5gb-year': '5GB 年付', 'cn-10gb-year': '10GB 年付', 'cn-20gb-year': '20GB 年付' };
-	const capacity = rights?.paid ? rights.logical : expired ? data?.lastPurchase?.logical : rights?.logical;
+	// A service fallback quota is not an activated subscription owned by this user.
+	const capacity = connected && rights?.paid === true ? rights.logical : undefined;
 	const usage = data?.usage?.logicalBytes;
 	return {
 		label: purchased ? '续费' : '购买', prominent: !purchased || due || expired,
-		badge: refunded ? '已退款' : expired ? '已到期' : due ? '即将到期' : purchased ? '已开通' : connected ? '试运行' : '尚未开通',
+		badge: !purchased ? '' : refunded ? '已退款' : expired ? '已到期' : due ? '即将到期' : '已开通',
 		title: purchased ? titles[rights?.paid ? rights.plan : data?.lastPurchase?.plan] ?? '年度套餐' : '尚未购买套餐',
 		usage: connected && Number.isFinite(capacity) ? Number.isFinite(usage) ? `已用 ${formatStorageSize(usage)} / ${formatStorageSize(capacity)}` : `套餐容量 ${formatStorageSize(capacity)} · 用量待核算` : '',
 		ratio: Number.isFinite(usage) && capacity > 0 ? Math.max(0, Math.min(1, usage / capacity)) : null,
 		expires: purchased && ends && !refunded ? `到期时间：${new Date(ends).toLocaleDateString('zh-CN')}` : '',
-		help: !connected ? purchased ? ['failed','uncertain','purchase_conflict'].includes(data?.registration) ? '付款已确认，登录信息发送待处理，请联系支持。' : '付款已确认，请使用邮件中的登录信息登录。' : '购买套餐后开通账号，已有账号可直接登录。'
-			: refunded ? '套餐已退款，可重新购买开通。' : expired ? '套餐已到期，续费后继续使用。' : due ? '距离到期不足一个月，可提前续费，不自动扣款。' : purchased ? '账号下所有笔记库共用套餐容量，不自动扣款。' : '当前使用试运行权益，购买后开通年度套餐。',
+		help: !purchased ? '' : !connected ? ['failed','uncertain','purchase_conflict'].includes(data?.registration) ? '付款已确认，登录信息发送待处理，请联系支持。' : '付款已确认，请使用邮件中的登录信息登录。'
+			: refunded ? '套餐已退款，可重新购买开通。' : expired ? '套餐已到期，续费后继续使用。' : due ? '距离到期不足一个月，可提前续费，不自动扣款。' : '账号下所有笔记库共用套餐容量，不自动扣款。',
 		order: order ? `${order.title}${order.purpose === 'test' ? ' · 1分钱测试' : ''} · ${statuses[order.status] ?? '订单处理中'}${order.status === 'paid' && order.purpose === 'test' ? '，套餐权益未改变' : ''}` : '',
 		resume: order && pending.has(order.status) ? order.id : undefined,
 	};
@@ -55,11 +56,13 @@ export function mountBillingCard(setting, { connected, load, open, live, onError
 	function render() {
 		const model = billingCard(data, connected, now());
 		badge.textContent = model.badge; title.textContent = model.title; usage.textContent = model.usage; expires.textContent = model.expires;
+		badge.hidden = !model.badge;
 		help.textContent = model.help; status.textContent = model.order;
+		usage.hidden = !model.usage; expires.hidden = !model.expires; help.hidden = !model.help;
 		progress.hidden = model.ratio === null; progress.value = model.ratio ?? 0;
 		button.textContent = model.label; button.disabled = acting;
 		button.classList.toggle('mod-cta', model.prominent); button.classList.toggle('is-prominent', model.prominent);
-		if (connected && !data) { badge.textContent = '读取中'; title.textContent = '正在读取套餐信息'; button.textContent = '读取中…'; button.disabled = true; }
+		if (connected && !data) { badge.textContent = '读取中'; badge.hidden = false; title.textContent = '正在读取套餐信息'; button.textContent = '读取中…'; button.disabled = true; }
 	}
 	async function refresh() {
 		view.clearTimeout(timer);

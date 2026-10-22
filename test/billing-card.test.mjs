@@ -7,7 +7,13 @@ const at = Date.UTC(2026, 9, 22), gb = 1024 ** 3;
 const paid = ends => ({ everPurchased:true, entitlement:{paid:true,plan:'cn-5gb-year',logical:5*gb,ends}, usage:{logicalBytes:1.2*gb} });
 test('purchase and renewal states use one calendar month, including short months and expired plans', () => {
 	assert.equal(billingCard(undefined, false, at).label, '购买');
-	assert.equal(billingCard({entitlement:{paid:false,logical:gb},usage:{logicalBytes:0}}, true, at).prominent, true);
+	for (const connected of [false, true]) {
+		const unpaid = billingCard({entitlement:{paid:false,logical:10*gb},usage:{logicalBytes:0}}, connected, at);
+		assert.equal(unpaid.prominent, true); assert.equal(unpaid.usage, ''); assert.equal(unpaid.ratio, null);
+		assert.equal(unpaid.title, '尚未购买套餐'); assert.equal(unpaid.help, ''); assert.equal(unpaid.badge, '');
+	}
+	const signedOut = billingCard(paid(Date.UTC(2027,0,1)), false, at);
+	assert.equal(signedOut.usage, ''); assert.equal(signedOut.ratio, null);
 	const active = billingCard(paid(Date.UTC(2027,0,1)), true, at);
 	assert.equal(active.label, '续费'); assert.equal(active.prominent, false); assert.equal(active.title, '5GB 年付'); assert.equal(active.ratio, .24);
 	assert.match(active.usage, /1.2.*5/);
