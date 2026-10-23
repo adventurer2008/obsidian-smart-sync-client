@@ -1,5 +1,10 @@
 # Source change record
 
+## 1.0.0 local verification — CHG-20261023-41
+
+Requirements: U366/R376; DEC357. Automatic GitHub Actions runs are replaced with local Windows and WSL validation maintained by the private release tools. Keep the optional hosted verification workflow manual-only. Runtime and published artifacts are unchanged by this workflow policy.
+
+
 ## 1.0.0 candidate — CHG-20261023-38/39/40
 
 Requirements: U363/R373, U364/R374, U365/R375. China account creation uses the free or paid plan page; existing-account login no longer offers manual beta applications. Retain existing login, pairing, encryption and original file modification times. Prepare version 1.0.0 for staging acceptance; this is not a published plugin Release.
