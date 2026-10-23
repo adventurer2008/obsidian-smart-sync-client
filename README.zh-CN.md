@@ -10,7 +10,7 @@
 
 ## 构建
 
-使用 Node 26.11.1，具体命令见英文 README。国内产物为 artifacts/cn，海外产物为 artifacts/global；构建不代表海外可发行。公开 CI 覆盖 Windows 和 Linux，不负责部署或发布。国内发行入口为 [obsidian-smart-sync-release-cn](https://github.com/adventurer2008/obsidian-smart-sync-release-cn)。
+使用 Node 26.12.1，具体命令见英文 README。国内产物为 artifacts/cn，海外产物为 artifacts/global；构建不代表海外可发行。公开 CI 覆盖 Windows 和 Linux，不负责部署或发布。国内发行入口为 [obsidian-smart-sync-release-cn](https://github.com/adventurer2008/obsidian-smart-sync-release-cn)。
 
 ## 许可和版本
 

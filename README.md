@@ -10,7 +10,7 @@ Server source, internal archives, deployment tools and private acceptance eviden
 
 ## Build and test
 
-Use Node 26.11.1:
+Use Node 26.12.1:
 
 ```sh
 npm ci --ignore-scripts
