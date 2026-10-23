@@ -1,5 +1,9 @@
 # Source change record
 
+## 1.0.0 candidate — CHG-20261023-38/39/40
+
+Requirements: U363/R373, U364/R374, U365/R375. China account creation uses the free or paid plan page; existing-account login no longer offers manual beta applications. Retain existing login, pairing, encryption and original file modification times. Prepare version 1.0.0 for staging acceptance; this is not a published plugin Release.
+
 
 ## 0.1.84 staging candidate — CHG-20261023-30
 

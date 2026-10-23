@@ -63,3 +63,10 @@ test('purchase entry isolates local simulation, staging and production origins',
         await assert.rejects(Plugin.prototype.openBilling.call(plugin), /Invalid purchase entry/);
     }
 });
+
+
+test('CN historical access command routes to plan opening, with no signup form or application request',async()=>{
+ let opened=0;
+ const plugin={openBilling:async()=>{opened++;return 'plans';},workspaceApi:()=>assert.fail('no manual application request')};
+ assert.equal(await Plugin.prototype.requestAccess.call(plugin),'plans');assert.equal(opened,1);
+});

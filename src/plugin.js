@@ -193,7 +193,7 @@ function formWindow(app, title, fields, submit, submitLabel = t('msg_31fbef1625'
 }
 function applicationDetails(area, changed) {
  const values = { requestedAmount: '', requestedUnit: 'M', purpose: '' };
- area.createEl('p', { text: '公测期内，请申请开通。' });
+ area.createEl('p', { text: '请填写账号开通信息。' });
  new Setting(area).setName('预计使用空间')
   .addText(input => {
    input.inputEl.type = 'number'; input.inputEl.min = '1'; input.inputEl.max = '1048576'; input.inputEl.step = '1';
@@ -789,7 +789,7 @@ export default class IndependentSync extends Plugin {
 		});
 		for (const [id, name, method] of [
 			['toggle-note-pin', t('pin.toggle'), 'toggleActiveNotePin'],
-			['request-access', t('msg_35d9a6514c'), 'requestAccess'],
+			['request-access', edition.edition === 'cn' ? t('billing.openPlans') : t('msg_35d9a6514c'), 'requestAccess'],
 			['registered-login', t('msg_b567a0c85b'), 'enrollment'],
 			['pair-new-device', t('msg_8b943b0cfd'), 'pairThisDevice'],
 			['approve-device', t('msg_0fb566edf8'), 'approveDevice'],
@@ -3122,6 +3122,7 @@ export default class IndependentSync extends Plugin {
 	}
 
 	async requestAccess() {
+  if (edition.edition === 'cn') return this.openBilling();
   let email = '';
   const dialog = new ChoiceWindow(this.app, t('msg_98d23d7e0e'), area => {
    new Setting(area).setName('邮箱').addText(input => { input.inputEl.type = 'email'; input.onChange(value => { email = value; }); });
@@ -3196,12 +3197,13 @@ export default class IndependentSync extends Plugin {
 		this.tab?.update();
 	}
 	async enrollment(initialMode = 'registered') {
-		let mode = initialMode === 'new' ? 'new' : 'registered',
+		let mode = edition.edition !== 'cn' && initialMode === 'new' ? 'new' : 'registered',
 			version = 0;
 		const dialog = new ChoiceWindow(this.app, t('msg_911a5a5fee'), (area) => {
 			const render = () => {
 				version++;
 				area.empty();
+				if (edition.edition !== 'cn') {
 				action(area, t('msg_6d3f7c7e30'), async () => {
 					mode = 'registered';
 					render();
@@ -3210,6 +3212,7 @@ export default class IndependentSync extends Plugin {
 					mode = 'new';
 					render();
 				});
+				}
 				let value = '',
 					pending = false;
 				new Setting(area)
