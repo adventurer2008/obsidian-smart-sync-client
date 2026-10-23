@@ -1,6 +1,7 @@
 import { formatStorageSize } from './i18n.js';
 
 const pending = new Set(['creating', 'pending', 'uncertain']);
+const mountedCards = new WeakMap();
 const statuses = { creating: '正在生成订单', pending: '等待付款', uncertain: '正在核实付款结果，请勿重复付款', paid: '付款成功', rejected: '支付订单创建失败', refund_pending: '退款处理中', refunded: '已退款' };
 export function renewalReminderAt(ends) {
 	const value = new Date(ends), day = value.getUTCDate();
@@ -42,6 +43,7 @@ export function billingCard(data, connected, now = Date.now()) {
 // Mounted only in the CN settings view. Every request/result is tied to its identity.
 export function mountBillingCard(setting, { connected, load, open, live, onError, target, now = Date.now }) {
 	if (!setting.infoEl || !setting.controlEl) return () => {};
+	mountedCards.get(setting.settingEl)?.();
 	setting.setName('我的套餐');
 	setting.settingEl.classList.add('smart-sync-billing');
 	const doc = setting.infoEl.ownerDocument;
@@ -91,5 +93,11 @@ export function mountBillingCard(setting, { connected, load, open, live, onError
 	};
 	button.addEventListener('click', click); view.addEventListener('focus', focus); doc.addEventListener('visibilitychange', focus);
 	render(); void refresh();
-	return () => { disposed = true; view.clearTimeout(timer); button.removeEventListener('click', click); view.removeEventListener('focus', focus); doc.removeEventListener('visibilitychange', focus); };
+	const dispose = () => {
+		disposed = true; view.clearTimeout(timer); button.removeEventListener('click', click); view.removeEventListener('focus', focus); doc.removeEventListener('visibilitychange', focus);
+		for (const node of [badge, title, upcoming, usage, progress, expires, help, status, button]) node.remove();
+		if (mountedCards.get(setting.settingEl) === dispose) { mountedCards.delete(setting.settingEl); setting.settingEl.classList.remove('smart-sync-billing', 'is-compact', 'is-free'); }
+	};
+	mountedCards.set(setting.settingEl, dispose);
+	return dispose;
 }

@@ -5,6 +5,31 @@ import { billingCard, mountBillingCard, renewalReminderAt } from '../src/billing
 
 const at = Date.UTC(2026, 9, 22), gb = 1024 ** 3;
 const paid = ends => ({ everPurchased:true, entitlement:{paid:true,plan:'cn-5gb-year',logical:5*gb,ends}, usage:{logicalBytes:1.2*gb} });
+test('signing in remounts one free card and discards the old guest view and pending response', async () => {
+ const dom = new JSDOM('<div id="setting"><div id="info"><span>我的套餐</span></div><div id="controls"></div></div>', {pretendToBeVisual:true}), doc = dom.window.document;
+ const setting = {settingEl:doc.querySelector('#setting'), infoEl:doc.querySelector('#info'), controlEl:doc.querySelector('#controls'), setName(){}};
+ const free = {entitlement:{plan:'cn-free',paid:false,logical:100*1024**2,starts:at},usage:{logicalBytes:0}};
+ let resolveOld, loads=0;
+ const old = mountBillingCard(setting, {connected:false, live:()=>true, now:()=>at, target:dom.window, load:async()=>{ if (++loads===1) return free; return new Promise(resolve=>{resolveOld=resolve;}); }, open:async()=>{}, onError:e=>{throw e;}});
+ await new Promise(resolve=>setImmediate(resolve)); assert.match(doc.body.textContent,/请使用邮件/);
+ dom.window.dispatchEvent(new dom.window.Event('focus')); await new Promise(resolve=>setImmediate(resolve));
+ const current = mountBillingCard({...setting}, {connected:true, live:()=>true, now:()=>at, target:dom.window, load:async()=>free, open:async()=>{}, onError:e=>{throw e;}});
+ await new Promise(resolve=>setImmediate(resolve)); resolveOld(free); await new Promise(resolve=>setImmediate(resolve));
+ old();
+ assert.equal(doc.querySelectorAll('.smart-sync-plan-title').length,1); assert.equal(doc.querySelectorAll('.smart-sync-plan-expiry').length,1); assert.equal(doc.querySelectorAll('button').length,1);
+ assert.equal((doc.body.textContent.match(/免费 · 100MB/g)||[]).length,1); assert.equal((doc.body.textContent.match(/开通日期/g)||[]).length,1); assert.doesNotMatch(doc.body.textContent,/请使用邮件/); assert.match(doc.body.textContent,/已用 0 B/);
+ current(); assert.equal(doc.querySelectorAll('.smart-sync-plan-title').length,0); assert.equal(doc.body.textContent,'我的套餐'); dom.window.close();
+});
+test('upgrading a free account replaces its card with only the current 5GB plan', async () => {
+ const dom = new JSDOM('<div id="setting"><div id="info"></div><div id="controls"></div></div>', {pretendToBeVisual:true}),doc = dom.window.document;
+ const setting = {settingEl:doc.querySelector('#setting'),infoEl:doc.querySelector('#info'),controlEl:doc.querySelector('#controls'),setName(){}};
+ const free={entitlement:{plan:'cn-free',paid:false,logical:100*1024**2,starts:at},usage:{logicalBytes:0}};
+ const options={connected:true,live:()=>true,now:()=>at,target:dom.window,open:async()=>{},onError:e=>{throw e;}};
+ const old=mountBillingCard(setting,{...options,load:async()=>free});await new Promise(resolve=>setImmediate(resolve));assert.match(doc.body.textContent,/免费 · 100MB/);
+ const dispose=mountBillingCard({...setting},{...options,load:async()=>paid(Date.UTC(2027,9,23))});await new Promise(resolve=>setImmediate(resolve));old();
+ assert.equal(doc.querySelectorAll('.smart-sync-plan-title').length,1);assert.equal(doc.querySelector('.smart-sync-plan-title').textContent,'当期套餐：5GB 年付');assert.doesNotMatch(doc.body.textContent,/免费|100MB|开通日期|登录信息/);assert.match(doc.body.textContent,/到期时间/);assert.match(doc.body.textContent,/5 GB/);assert.equal(doc.querySelector('button').hidden,true);
+ dispose();dom.window.close();
+});
 test('purchase and renewal states use one calendar month, including short months and expired plans', () => {
 	assert.equal(billingCard(undefined, false, at).label, '购买');
 	for (const connected of [false, true]) {
