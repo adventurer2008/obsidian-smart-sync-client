@@ -1080,9 +1080,6 @@ export class NotebookSynchronizer {
 			const digest = file.digest;
 			this.assertActive();
 			let found = byPath.get(path);
-			// A parent tombstone may arrive before its children. The still occupied
-			// physical folder belongs to that deletion, rather than a user recreation.
-			if (kind === 'folder' && !found && pendingDeletedFolders.has(path)) continue;
 			if (++checked % 100 === 0 || checked === scanTotal) {
 				this.onProgress(t('sync.checked', { checked, total: scanTotal }), { checked, total: scanTotal });
 				if (Date.now() - lastYield >= 16) {
@@ -1090,6 +1087,9 @@ export class NotebookSynchronizer {
 					lastYield = Date.now();
 				}
 			}
+			// A parent tombstone may arrive before its children. The still occupied
+			// physical folder belongs to that deletion, rather than a user recreation.
+			if (kind === 'folder' && !found && pendingDeletedFolders.has(path)) continue;
 			if (!found) {
 				const aliases = [];
 				if (this.host.sameEntry) for (const candidate of bySpelling.get(path.toLowerCase()) ?? []) {
