@@ -65,6 +65,18 @@ async function setup(t, { batch = true, size = 96000, disk = false, unknownTime 
         reads: () => reads, chunks: () => chunks, deny: () => { allowed = false; }, changeStamp: () => { stamp = 'changed'; }, changeTime: () => { fileMtime++; } };
 }
 
+test('local scan progress starts at zero and completes with an eligible total after receiving', async t => {
+    const f = await setup(t), progress = [];
+    f.files.set('ignored/private.bin', new Uint8Array([1]));
+    f.engine.ignored = ['ignored'];
+    f.engine.direction = 'both';
+    f.engine.onProgress = (_, scan) => { if (scan) progress.push(scan); };
+    await f.engine.run();
+    assert.deepEqual(progress, [{ checked: 0, total: 1 }, { checked: 1, total: 1 }]);
+    assert.deepEqual(f.files.get(f.path), f.bytes);
+    assert.equal(f.times.get(f.path), mtime);
+});
+
 test('cold local libraries supply authenticated content to ordinary and batch receive without cloud body downloads', async t => {
     for (const batch of [false, true]) {
         const f = await setup(t, { batch });

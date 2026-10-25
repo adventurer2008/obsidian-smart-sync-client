@@ -1052,6 +1052,8 @@ export class NotebookSynchronizer {
 				folderSet.has(path) ? 'folder' : 'file',
 				folderSet.has(path) ? '' : digests.get(path),
 			]);
+		const scanTotal = paths.filter(path => !this.excluded(path)).length;
+		this.onProgress(t('sync.checked', { checked: 0, total: scanTotal }), { checked: 0, total: scanTotal });
 		let checked = 0,
 			lastYield = Date.now();
 		for (const raw of paths) {
@@ -1081,8 +1083,8 @@ export class NotebookSynchronizer {
 			// A parent tombstone may arrive before its children. The still occupied
 			// physical folder belongs to that deletion, rather than a user recreation.
 			if (kind === 'folder' && !found && pendingDeletedFolders.has(path)) continue;
-			if (++checked % 100 === 0) {
-				this.onProgress(t('sync.checked', { checked, total: paths.length }));
+			if (++checked % 100 === 0 || checked === scanTotal) {
+				this.onProgress(t('sync.checked', { checked, total: scanTotal }), { checked, total: scanTotal });
 				if (Date.now() - lastYield >= 16) {
 					await this.yieldWork();
 					lastYield = Date.now();

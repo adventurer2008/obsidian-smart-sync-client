@@ -147,9 +147,14 @@ export function bindManualSyncAction(setting, plugin) {
   if (!live()) return;
   const activity = plugin.cycleActivity;
   const stage = activity ? t(`sync.stage.${activity.stage}`) : '准备同步';
+  const counts = [];
+  if (activity?.scan && Number.isSafeInteger(activity.scan.checked) && Number.isSafeInteger(activity.scan.total))
+   counts.push(t('sync.scanCount', activity.scan));
+  if (activity?.received > 0) counts.push(t('sync.receiveCount', { count: activity.received }));
+  const detail = counts.length ? ` ${counts.join('；')}。` : '';
   status.setText((Date.now() - (activity?.progressAt ?? startedAt)) >= 15000
-   ? `仍在等待：${stage}。可在“同步任务与记录”中查看详情或停止本轮。`
-   : `正在${stage}，请稍候…`);
+   ? `仍在等待：${stage}。${detail}可在“同步任务与记录”中查看详情或停止本轮。`
+   : `正在${stage}，请稍候…${detail}`);
  };
  bindAction(setting, t('msg_36e7a43a1c'), async () => {
   if (!live()) return;
@@ -2149,13 +2154,17 @@ export default class IndependentSync extends Plugin {
 				return timers ? abortableYield(api.signal, timers.setImmediate, timers.clearImmediate) : abortableYield(api.signal);
 			},
 			renames: this.data.renames,
-			onProgress: (text) => {
+			onProgress: (text, scan) => {
+				if (this.cycleActivity && Number.isSafeInteger(scan?.checked) && Number.isSafeInteger(scan?.total) && scan.checked >= 0 && scan.total >= scan.checked)
+					this.cycleActivity.scan = { checked: scan.checked, total: scan.total };
 				this.syncStage('scanning');
 				this.setStatus(t('msg_242eab2e90', { text: text }), { overview: this.transferPhase ?? t('overview.scanning') });
 				this.logEvent(text);
 			},
 			onTask: async (event) => {
 				if (this.cycleActivity) this.cycleActivity.changed = true;
+				if (this.cycleActivity && event.direction === 'receive' && event.status === 'done')
+					this.cycleActivity.received = (this.cycleActivity.received ?? 0) + 1;
 				if (event.direction === 'send' || event.direction === 'receive') {
 					this.syncStage(event.direction === 'send' ? 'uploading' : 'receiving');
 					window.clearTimeout(this.backgroundStatusTimer);

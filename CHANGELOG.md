@@ -1,5 +1,9 @@
 # Source change record
 
+## Unreleased — CHG-20261026-01 — Show measurable synchronization progress
+
+Requirements: U385/R395; DEC376. An iPad field report showed prolonged receiving/local-read stages despite ongoing work and active peer transfers. Display actual local inventory checked/eligible counts and completed receive operations beside the manual action; include initial and final scan updates for small inventories and excluded paths. Keep stalled guidance, cancellation, error reporting and cloud/peer behavior unchanged. Counts are operations, not a download percentage or promised throughput. This change has not been installed or published.
+
 ## 1.0.3 candidate — CHG-20261025-21
 
 Requirements: U384/R394; DEC375. Prepare the accumulated CHG-20261025-16 through 20 changes for the China production release. Include encrypted LAN transfer expansion and counters, manual synchronization stage feedback, active-plan summary corrections and recent/search sidebar entrances. Keep cloud authentication, version coordination and fallback; full offline synchronization is not supported. The user defers physical two-device LAN and cellular acceptance until after publication. Run the complete release gates; deferred device checks are not passed checks. Preserve existing 1.0.2 assets.
