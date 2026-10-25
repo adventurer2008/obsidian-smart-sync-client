@@ -1,5 +1,9 @@
 # Source change record
 
+## Unreleased — CHG-20261025-18 — Hide unfinished orders on an active plan card
+
+Requirements: U381/R391; DEC372. While a paid plan is active, omit creating, pending and uncertain orders from its summary card. Keep order polling, first-purchase and expired-plan status, refund notices and payment-conflict warnings. Fourteen targeted billing tests and both regional builds passed. No installation, deployment or publication.
+
 ## Unreleased — CHG-20261025-17 — Default recent and search tools to right sidebar tabs
 
 Requirements: U380/R390; DEC371. Create enabled recent-files and note-search tabs in the right sidebar after layout restoration without activating or revealing them. Reuse restored views, preserve user placement, remove duplicate ribbon icons and keep command-palette access and feature switches. Twelve targeted synthetic regressions and regional builds passed; native-host appearance remains unverified. No installation or release.
