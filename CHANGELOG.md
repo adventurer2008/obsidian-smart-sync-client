@@ -1,5 +1,9 @@
 # Source change record
 
+## Unreleased — CHG-20261025-19 — Show manual synchronization progress beside its action
+
+Requirements: U382/R392; DEC373. Display an accessible persistent preparation/stage message below Sync now while its callback is pending. After 15 seconds without progress, point to task history and the existing stop action without inventing a timeout or success. Show the actual final overview or safe failure, restore the button, clear timers and ignore stale identities or disposed views. Six targeted synthetic regressions, regional builds and lint passed with five existing warnings. Native visual acceptance, deployment and release remain pending.
+
 ## Unreleased — CHG-20261025-18 — Hide unfinished orders on an active plan card
 
 Requirements: U381/R391; DEC372. While a paid plan is active, omit creating, pending and uncertain orders from its summary card. Keep order polling, first-purchase and expired-plan status, refund notices and payment-conflict warnings. Fourteen targeted billing tests and both regional builds passed. No installation, deployment or publication.

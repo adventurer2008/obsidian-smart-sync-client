@@ -135,6 +135,36 @@ function bindAction(setting, label, callback) {
 		});
 	});
 }
+export function bindManualSyncAction(setting, plugin) {
+ const status = setting.settingEl.createDiv({ cls: 'smart-sync-manual-feedback', attr: { role: 'status', 'aria-live': 'polite' } });
+ setting.settingEl.classList.add('smart-sync-manual-action');
+ status.hidden = true;
+ let disposed = false, timer, startedAt;
+ const binding = () => JSON.stringify([plugin.data.localId, plugin.data.settings.origin, plugin.data.settings.workspace]);
+ const expected = binding();
+ const live = () => !disposed && !plugin.stopped && binding() === expected;
+ const update = () => {
+  if (!live()) return;
+  const activity = plugin.cycleActivity;
+  const stage = activity ? t(`sync.stage.${activity.stage}`) : '准备同步';
+  status.setText((Date.now() - (activity?.progressAt ?? startedAt)) >= 15000
+   ? `仍在等待：${stage}。可在“同步任务与记录”中查看详情或停止本轮。`
+   : `正在${stage}，请稍候…`);
+ };
+ bindAction(setting, t('msg_36e7a43a1c'), async () => {
+  if (!live()) return;
+  startedAt = Date.now(); status.hidden = false; update();
+  timer = window.setInterval(update, 1000);
+  try {
+   await plugin.requestSynchronization();
+   if (live()) status.setText(plugin.overviewStatusText ?? '本次操作已结束，请查看同步任务与记录或按弹窗提示继续。');
+  } catch (error) {
+   if (live()) status.setText(`同步未完成：${failureMessage(error)}`);
+   throw error;
+  } finally { window.clearInterval(timer); timer = undefined; }
+ });
+ return () => { disposed = true; window.clearInterval(timer); status.remove(); };
+}
 function action(container, label, callback) {
 	bindAction(new Setting(container), label, callback);
 }
@@ -4300,7 +4330,7 @@ class IndependentSettings extends PluginSettingTab {
 			}),
 			direction,
 			open(t('msg_fd2d01b08e'), 'showSyncPlan', t('msg_d1b456ced0')),
-			open(t('msg_36e7a43a1c'), 'requestSynchronization'),
+			row(t('msg_36e7a43a1c'), setting => bindManualSyncAction(setting, plugin)),
 			open(t('msg_6dc05b92e9'), 'logs'),
 			toggle(t('msg_abca78082c'), 'autoChanges'),
 			toggle(t('msg_26c7fcb6f0'), 'autoStartup'),
