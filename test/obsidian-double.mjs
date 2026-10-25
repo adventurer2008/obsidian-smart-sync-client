@@ -28,7 +28,12 @@ export class TFolder {
 function element() {
 	const classes = new Set();
 	return {
-		classList: { add: (...names) => names.forEach(name => classes.add(name)), remove: (...names) => names.forEach(name => classes.delete(name)), contains: name => classes.has(name) },
+		classList: {
+			add: (...names) => names.forEach(name => classes.add(name)),
+			remove: (...names) => names.forEach(name => classes.delete(name)),
+			contains: name => classes.has(name),
+			toggle: (name, force) => { const enabled = force ?? !classes.has(name); if (enabled) classes.add(name); else classes.delete(name); return enabled; },
+		},
 		querySelector() { return null; },
 		text: '',
 		value: '',
