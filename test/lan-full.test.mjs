@@ -134,6 +134,18 @@ test('old or disabled peers keep cloud batch behavior and receive no new note re
     }
 });
 
+test('batch peer hits survive sender backpressure without spilling the second object to cloud', async t => {
+    const p = pair(t), bytes = new Uint8Array(randomBytes(96000)), other = new Uint8Array(randomBytes(96000));
+    const first = await fingerprint(bytes), second = await fingerprint(other);
+    p.a.remember(first, bytes); p.a.remember(second, other);
+    p.left.channel.bufferedAmount = 131073;
+    const drain = setTimeout(() => { p.left.channel.bufferedAmount = 0; }, 30); t.after(() => clearTimeout(drain));
+    const api = { load: async () => assert.fail('no cloud body read'), store: async () => {}, loadBatch: async () => assert.fail('both objects are local') };
+    bindLanTransfers(api, p.b);
+    const result = await api.loadBatch([first, second], 256 * 1024);
+    assert.deepEqual(result.get(first), bytes); assert.deepEqual(result.get(second), other);
+});
+
 test('disabling during note preparation cancels the lease and disposes late encrypted packages', async t => {
     const f = pair(t); let resolve, disposed = 0;
     f.a.provideNote = () => new Promise(done => { resolve = done; });

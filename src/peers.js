@@ -454,9 +454,10 @@ export function bindLanTransfers(api, peers) {
 	};
 	if (base.loadBatch) api.loadBatch = async (addresses, limit = 2 * 1024 * 1024) => {
 		const result = new Map(), unique = [...new Set(addresses)], deadline = Date.now() + 2000; let used = 0;
-		for (let at = 0; at < unique.length; at += 2) {
+		for (let at = 0; at < unique.length; at++) {
 			if (Date.now() >= deadline || used >= limit) break;
-			const part = unique.slice(at, at + 2);
+			// One object at a time respects the peer channel's bounded sender.
+			const part = unique.slice(at, at + 1);
 			const bodies = await Promise.all(part.map(address => peers.load(address)));
 			if (api.signal?.aborted) throw api.signal.reason;
 			for (let index = 0; index < part.length; index++) if (bodies[index] && used + bodies[index].length <= limit) { result.set(part[index], bodies[index]); used += bodies[index].length; }
