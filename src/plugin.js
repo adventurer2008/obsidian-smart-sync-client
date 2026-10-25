@@ -2265,6 +2265,7 @@ export default class IndependentSync extends Plugin {
 	}
 
 	onunload() {
+		this.syncSetupWindow?.close();
 		this.capacityWindow?.close();
 		this.noteEncryption?.dispose();
 		for (const view of this.noteSearchViews ?? []) void view.onClose();
@@ -2352,6 +2353,29 @@ export default class IndependentSync extends Plugin {
 		return dialog;
 	}
 	async synchronizeManually() {
+		if (edition.edition === 'cn' && !this.stopped && !this.stopping && !this.connecting && !this.running && !this.data.settings.workspace && !this.secret('account') && !this.secret('access')) {
+			if (this.syncSetupWindow) return this.syncSetupWindow;
+			const binding = () => JSON.stringify([this.data.localId, this.data.settings.origin, this.data.settings.workspace, this.secret('account'), this.secret('access')]);
+			const expected = binding();
+			const live = () => !this.stopped && !this.stopping && !this.connecting && !this.running && binding() === expected;
+			const dialog = new ChoiceWindow(this.app, '请先开通套餐', area => {
+				area.createEl('p', { text: '请先点击“购买”选择套餐并开通，再登录账号开始同步。已有账号可直接登录。' });
+				const proceed = async callback => {
+					if (this.syncSetupWindow !== dialog || !live()) { dialog.close(); return; }
+					dialog.close();
+					await callback();
+				};
+				action(area, '购买', () => proceed(() => this.openBilling()));
+				action(area, '已有账号登录', () => proceed(() => this.enrollment()));
+			});
+			dialog.onClose = () => {
+				dialog.contentEl.empty();
+				if (this.syncSetupWindow === dialog) this.syncSetupWindow = undefined;
+			};
+			this.syncSetupWindow = dialog;
+			dialog.open();
+			return dialog;
+		}
 		if (!this.running && !this.stopped && !this.stopping && !this.connecting && this.data.settings.workspace && this.data.settings.direction !== 'receive') await this.warnCapacity();
 		return this.synchronize();
 	}
