@@ -71,6 +71,7 @@ const englishEditionFailures = {
 };
 export const messages = {
 	'lan.disabled': '已关闭',
+	'lan.statusTitle': '局域网连接状态',
 	'lan.unsupported': '当前宿主不支持直连，使用云端',
 	'lan.connected': '已直连 {count} 台设备',
 	'lan.cloud': '暂无直连，使用云端',

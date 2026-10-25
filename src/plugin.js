@@ -4689,13 +4689,13 @@ class IndependentSettings extends PluginSettingTab {
 		const notebook = identityRow('overview.notebook', 'label', 'overview.notebookUnavailable', [
 			['overview.manageNotebooks', 'manageNotebooks'],
 		]);
-		const lan = row(t('lan.title'), setting => {
+		const lan = row(t('lan.statusTitle'), setting => {
 			let timer, disposed = false;
 			const update = () => {
 				if (disposed || plugin.stopped || identityScope() !== scopeKey) { window.clearInterval(timer); return; }
 				setting.setDesc(plugin.lanSummary());
 			};
-			update(); timer = window.setInterval(update, 1000);
+			update(); timer = window.setInterval(update, 1000); plugin.registerInterval(timer);
 			return () => { disposed = true; window.clearInterval(timer); };
 		});
 		const billing = edition.edition === 'cn' ? row('我的套餐', setting => {

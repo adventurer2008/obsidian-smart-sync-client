@@ -26,7 +26,10 @@ export class TFolder {
 	}
 }
 function element() {
+	const classes = new Set();
 	return {
+		classList: { add: (...names) => names.forEach(name => classes.add(name)), remove: (...names) => names.forEach(name => classes.delete(name)), contains: name => classes.has(name) },
+		querySelector() { return null; },
 		text: '',
 		value: '',
 		isConnected: true,
@@ -124,6 +127,8 @@ export class PluginSettingTab {
 export class Setting {
 	constructor(container) {
 		this.containerEl = container;
+		this.settingEl = element();
+		this.settingEl.parentElement = container;
 		this.controls = [];
 		container.settings?.push(this);
 	}
