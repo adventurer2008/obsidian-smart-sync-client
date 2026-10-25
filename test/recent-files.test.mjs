@@ -141,12 +141,14 @@ test('feature switches remove entrances and views, stop recent recording and ree
 		addRibbonIcon: icon => { const item = { icon, removed: false, remove() { this.removed = true; } }; icons.push(item); return item; } };
 	registerNoteSearch(owner);
 	assert.equal(icons.filter(icon => !icon.removed).length, 2);
+	assert.deepEqual([...commands.keys()], ['recent-files', 'search-notes']);
 	const before = [...owner.recentFiles.paths];
 	owner.data.settings.recentEnabled = false;
 	await owner.refreshNoteTools();
 	events.get('file-open')(files.get('目录/文件10.md'));
 	assert.deepEqual(owner.recentFiles.paths, before);
 	assert.deepEqual(closed, ['test-recent-files']);
+	assert.equal(commands.has('recent-files'), false);
 	assert.deepEqual(icons.filter(icon => !icon.removed).map(icon => icon.icon), ['file-search-2']);
 	await owner.openRecentFiles();
 	owner.data.settings.noteSearchEnabled = false;
@@ -156,7 +158,7 @@ test('feature switches remove entrances and views, stop recent recording and ree
 	owner.data.settings.recentEnabled = owner.data.settings.noteSearchEnabled = true;
 	await owner.refreshNoteTools(); await owner.refreshNoteTools();
 	assert.equal(icons.filter(icon => !icon.removed).length, 2);
-	assert.equal(commands.size, 1);
+	assert.equal(commands.size, 2);
 	events.get('file-open')(files.get('目录/文件10.md'));
 	assert.equal(owner.recentFiles.paths[0], '目录/文件10.md');
 });

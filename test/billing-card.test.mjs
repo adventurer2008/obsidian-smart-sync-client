@@ -120,3 +120,10 @@ test('free card shows 100MB, opening date only and a prominent purchase-more act
  const dispose=mountBillingCard(setting,{connected:true,live:()=>true,now:()=>at,target:dom.window,load:async()=>value,open:async()=>{opened++;},onError:e=>{throw e;}});
  try{await new Promise(done=>setImmediate(done));assert.equal(setting.settingEl.classList.contains('is-free'),true);assert.equal(doc.querySelector('button').textContent,'购买更多额度');doc.querySelector('button').click();await new Promise(done=>setImmediate(done));assert.equal(opened,1);}finally{dispose();dom.window.close();}
 });
+
+test('an active subscription separates another pending order from current entitlement', () => {
+ const card = billingCard({...paid(Date.UTC(2027,0,1)),currentOrder:{id:'another',title:'5GB',status:'pending',purpose:'purchase'}},true,at);
+ assert.equal(card.badge,'已开通'); assert.equal(card.title,'当期套餐：5GB 年付');
+ assert.equal(card.order,'另有未完成订单：5GB · 待支付（不影响当期套餐）');
+ assert.equal(card.resume,'another');
+});

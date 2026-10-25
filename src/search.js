@@ -135,7 +135,7 @@ export function registerNoteSearch(owner) {
 	owner.openRecentFiles = () => openView(recentType, false);
 	owner.openNoteSearch = () => openView(viewType, true);
 	const ribbons = new Map();
-	let searchCommand = false;
+	let searchCommand = false, recentCommand = false;
 	owner.refreshNoteTools = async () => {
 		const closing = [];
 		for (const [recent, type, icon, title, open] of [
@@ -148,6 +148,12 @@ export function registerNoteSearch(owner) {
 				ribbons.get(type)?.element?.remove(); ribbons.delete(type);
 				for (const leaf of owner.app.workspace.getLeavesOfType?.(type) ?? []) closing.push(leaf.detach());
 			}
+		}
+		if (enabled(true) && !recentCommand) {
+			owner.addCommand({ id: 'recent-files', name: '最近打开的文件', callback: () => { void owner.openRecentFiles(); } });
+			recentCommand = true;
+		} else if (!enabled(true) && recentCommand) {
+			owner.removeCommand('recent-files'); recentCommand = false;
 		}
 		if (enabled(false) && !searchCommand) {
 			owner.addCommand({ id: 'search-notes', name: '搜索笔记', callback: () => { void owner.openNoteSearch(); } });
