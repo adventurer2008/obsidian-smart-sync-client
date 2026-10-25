@@ -225,9 +225,9 @@ export const messages = {
 	'sorting.deeperHelp': '五级及以下共用此规则；默认同四级目录，也可自定义。',
 	'sorting.enabled': '启用排序',
 	'notes.recentEnabled': '启用最近',
-	'notes.recentEnabledHelp': '入口：左侧工具栏的时钟图标，或命令面板“无界同步：最近打开的文件”。关闭后停止记录。',
+	'notes.recentEnabledHelp': '入口：右侧栏顶部的时钟标签，或命令面板“无界同步：最近打开的文件”。关闭后停止记录。',
 	'notes.noteSearchEnabled': '启用搜索',
-	'notes.noteSearchEnabledHelp': '入口：左侧工具栏的文件搜索图标，或命令面板“无界同步：搜索笔记”。仅搜索本机已有笔记。',
+	'notes.noteSearchEnabledHelp': '入口：右侧栏顶部的文件搜索标签，或命令面板“无界同步：搜索笔记”。仅搜索本机已有笔记。',
 	'notes.saveFailed': '功能设置未保存，请重试。',
 	'sorting.enabledHelp': '对本机当前笔记库生效；关闭后恢复原来的排序。',
 	'sorting.unavailable': '文件列表尚未就绪或当前版本不支持，请打开文件列表后重试。',
@@ -686,7 +686,7 @@ export const messages = {
 // Draft only: no English language option is released.
 export const englishDraft = {
 	'notes.recentEnabled': 'Enable recent files',
-	'notes.recentEnabledHelp': 'Use the clock icon in the ribbon or the Recent files command. Turning this off stops recording opened files.',
+	'notes.recentEnabledHelp': 'Use the clock tab in the right sidebar or the Recent files command. Turning this off stops recording opened files.',
 	'notes.noteSearchEnabled': 'Enable note search',
 	'notes.noteSearchEnabledHelp': 'Show note search for locally available notes.',
 	'notes.saveFailed': 'Could not save this setting. Try again.',
