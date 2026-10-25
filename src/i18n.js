@@ -70,6 +70,11 @@ const englishEditionFailures = {
 	EDITION_SERVICE_MISMATCH: 'This connection belongs to another sync service. Use the matching edition. Local notes are preserved.',
 };
 export const messages = {
+	'lan.disabled': '已关闭',
+	'lan.unsupported': '当前宿主不支持直连，使用云端',
+	'lan.connected': '已直连 {count} 台设备',
+	'lan.cloud': '暂无直连，使用云端',
+	'lan.summary': '{state}。本次连接密文：局域网已收 {received}、已发 {sent}；云端已收 {cloud}；回退 {fallbacks} 次。',
 	'sync.waitingStage': '仍在等待：{stage}。可停止本轮；若仍无法结束，请保存后重启 Obsidian。',
 	'sync.stage.connecting': '连接同步服务',
 	'sync.stage.unlocking': '解锁同步密钥',

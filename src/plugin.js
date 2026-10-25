@@ -52,7 +52,7 @@ import {
 } from './pairing.js';
 import { decryptRecovery, encryptRecovery } from './recovery.js';
 import { routedFetch } from './routing.js';
-import { LanPeers, intersectDirection } from './peers.js';
+import { LanPeers, intersectDirection, bindLanTransfers, localNoteProvider, receivePeerNote } from './peers.js';
 import { desktopFiles } from './desktop.js';
 import {
 	emptyState,
@@ -1740,6 +1740,7 @@ export default class IndependentSync extends Plugin {
 			},
 		});
 		const activity = this.cycleActivity ?? this.lastCycleActivity;
+		report.lan = this.lanPeers?.snapshot();
 		report.timingScope = 'plugin-session';
 		report.timings = structuredClone(this.phaseTimings ?? {});
 		report.pendingDiagnostics = this.data.taskOutbox?.length ?? 0;
@@ -1767,6 +1768,14 @@ export default class IndependentSync extends Plugin {
 			});
 		}).open();
 		return report;
+	}
+	lanSummary() {
+		const stats = this.lanPeers?.snapshot();
+		const state = !this.data.settings.workspace ? t('sync.notConnected')
+			: this.data.settings.lanAcceleration === false ? t('lan.disabled')
+			: stats?.supported === false ? t('lan.unsupported')
+			: stats?.connected ? t('lan.connected', { count: stats.connected }) : t('lan.cloud');
+		return t('lan.summary', { state, received: formatStorageSize(stats?.receivedBytes ?? 0), sent: formatStorageSize(stats?.sentBytes ?? 0), cloud: formatStorageSize(stats?.cloudBytes ?? 0), fallbacks: stats?.fallbacks ?? 0 });
 	}
 	workspaceApi(origin, ...args) {
 		assertEditionOrigin(origin);
@@ -1819,20 +1828,7 @@ export default class IndependentSync extends Plugin {
 				if (!peers.mode) throw error;
 				peers.drop();
 			}
-			const load = api.load.bind(api),
-				store = api.store.bind(api);
-			api.load = async (address, onProgress) => {
-				const direct = await peers.load(address);
-				const body = direct ?? (await load(address, onProgress));
-				if (direct) onProgress?.(body.length);
-				peers.remember(address, body);
-				return body;
-			};
-			api.store = async (object) => {
-				const result = await store(object);
-				peers.remember(object.address, object.body);
-				return result;
-			};
+			bindLanTransfers(api, peers);
 		})().finally(() => {
 			this.devicePreparing = undefined;
 		});
@@ -2202,6 +2198,14 @@ export default class IndependentSync extends Plugin {
 			direction: intersectDirection(this.data.settings.direction, this.lanPeers?.mode ?? 'both'),
 			remoteMode: this.lanPeers?.mode ?? 'both',
 		});
+		const peers = this.lanPeers;
+		if (peers) {
+			const selection = () => JSON.stringify([this.data.localId, this.data.settings.origin, this.data.settings.workspace, this.data.settings.ignored, this.data.settings.excludedExtensions, this.data.settings.configuration]);
+			const selected = selection();
+			peers.canServe = () => !this.stopped && !api.signal.aborted && selection() === selected && !['paused', 'receive'].includes(this.data.settings.direction);
+			peers.provideNote = localNoteProvider({ keys, workspace: api.workspace, state, host: scopedHost, accepts: path => !engine.excluded(path) });
+			api.peerContents = (note, manifest, info, sinkFor, onTiming) => receivePeerNote(peers, keys, api.workspace, note, manifest, info, sinkFor, onTiming);
+		}
 		return { api, keys, engine, host: scopedHost, pinsSupported: info.notePins === 1 };
 	}
 	async exclusive(task) {
@@ -4685,6 +4689,15 @@ class IndependentSettings extends PluginSettingTab {
 		const notebook = identityRow('overview.notebook', 'label', 'overview.notebookUnavailable', [
 			['overview.manageNotebooks', 'manageNotebooks'],
 		]);
+		const lan = row(t('lan.title'), setting => {
+			let timer, disposed = false;
+			const update = () => {
+				if (disposed || plugin.stopped || identityScope() !== scopeKey) { window.clearInterval(timer); return; }
+				setting.setDesc(plugin.lanSummary());
+			};
+			update(); timer = window.setInterval(update, 1000);
+			return () => { disposed = true; window.clearInterval(timer); };
+		});
 		const billing = edition.edition === 'cn' ? row('我的套餐', setting => {
 			const credential = plugin.secret('account') || plugin.secret('access');
 			return mountBillingCard(setting, {
@@ -4748,6 +4761,7 @@ class IndependentSettings extends PluginSettingTab {
 		return [
 			...header.map(present),
 			present(status),
+			present(lan),
 			present(account),
 			...(billing ? [present(billing)] : []),
 			...(accountConnected ? [present(notebook)] : []),

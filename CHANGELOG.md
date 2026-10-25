@@ -1,5 +1,9 @@
 # Source change record
 
+## Unreleased — CHG-20261025-20 — Complete LAN acceleration paths
+
+Requirements: U383/R393; DEC374. Extend scoped encrypted peer transfers to batch reads and locally available committed notes and attachments, with bounded resources, cloud fallback and observable payload counters. Preserve cloud authority, permissions, conflict safety, content verification and original modification times. Validate synthetic fixtures separately from native LAN/mobile acceptance; no installation, deployment or release.
+
 ## Unreleased — CHG-20261025-19 — Show manual synchronization progress beside its action
 
 Requirements: U382/R392; DEC373. Display an accessible persistent preparation/stage message below Sync now while its callback is pending. After 15 seconds without progress, point to task history and the existing stop action without inventing a timeout or success. Show the actual final overview or safe failure, restore the button, clear timers and ignore stale identities or disposed views. Six targeted synthetic regressions, regional builds and lint passed with five existing warnings. Native visual acceptance, deployment and release remain pending.
