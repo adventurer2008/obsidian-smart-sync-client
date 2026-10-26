@@ -142,12 +142,13 @@ export function bindManualSyncAction(setting, plugin) {
  const status = setting.settingEl.createDiv({ cls: 'smart-sync-manual-feedback', attr: { role: 'status', 'aria-live': 'polite' } });
  setting.settingEl.classList.add('smart-sync-manual-action');
  status.hidden = true;
- let disposed = false, timer, startedAt;
+ let disposed = false, timer, startedAt, stopButton, stopping = false;
  const binding = () => JSON.stringify([plugin.data.localId, plugin.data.settings.origin, plugin.data.settings.workspace]);
  const expected = binding();
  const live = () => !disposed && !plugin.stopped && binding() === expected;
  const update = () => {
   if (!live()) return;
+  if (stopping || plugin.stopping) { status.setText(t('task.stateStopping')); return; }
   const activity = plugin.cycleActivity;
   const stage = activity ? t(`sync.stage.${activity.stage}`) : '准备同步';
   const counts = [];
@@ -171,7 +172,29 @@ export function bindManualSyncAction(setting, plugin) {
    throw error;
   } finally { window.clearInterval(timer); timer = undefined; }
  });
- return () => { disposed = true; window.clearInterval(timer); status.remove(); };
+ const refreshStop = () => {
+  if (!live() || !stopButton) return;
+  stopButton.setButtonText(t(stopping || plugin.stopping ? 'task.stateStopping' : 'sync.stop'));
+  stopButton.setDisabled(stopping || Boolean(plugin.stopping) || plugin.data.manualSyncStopped === true);
+ };
+ setting.addButton(button => {
+  stopButton = button;
+  button.onClick(async () => {
+   if (!live() || stopping || plugin.stopping || plugin.data.manualSyncStopped) return;
+   stopping = true; refreshStop(); status.hidden = false; status.setText(t('task.stateStopping'));
+   try {
+    await plugin.stopSynchronization();
+    if (live()) status.setText(t('task.stopped'));
+   } catch (error) {
+    if (live()) status.setText(failureMessage(error));
+    new Notice(failureMessage(error));
+   } finally { stopping = false; refreshStop(); }
+  });
+ });
+ plugin.statusListeners ??= new Set();
+ plugin.statusListeners.add(refreshStop);
+ refreshStop();
+ return () => { disposed = true; window.clearInterval(timer); plugin.statusListeners.delete(refreshStop); status.remove(); };
 }
 function action(container, label, callback) {
 	bindAction(new Setting(container), label, callback);

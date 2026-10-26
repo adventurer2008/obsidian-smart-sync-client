@@ -1,5 +1,13 @@
 # Source change record
 
+## 1.0.6 candidate — CHG-20261026-20 — Quick stop beside Sync now
+
+Requirements: U402/R412; DEC393. Place Stop immediately after Sync now in the same control row, including narrow panes. Invoke the same persistent stop operation as the task panel, show the stopping state while durable work drains, disable duplicate stops and retain manual-only resumption. Dispose the status listener with its settings view.
+
+## 1.0.6 candidate refinement — CHG-20261026-19
+
+Requirements: U400/R410; U401/R411; DEC391/392. Keep folded settings after common actions in the modern flex container and give ordinary rows consistent flat styling. Stop the earlier local-only candidate before deployment; fix and validate a new immutable candidate.
+
 ## 1.0.6 release preparation — CHG-20261026-18
 
 Requirements: U401/R411; DEC392. The user authorized cumulative China production delivery of the unreleased 1.0.6 changes below, paired with Server 0.1.32 for its pending foldable purchase-page layout. Run the full local and paired verification plan, staging and production acceptance, and immutable public asset checks. Preparation does not itself confirm publication or physical-device acceptance.

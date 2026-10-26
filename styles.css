@@ -314,4 +314,12 @@
 
 .smart-sync-common .setting-item-control:empty { display: none; }
 .smart-sync-log-panel { overflow-wrap: anywhere; }
-.smart-sync-common > .smart-sync-setting-group { flex: 1 1 100%; width: 100%; min-width: 0; }
+.smart-sync-common > .smart-sync-setting-group { order: 5; flex: 1 1 100%; width: 100%; min-width: 0; }
+
+.setting-items.smart-sync-common > .setting-item:where(:not(.smart-sync-billing)) {
+  background: transparent; border-radius: 0; margin: 0; padding: 12px 0;
+  border: 0; border-bottom: 1px solid var(--background-modifier-border);
+}
+
+/* CHG-20261026-20: keep quick stop immediately beside manual sync. */
+.smart-sync-common .smart-sync-manual-action .setting-item-control { flex-wrap: nowrap; gap: 0.5rem; }

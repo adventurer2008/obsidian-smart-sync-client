@@ -25,6 +25,7 @@ test('manual stop survives later timer ticks, change events, automatic retry and
  assert.equal(p.automaticChangesAllowed(),false);
  const restored = await fixture(t,structuredClone(p.persisted));
  await restored.plugin.synchronize(undefined,undefined,true); assert.equal(restored.connections(),0);
+ restored.plugin.data.settings.autoTimer=false; // Resume assertions use explicit calls after the timer-stop probe.
  await restored.plugin.synchronize(); assert.equal(restored.connections(),1);
  assert.equal(restored.plugin.data.manualSyncStopped,undefined); assert.equal(restored.plugin.persisted.manualSyncStopped,undefined);
  await restored.plugin.synchronize(undefined,undefined,true); assert.equal(restored.connections(),2);

@@ -48,7 +48,7 @@ test('legacy host renders all shared definitions offline, refreshes and releases
 	const toggle = [...tab.containerEl.querySelectorAll('.setting-item')].flatMap(el => el.setting.controls).find(control => control.kind === 'toggle');
 	await toggle.change(false); assert.equal(plugin.data.settings.autoChanges, false);
 	tab.update(); assert.equal(timers.size, 2); assert.equal(tab.containerEl.querySelector('details').open, true);
-	assert.equal(plugin.statusListeners.size, 2);
+	assert.equal(plugin.statusListeners.size, 3); // Overview, LAN and the adjacent quick-stop state.
 	tab.hide(); assert.equal(timers.size, 0); assert.equal(plugin.statusListeners.size, 0);
 	finishVersion('9.0.0'); await Promise.resolve();
 	tab.containerEl.empty(); tab.update(); assert.equal(tab.containerEl.children.length, 0);
