@@ -3949,7 +3949,6 @@ export default class IndependentSync extends Plugin {
 				return;
 			}
 			action(container, t('device.refresh'), refresh);
-			container.createEl('p', { text: t('device.vaultUsageHelp') });
 			const revoked = entries.filter(device => device.revoked);
 			const active = entries.some(device => !device.revoked) ? container.createDiv({ cls: 'smart-sync-device-list' }) : undefined;
 			const history = revoked.length ? container.createEl('details', { cls: 'smart-sync-device-history' }) : undefined;
@@ -3957,23 +3956,25 @@ export default class IndependentSync extends Plugin {
 			for (const device of [...entries.filter(item => !item.revoked), ...revoked]) {
 				const row = (device.revoked ? history : active).createDiv({ cls: 'smart-sync-device-card' });
 				const current = !device.revoked && (device.id === currentDeviceId || (device.accountDevice && device.id === managingIdentity.deviceId));
-				row.createEl('p', {
+				const deviceInfo = row.createEl('p', {
 					text: t('device.state', {
-						label: `${device.label?.trim() || t('device.unnamed')} · ${device.id.slice(0, 8)}${device.accountDevice ? ` · ${t('notebooks.accountDevice')}` : ''}${current ? ` · ${t('device.current')}` : ''}`,
+						label: `${device.label?.trim() || `${t('device.unnamed')} · ${device.id.slice(0, 8)}`}${current ? ` · ${t('device.current')}` : ''}`,
 						status: device.revoked
 							? t('device.revoked')
 							: device.online
 								? t('device.online')
 								: t('device.offline'),
 						seen: device.lastSeen
-							? new Date(device.lastSeen).toLocaleString(locale)
+							? new Date(device.lastSeen).toLocaleString(locale, { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })
 							: t('device.never'),
 					}),
 				});
+				deviceInfo.title = `${device.id}${device.accountDevice ? ` · ${t('notebooks.accountDevice')}` : ''}${device.lastSeen ? ` · ${new Date(device.lastSeen).toLocaleString(locale)}` : ''}`;
 				const usage = device.vaultUsage;
-				row.createEl('p', { text: usage && Number.isSafeInteger(usage.bytes) && usage.bytes >= 0 && Number.isSafeInteger(usage.sampledAt) && usage.sampledAt > 0
-					? t('device.vaultUsage', { size: formatStorageSize(usage.bytes), time: new Date(usage.sampledAt).toLocaleString(locale) })
+				const sizeInfo = row.createEl('p', { text: usage && Number.isSafeInteger(usage.bytes) && usage.bytes >= 0 && Number.isSafeInteger(usage.sampledAt) && usage.sampledAt > 0
+					? t('device.vaultUsage', { size: formatStorageSize(usage.bytes), time: new Date(usage.sampledAt).toLocaleString(locale, { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }) })
 					: t('device.vaultUsageUnknown') });
+				sizeInfo.title = `${t('device.vaultUsageHelp')}${usage?.sampledAt ? ` · ${new Date(usage.sampledAt).toLocaleString(locale)}` : ''}`;
 				if (!device.revoked && (device.accountDevice || device.accountDeviceId)) {
 					action(row,t('msg_5faac43bc7'),async()=>{
 						formWindow(this.app,t('notebooks.revokeAccountDevice'),[{key:'confirm',label:t('notebooks.revokeConfirm'),description:t('notebooks.revokeHelp')}],async({confirm})=>{

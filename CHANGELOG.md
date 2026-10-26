@@ -1,5 +1,9 @@
 # Source change record
 
+## 1.0.6 candidate — CHG-20261026-11/12 — Simplify device cards
+
+Requirements: U394/R404; DEC385; U395/R405; DEC386. The user assigned this change to 1.0.6. Remove the introductory paragraph, shorten status and size labels, and show compact month/day and minute timestamps. Keep device IDs, account-authorization details, full timestamps and size scope in hover details; retain the short ID for unnamed devices. Preserve current-device identification, last reported offline sizes, missing-data states, refresh and revocation. No release or deployment.
+
 ## 1.0.6 candidate — CHG-20261026-09/10 — Legacy settings layout
 
 Requirements: U392/R402; DEC383; U393/R403; DEC384. The user confirmed settings open on Obsidian 1.12.7 but reported uneven cards, account/billing collisions and misaligned sections, then requested an immediate styles.css patch and inclusion in 1.0.6. Restore a full-width vertical layout only for the flat legacy settings container; align account, plan and device rows, keep primary actions together and stack folded sections consistently. Preserve theme variables, narrow-screen wrapping and every existing control. Deliver the standalone local stylesheet for installed 1.0.5; keep published 1.0.5 assets immutable. Reserve 1.0.6 as a candidate; no new release or service deployment is performed by this change.
