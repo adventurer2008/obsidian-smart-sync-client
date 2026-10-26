@@ -1,5 +1,27 @@
 # Source change record
 
+## 1.0.6 cumulative delivery — CHG-20261026-24
+
+Requirements: U401/R411; U403/R413; U404/R414; DEC392/394/395. The user explicitly included the completed background-tray and compact-task-panel changes in the current production delivery. Preserve persistent manual-stop semantics while a window is hidden or restored. Run unified fixed-candidate verification before release; earlier preview acceptance and synthetic checks are not production proof.
+
+## 1.0.6 candidate — CHG-20261026-23 — Keep the window alive on close
+
+Requirements: U403/R413; DEC394. User native-test feedback on 2026-10-26: clicking X exits the test host despite the enabled background-tray switch. Remote main-process close listeners are asynchronous and cannot alone cancel renderer unload. Add a synchronous capture-phase beforeunload listener to the owning renderer, stop subsequent unload handlers, and retain the main-process listener for the host's delayed-close path. Remove both on disable/unload; explicit tray Quit marks quitting before requesting application quit. Add a regression that delivers renderer unload before remote close notification. The previous synthetic event-emitter tests did not model this ordering; their passing results were not native acceptance. Preserve other in-progress candidate changes and do not publish a release.
+
+Validation: 181/181 Client tests, both regional builds and isolation checks passed; Community lint has zero errors and five existing warnings. In the isolated Obsidian 1.14.5 Windows test profile, a real click on the window X hid the window while its process remained alive beyond the host's delayed-close interval. Updated the same offline preview vault. Tray-click restore, explicit native Quit and actual OS shutdown remain separate manual acceptance; no release or deployment.
+
+User acceptance (2026-10-26): after testing the repaired preview, the user confirmed “测试通过”. Record the requested tray behavior as manually accepted in this Windows preview. This does not establish actual OS shutdown, other desktop platforms or production/release acceptance.
+
+## 1.0.6 candidate — CHG-20261026-22 — Compact task panel
+
+Requirements: U404/R414; DEC395. User screenshot feedback on 2026-10-26 requests a concise synchronization task panel. Move local-record/privacy and diagnostic-retention explanations into a collapsed Record details section below the records. Shorten the cycle summary while preserving progress counts, failures, bytes, running-total uncertainty, deferred-attachment scope, actions and error visibility. No installation or release.
+
+## 1.0.6 candidate — CHG-20261026-21 — Branded background tray
+
+Requirement: U403/R413; DEC394. Add a desktop-only switch immediately after Enable note search in Advanced, enabled by default on Obsidian startup. Closing a vault window hides it to a tray icon using the existing brand logo and keeps background work running. Clicking the icon restores that vault; its menu can show the window or quit Obsidian. Disable/unload restores any hidden window, removes listeners/icon and restores throttling. Preserve ordinary application quit and system shutdown. Unsupported hosts retain normal window closing. Do not configure Windows login startup (user clarification), hide windows on launch, change synchronization stop state, install plugins or publish a release. Synthetic verification and native-host acceptance are recorded separately.
+
+Validation: Node 26.12.1 Client suite passed 180/180 synthetic tests, including close/restore, quit/shutdown, multiple vaults, setup failure, cleanup, settings order/mobile exclusion and persistence rollback. Both regional builds and dependency-isolation checks passed; Community lint reported zero errors and five existing warnings. Native Obsidian tray appearance, actual window lifecycle and OS shutdown acceptance remain unperformed. No installation, deployment or release.
+
 ## 1.0.6 candidate — CHG-20261026-20 — Quick stop beside Sync now
 
 Requirements: U402/R412; DEC393. Place Stop immediately after Sync now in the same control row, including narrow panes. Invoke the same persistent stop operation as the task panel, show the stopping state while durable work drains, disable duplicate stops and retain manual-only resumption. Dispose the status listener with its settings view.

@@ -56,6 +56,7 @@ import { routedFetch } from './routing.js';
 import { sampleVaultSize, LanPeers, intersectDirection, bindLanTransfers, localNoteProvider, receivePeerNote } from './peers.js';
 import { ReceiveCache } from './resume.js';
 import { desktopFiles } from './desktop.js';
+import { createBackgroundTray } from './background-tray.js';
 import {
 	emptyState,
 	NotebookSynchronizer,
@@ -301,6 +302,7 @@ class SyncLogView extends ItemView {
 const defaults = () => ({
 	recentEnabled: true,
 	noteSearchEnabled: true,
+	backgroundTray: true,
 	explorerSorting: { enabled: true, grouping: 'files-first', primary: 'mtime-desc', secondary: 'none', folderPrimary: 'name-asc', folderSecondary: 'none', includeUpdated: true },
 	origin: edition.serviceOrigin ?? '',
 	workspace: '',
@@ -742,6 +744,7 @@ export default class IndependentSync extends Plugin {
 		this.logViews = new Set();
 		registerNoteSearch(this);
 		registerNoteEncryption(this);
+		this.refreshBackgroundTray();
 		this.registerView(logViewType, (leaf) => new SyncLogView(leaf, this));
 		this.addRibbonIcon('refresh-cw', t('msg_6dc05b92e9'), async () => {
 			const leaf =
@@ -966,6 +969,14 @@ export default class IndependentSync extends Plugin {
 	}
 	async setting(name, value, configurationReady = false) {
 		if (this.stopped) throw new Error('Plugin is unloaded');
+		if (name === 'backgroundTray') {
+			const previous = this.data.settings.backgroundTray;
+			this.data.settings.backgroundTray = value === true;
+			try { await this.saveData(this.data); }
+			catch (error) { this.data.settings.backgroundTray = previous; throw error; }
+			this.refreshBackgroundTray();
+			return;
+		}
 		if (['recentEnabled', 'noteSearchEnabled'].includes(name)) {
 			const previous = this.data.settings[name];
 			this.data.settings[name] = value === true;
@@ -2358,7 +2369,20 @@ export default class IndependentSync extends Plugin {
 		});
 	}
 
+	refreshBackgroundTray() {
+		this.backgroundTray?.dispose();
+		this.backgroundTray = undefined;
+		if (Platform.isMobile || this.stopped || this.data.settings.backgroundTray === false || typeof window.require !== 'function') return;
+		try {
+			this.backgroundTray = createBackgroundTray({
+				load: name => window.require(name), renderer: window, name: edition.name, vaultName: this.app.vault.getName(),
+				labels: { show: t('tray.show'), quit: t('tray.quit') },
+			});
+		} catch { this.notify(t('tray.unavailable')); }
+	}
 	onunload() {
+		this.backgroundTray?.dispose();
+		this.backgroundTray = undefined;
 		this.tab?.disposeLegacySettings?.();
 		this.syncSetupWindow?.close();
 		this.capacityWindow?.close();
@@ -3100,7 +3124,6 @@ export default class IndependentSync extends Plugin {
 			await this.persistTasks();
 			this.refreshTasks();
 		});
-		area.createEl('p', { text: t('msg_1202d86812') });
 		const body = area.createDiv();
 		this.taskStatusRows ??= new WeakMap();
 		this.taskStatusRows.set(body, state);
@@ -3109,11 +3132,6 @@ export default class IndependentSync extends Plugin {
 	renderTaskRows(area) {
 		this.taskStatusRows?.get(area)?.setText(t('task.stateLine', { state: this.taskSyncState() }));
 		area.empty();
-		area.createEl('p', {
-			text: t('msg_b4391a4866', {
-				value0: this.diagnosticPending ?? this.data.taskOutbox?.length ?? 0,
-			}),
-		});
 		if (this.taskSaveFailed) area.createEl('p', { text: t('msg_294afd29d6') });
 		const all = this.journal.select(this.taskScope);
 		const cycle = [...all].reverse().find((row) => row.direction === 'cycle');
@@ -3187,6 +3205,14 @@ export default class IndependentSync extends Plugin {
 		bindAction(pagination, t('msg_8a8542f696'), async () => {
 			this.taskPage = (this.taskPage ?? 0) + 1;
 			this.refreshTasks();
+		});
+		const details = area.createEl('details');
+		details.createEl('summary', { text: t('task.recordDetails') });
+		details.createEl('p', { text: t('msg_1202d86812') });
+		details.createEl('p', {
+			text: t('msg_b4391a4866', {
+				value0: this.diagnosticPending ?? this.data.taskOutbox?.length ?? 0,
+			}),
 		});
 	}
 	logEvent(text) {
@@ -4947,6 +4973,12 @@ export class IndependentSettings extends PluginSettingTab {
 						try { await plugin.setting(key, value); }
 						catch { plugin.notify(t('notes.saveFailed')); this.update(); }
 					})))),
+				...(!Platform.isMobile ? [row(t('tray.enabled'), setting => setting
+					.setDesc(t('tray.help'))
+					.addToggle(input => input.setValue(config.backgroundTray !== false).onChange(async value => {
+						try { await plugin.setting('backgroundTray', value); }
+						catch { plugin.notify(t('notes.saveFailed')); this.update(); }
+					})))] : []),
 				...advancedItems,
 			]),
 		];
