@@ -113,6 +113,7 @@ class ChoiceWindow extends Modal {
 	onOpen() {
 		this.setTitle(this.heading);
 		this.contentEl.empty();
+		this.contentEl.classList.add('smart-sync-dialog');
 		this.render(this.contentEl);
 	}
 	onClose() {
@@ -787,7 +788,7 @@ export default class IndependentSync extends Plugin {
 			});
 		}
 		this.status = this.addStatusBarItem();
-		this.setStatus(t(this.data.settings.direction === 'paused' ? 'msg_c4f91c861a' : 'sync.ready'));
+		this.setStatus(t(this.data.manualSyncStopped ? 'task.stopped' : this.data.settings.direction === 'paused' ? 'msg_c4f91c861a' : 'sync.ready'));
 		this.tab = new IndependentSettings(this.app, this);
 		this.addSettingTab(this.tab);
 		this.addCommand({
@@ -865,6 +866,7 @@ export default class IndependentSync extends Plugin {
 					!this.connecting &&
 					!this.running &&
 					!this.deviceStarting &&
+					!this.data.manualSyncStopped &&
 					!this.lanPeers &&
 					this.data.settings.workspace &&
 					this.secret('access').length >= 32
@@ -884,7 +886,7 @@ export default class IndependentSync extends Plugin {
 			this.data.settings.direction !== 'paused'
 		)
 			this.pendingTimer = window.setTimeout(() => {
-				void this.synchronize();
+				void this.synchronize(undefined, undefined, true);
 			}, 1000);
 		if (this.app.workspace.on)
 			this.registerEvent(
@@ -1154,7 +1156,7 @@ export default class IndependentSync extends Plugin {
 		if (!(file instanceof TFile) || !file.path.toLowerCase().endsWith('.md')) return;
 		const settings = this.data.settings;
 		if (
-			this.stopped ||
+			this.stopped || this.stopping || this.data.manualSyncStopped ||
 			settings.attachmentMiB !== 0 ||
 			settings.direction === 'paused' ||
 			!settings.workspace
@@ -1163,7 +1165,7 @@ export default class IndependentSync extends Plugin {
 		const scope = `${settings.origin}|${settings.workspace}`;
 		if (this.running) await this.running.catch(() => {});
 		if (
-			this.stopped ||
+			this.stopped || this.stopping || this.data.manualSyncStopped ||
 			this.running ||
 			scope !== `${settings.origin}|${settings.workspace}` ||
 			settings.attachmentMiB !== 0 ||
@@ -2277,7 +2279,7 @@ export default class IndependentSync extends Plugin {
 	}
 
 	automaticChangesAllowed(sending = false) {
-		return !this.stopped && !this.stopping && !this.connecting && this.data.settings.workspace &&
+		return !this.stopped && !this.stopping && !this.connecting && !this.data.manualSyncStopped && this.data.settings.workspace &&
 			this.data.settings.autoChanges !== false && this.data.settings.direction !== 'paused' &&
 			(!sending || this.data.settings.direction !== 'receive');
 	}
@@ -2321,7 +2323,7 @@ export default class IndependentSync extends Plugin {
 	}
 	requestChangedSynchronization() {
 		if (!this.automaticChangesAllowed()) return;
-		if (!this.running) { void this.synchronize(); return; }
+		if (!this.running) { void this.synchronize(undefined, undefined, true); return; }
 		const pending = this.running;
 		if (this.changeWait === pending) return;
 		this.changeWait = pending;
@@ -2329,7 +2331,7 @@ export default class IndependentSync extends Plugin {
 		void pending.catch(() => {}).then(() => {
 			if (this.changeWait !== pending) return;
 			this.changeWait = undefined;
-			if (this.automaticChangesAllowed() && !controller.signal.aborted && this.abortController === controller && binding === this.editorBinding()) void this.synchronize();
+			if (this.automaticChangesAllowed() && !controller.signal.aborted && this.abortController === controller && binding === this.editorBinding()) void this.synchronize(undefined, undefined, true);
 		});
 	}
 
@@ -2465,6 +2467,7 @@ export default class IndependentSync extends Plugin {
 		}, 100);
 	}
 	async synchronize(retryRow, approval, automatic = false) {
+		if (automatic && this.data?.manualSyncStopped) return;
 		if (this.stopped) return;
 		if (this.configurationPending) return;
 		if (this.stopping) return;
@@ -2491,6 +2494,14 @@ export default class IndependentSync extends Plugin {
 			let cycle;
 			let diagnosticApi;
 			try {
+				if (!automatic && this.data.manualSyncStopped) {
+					delete this.data.manualSyncStopped;
+					try {
+						if (this.checkpoints) await this.checkpoints.saveConfiguration(this.data);
+						else await this.saveData(this.data);
+					} catch (error) { this.data.manualSyncStopped = true; throw error; }
+					if (this.stopping || this.stopped || this.data.manualSyncStopped) return;
+				}
 				if (this.data.settings.direction === 'paused' && !approval) {
 					this.setStatus(t('msg_c4f91c861a'));
 					if (retryRow) this.notify(t('msg_3ce8632e0d'));
@@ -2908,6 +2919,7 @@ export default class IndependentSync extends Plugin {
 	async stopSynchronization() {
 		if (this.stopRun) return this.stopRun;
 		this.stopping = true;
+		if (this.data) this.data.manualSyncStopped = true;
 		this.cancelEditorSaves();
 		this.abortController.abort();
 		window.clearTimeout(this.diagnosticTimer);
@@ -2925,9 +2937,13 @@ export default class IndependentSync extends Plugin {
 				await Promise.allSettled([...(this.editorSaveWork?.values() ?? [])]);
 				if (running) {
 					await running.catch(() => {});
-					this.setStatus(t('task.stopped'));
 				}
 				await this.diagnosticRun;
+				if (this.data) {
+					if (this.checkpoints) await this.checkpoints.saveConfiguration(this.data);
+					else await this.saveData(this.data);
+				}
+				this.setStatus(t('task.stopped'));
 			} finally { if (!this.stopped) this.abortController = new AbortController(); this.lastStopMilliseconds = performance.now() - started; this.stopping = false; }
 		})().finally(() => { this.stopRun = undefined; });
 		return this.stopRun;

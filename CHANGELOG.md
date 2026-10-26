@@ -1,5 +1,13 @@
 # Source change record
 
+## 1.0.6 candidate — CHG-20261026-17 — Responsive desktop, mobile and foldable layouts
+
+Requirements: U400/R410; DEC391. Adapt settings, plugin dialogs and task panels to their available pane width, including wide mobile windows and narrow split panes. Wrap actions, constrain long text and controls, use adaptive device-card columns, and retain 44 px mobile controls. Preserve all settings and operations. Fourteen synthetic legacy/modern layout cases cover 320/390/600/768/960 px panes, enlarged text and dark colors with no measured horizontal overflow. Physical phone/foldable host validation remains pending. No installation or release.
+
+## 1.0.6 candidate — CHG-20261026-16 — Keep manually stopped synchronization stopped
+
+Requirements: U399/R409; DEC390. Persist manual stop across timers, change notifications, foreground/network events and restarts. Suppress background peer setup and automatic on-open attachment downloads while stopped. Explicit Sync now or Retry resumes without changing the selected synchronization direction. Retain safe draining of writes/checkpoints and completed work; failed persistence leaves the automatic stop in place. Client synthetic tests (172), regional builds, isolation and lint passed (zero errors, five existing warnings). No installation or release.
+
 ## 1.0.6 candidate — CHG-20261026-15 — Isolate failed receives with durable retries
 
 Requirements: U398/R408; DEC389. Continue later receives after a file-specific failure, checkpoint its opaque revision and authenticated destination before advancing the feed cursor, and retry it after restart. Prefer newer revisions and tombstones, preserve original modification times and completed task results, and show a remaining-retry count instead of reporting full success. Protect affected upload paths; defer uploads when a failed manifest leaves the destination unknown. Authorization, cancellation, service/key/plan changes and checkpoint failures still stop safely. Physical iPad failures and a subsequently observed HTTP 409 upload conflict remain under investigation; this candidate is not installed, released or deployed.
