@@ -1,5 +1,9 @@
 # Source change record
 
+## 1.0.6 candidate — CHG-20261026-14 — Faster local search feedback
+
+Requirements: U397/R407; DEC388. Replace serial body reads with at most four concurrent reads, show a bounded first page of partial matches during scanning, and compile query matchers once. Apply folder/tag/date filters before reading text and avoid body reads for title-only searches. Keep AND/phrase matching, ranking, pagination, original modification-time filters, cancellation, encryption masking and the memory-only 24 MiB text cache. Windows Client tests (163), Windows/WSL search/recent regressions (16), regional builds, isolation and lint passed (zero errors, five existing warnings). Native-vault throughput and appearance remain unverified; no installation or release.
+
 ## 1.0.6 candidate — CHG-20261026-13 — Default note tools to left sidebar tabs
 
 Requirements: U396/R406; DEC387. Create recent-files and local note-search views in the left sidebar tab strip, beside the standard navigation tabs, on first layout restoration or explicit opening when no view exists. Preserve restored user placement, feature switches, command access and duplicate prevention; do not activate or reveal startup tabs. No installation or release.
