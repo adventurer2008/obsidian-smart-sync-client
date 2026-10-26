@@ -126,7 +126,7 @@ export function registerNoteSearch(owner) {
 	owner.registerView(recentType, leaf => new NoteSearchView(leaf, owner, recentType, true));
 	const openView = async (type, focus) => {
 		if (!enabled(type === recentType)) return;
-		const leaf = owner.app.workspace.getLeavesOfType(type)[0] ?? owner.app.workspace.getRightLeaf(false);
+		const leaf = owner.app.workspace.getLeavesOfType(type)[0] ?? owner.app.workspace.getLeftLeaf(false);
 		if (!leaf) return;
 		await leaf.setViewState({ type, active: true });
 		await owner.app.workspace.revealLeaf(leaf);
@@ -140,7 +140,7 @@ export function registerNoteSearch(owner) {
 	const ensureDefaultView = type => {
 		if (disposed || owner.app.workspace.getLeavesOfType(type).length) return;
 		if (opening.has(type)) return opening.get(type);
-		const leaf = owner.app.workspace.getRightLeaf(false);
+		const leaf = owner.app.workspace.getLeftLeaf(false);
 		if (!leaf) return;
 		const task = leaf.setViewState({ type, active: false }).then(() => {
 			if (disposed || !enabled(type === recentType)) leaf.detach();
