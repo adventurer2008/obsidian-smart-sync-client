@@ -1,5 +1,9 @@
 # Source change record
 
+## 1.0.6 candidate — CHG-20261026-09/10 — Legacy settings layout
+
+Requirements: U392/R402; DEC383; U393/R403; DEC384. The user confirmed settings open on Obsidian 1.12.7 but reported uneven cards, account/billing collisions and misaligned sections, then requested an immediate styles.css patch and inclusion in 1.0.6. Restore a full-width vertical layout only for the flat legacy settings container; align account, plan and device rows, keep primary actions together and stack folded sections consistently. Preserve theme variables, narrow-screen wrapping and every existing control. Deliver the standalone local stylesheet for installed 1.0.5; keep published 1.0.5 assets immutable. Reserve 1.0.6 as a candidate; no new release or service deployment is performed by this change.
+
 ## 1.0.5 — Production delivery verified (2026-10-26)
 
 Requirements: U387/R397; U388/R398; U389/R399; U390/R400; U391/R401. Delivered Obsidian 1.12.7 settings compatibility, general mobile desktop-only plugin exclusion and per-device vault size reporting. The approved quick local profile, retained Windows/WSL paired checks, paired Server migration, staging/production body and source-mtime probes, mail receipt and eleven anonymous release-asset hashes passed. Native 1.12.7 and physical iPad acceptance remain unperformed. [China 1.0.5 release](https://github.com/adventurer2008/obsidian-smart-sync-release-cn/releases/tag/1.0.5).

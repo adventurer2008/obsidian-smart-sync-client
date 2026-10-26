@@ -5,6 +5,39 @@
 	overflow: auto;
 }
 .smart-sync-common { display: flex; flex-wrap: wrap; }
+/* CHG-20261026-09: 1.12.x uses a flat container rather than declarative setting-items. */
+.smart-sync-common:not(.setting-items) { display: block; min-width: 0; }
+.smart-sync-common:not(.setting-items) > .setting-item {
+  width: 100%; min-width: 0; box-sizing: border-box;
+  margin: 0; padding: 12px 0; border: 0;
+  border-bottom: 1px solid var(--background-modifier-border);
+  border-radius: 0; background: transparent;
+}
+.smart-sync-common:not(.setting-items) > .setting-item .setting-item-info { min-width: 0; }
+.smart-sync-common:not(.setting-items) > .setting-item .setting-item-description { overflow-wrap: anywhere; line-height: 1.6; }
+.smart-sync-common:not(.setting-items) > .setting-item .setting-item-control { max-width: 100%; flex-wrap: wrap; gap: 8px; }
+.smart-sync-common:not(.setting-items) > .setting-item.smart-sync-title { border: 0; padding: 0 0 4px; }
+.smart-sync-common:not(.setting-items) > .smart-sync-title .setting-item-info { padding-left: 64px; min-height: 48px; }
+.smart-sync-common:not(.setting-items) > .smart-sync-title .setting-item-name { font-size: var(--h2-size); }
+.smart-sync-common:not(.setting-items) > .smart-sync-title .setting-item-name::before { width: 48px; height: 48px; }
+.smart-sync-common:not(.setting-items) > .setting-item.smart-sync-version { border: 0; padding: 0 0 12px 64px; }
+.smart-sync-common:not(.setting-items) > .setting-item.smart-sync-overview-status { padding-top: 6px; }
+.smart-sync-common:not(.setting-items) > .setting-item.smart-sync-billing {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto;
+  margin: 12px 0; padding: 14px 16px; border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m); background: var(--background-secondary);
+}
+.smart-sync-common:not(.setting-items) > .setting-item.smart-sync-overview-action {
+  display: inline-flex; width: auto; max-width: 100%; padding: 0;
+  margin: 12px 8px 4px 0; border: 0; vertical-align: top;
+}
+.smart-sync-common:not(.setting-items) > .smart-sync-setting-group { display: block; width: 100%; }
+.smart-sync-common:not(.setting-items) > .smart-sync-setting-group .smart-sync-section { width: 100%; box-sizing: border-box; }
+@media (max-width: 650px) {
+  .smart-sync-common:not(.setting-items) > .setting-item { flex-wrap: wrap; gap: 8px; }
+  .smart-sync-common:not(.setting-items) > .setting-item .setting-item-control { justify-content: flex-start; }
+  .smart-sync-common:not(.setting-items) > .setting-item.smart-sync-identity-row .setting-item-control { width: 100%; }
+}
 .setting-items.smart-sync-common > .setting-item { width: 100%; min-width: 0; box-sizing: border-box; order: 4; }
 .setting-items.smart-sync-common > .setting-item.smart-sync-title { border: 0; padding-bottom: 0; order: 0; }
 .smart-sync-title .setting-item-name { font-size: var(--h2-size); }
