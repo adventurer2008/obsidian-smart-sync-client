@@ -1,5 +1,9 @@
 # Source change record
 
+## 1.0.6 release preparation — CHG-20261026-18
+
+Requirements: U401/R411; DEC392. The user authorized cumulative China production delivery of the unreleased 1.0.6 changes below, paired with Server 0.1.32 for its pending foldable purchase-page layout. Run the full local and paired verification plan, staging and production acceptance, and immutable public asset checks. Preparation does not itself confirm publication or physical-device acceptance.
+
 ## 1.0.6 candidate — CHG-20261026-17 — Responsive desktop, mobile and foldable layouts
 
 Requirements: U400/R410; DEC391. Adapt settings, plugin dialogs and task panels to their available pane width, including wide mobile windows and narrow split panes. Wrap actions, constrain long text and controls, use adaptive device-card columns, and retain 44 px mobile controls. Preserve all settings and operations. Fourteen synthetic legacy/modern layout cases cover 320/390/600/768/960 px panes, enlarged text and dark colors with no measured horizontal overflow. Physical phone/foldable host validation remains pending. No installation or release.
