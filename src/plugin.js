@@ -2619,7 +2619,10 @@ export default class IndependentSync extends Plugin {
 						this.taskSaveFailed = true;
 					});
 				}
-				this.setStatus(t('msg_c0d9fccf36', { value0: failureMessage(error) }), { overview: t('overview.failed') });
+				this.setStatus(error?.pendingReceiveCount
+					? t('sync.partialReceive', { count: error.pendingReceiveCount })
+					: t('msg_c0d9fccf36', { value0: failureMessage(error) }),
+					{ overview: error?.pendingReceiveCount ? t('overview.retryNeeded') : t('overview.failed') });
 			} finally {
 				if (diagnosticApi) await this.flushDiagnostics(diagnosticApi, { automatic });
 				this.refreshTasks();

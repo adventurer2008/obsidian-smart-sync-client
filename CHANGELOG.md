@@ -1,5 +1,9 @@
 # Source change record
 
+## 1.0.6 candidate — CHG-20261026-15 — Isolate failed receives with durable retries
+
+Requirements: U398/R408; DEC389. Continue later receives after a file-specific failure, checkpoint its opaque revision and authenticated destination before advancing the feed cursor, and retry it after restart. Prefer newer revisions and tombstones, preserve original modification times and completed task results, and show a remaining-retry count instead of reporting full success. Protect affected upload paths; defer uploads when a failed manifest leaves the destination unknown. Authorization, cancellation, service/key/plan changes and checkpoint failures still stop safely. Physical iPad failures and a subsequently observed HTTP 409 upload conflict remain under investigation; this candidate is not installed, released or deployed.
+
 ## 1.0.6 candidate — CHG-20261026-14 — Faster local search feedback
 
 Requirements: U397/R407; DEC388. Replace serial body reads with at most four concurrent reads, show a bounded first page of partial matches during scanning, and compile query matchers once. Apply folder/tag/date filters before reading text and avoid body reads for title-only searches. Keep AND/phrase matching, ranking, pagination, original modification-time filters, cancellation, encryption masking and the memory-only 24 MiB text cache. Windows Client tests (163), Windows/WSL search/recent regressions (16), regional builds, isolation and lint passed (zero errors, five existing warnings). Native-vault throughput and appearance remain unverified; no installation or release.
