@@ -1,5 +1,9 @@
 # Source change record
 
+## 1.0.5 — Production delivery verified (2026-10-26)
+
+Requirements: U387/R397; U388/R398; U389/R399; U390/R400; U391/R401. Delivered Obsidian 1.12.7 settings compatibility, general mobile desktop-only plugin exclusion and per-device vault size reporting. The approved quick local profile, retained Windows/WSL paired checks, paired Server migration, staging/production body and source-mtime probes, mail receipt and eleven anonymous release-asset hashes passed. Native 1.12.7 and physical iPad acceptance remain unperformed. [China 1.0.5 release](https://github.com/adventurer2008/obsidian-smart-sync-release-cn/releases/tag/1.0.5).
+
 ## 1.0.5 candidate — CHG-20261026-04 — Obsidian 1.12.7 settings compatibility
 
 Requirements: U388/R398; DEC379; U389/R399; DEC380; U390/R400; DEC381; U391/R401; DEC382. The user reported a blank settings tab with the latest offline plugin on Obsidian 1.12.7 and requested compatibility, then authorized a new version containing all unpublished changes. Render the existing shared settings definitions through the legacy display entry point on older hosts; keep the modern host renderer, settings, collapsed sections and refresh actions. Dispose listeners and timers on refresh, close and unload. Lower the new candidate's minimum app version to 1.12.7 without altering published compatibility entries. Include CHG-20261026-03 device vault-size reporting with its paired Server migration, plus all previously released behavior. The user approved the quick local release profile; retained paired verification and deployment gates still apply. Native 1.12.7 acceptance is recorded separately; no native acceptance is implied by synthetic tests.

@@ -38,4 +38,4 @@ Copyright (c) 2026 lihy. New Client candidates after the existing 0.1.81 release
 
 ## Host compatibility
 
-The 1.0.5 candidate supports Obsidian 1.12.7 and newer through shared legacy and declarative settings definitions. Offline installation does not provide offline cloud synchronization. Native-host acceptance is recorded separately from synthetic tests.
+Version 1.0.5 supports Obsidian 1.12.7 and newer through shared legacy and declarative settings definitions. Offline installation does not provide offline cloud synchronization. Native-host acceptance is recorded separately from synthetic tests.
