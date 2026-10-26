@@ -1,5 +1,9 @@
 # Source change record
 
+## Unreleased — CHG-20261026-03 — Local vault sizes in device management
+
+Requirements: U387/R397; DEC378. Show each device's last reported local note/attachment byte total and measurement time. Retain offline samples and display No data yet for devices that have never reported. Count SDK file metadata without reading content or including hidden settings/caches; resample at most every 30 seconds during presence and immediately on device-view refresh. Unknown or invalid metadata never becomes a fabricated zero. Preserve authentication, revocation, synchronization and original modification times. Requires the paired Server additive device-vault-usage migration; this source change has not been installed, deployed or released. Windows Client tests (152), WSL targeted Client/Server tests (8/20), regional builds, isolation and lint passed (five existing warnings); native-device visual acceptance remains pending.
+
 ## 1.0.4 candidate — CHG-20261026-02 — Resume interrupted mobile receives
 
 Requirements: U386/R396; DEC377. Persist bounded, verified encrypted attachment objects for cloud receive recovery and retain authenticated peer bundles across restarts. Seed local fingerprints only after observed successful writes, recheck changed files, and checkpoint after 4 MiB of received content as well as existing item/time boundaries. Back off repeated peer-cache misses. Preserve permissions, conflicts, original modification times, existing upload behavior and old-client fallback. Include CHG-20261026-01 item-progress feedback. User authorized full China production delivery after complete validation; native iPad acceptance is reported separately. Existing release assets remain immutable.
