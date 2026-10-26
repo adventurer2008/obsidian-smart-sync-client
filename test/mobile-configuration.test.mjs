@@ -11,8 +11,8 @@ const keys = await unlockWorkspace('synthetic platform compatibility', freshSalt
 async function fixture(items, mobile = true) {
 	const objects = new Map(), entries = [], files = new Map(), notes = new Map(), mtimes = new Map(), events = [];
 	let loads = 0, commits = 0;
-	async function add(path, content) {
-		const packed = await packNote(keys, 'synthetic-platform', path, encode(content), undefined, undefined, 'file', 1577836800123);
+	async function add(path, content, identity) {
+		const packed = await packNote(keys, 'synthetic-platform', path, encode(content), undefined, identity, 'file', 1577836800123);
 		for (const object of packed.objects) objects.set(object.address, object.body);
 		entries.push({ note: packed.id, sequence: entries.length + 1, manifest: packed.manifest, removed: false });
 		return packed.id;
@@ -76,6 +76,16 @@ test('mobile enable state filters desktop plugins locally while preserving share
 	await f.run();
 	assert.deepEqual(JSON.parse(new TextDecoder().decode(f.files.get('custom/community-plugins.json'))), ['mobile-tool', 'wujie-sync']);
 	assert.equal(f.commits(), 0);
+});
+
+test('mobile resolves reinstalled manifest identities and ignores a stale mobile-compatible local manifest', async () => {
+	const path = prefix + 'plugins/reinstalled/main.js';
+	const f = await fixture([[path, 'desktop code'], ['note.md', 'continues']]);
+	f.files.set('custom/plugins/reinstalled/manifest.json', encode({ isDesktopOnly: false }));
+	await f.add(prefix + 'plugins/reinstalled/manifest.json', { isDesktopOnly: true }, 'e'.repeat(64));
+	await f.run();
+	assert.equal(f.files.has('custom/plugins/reinstalled/main.js'), false);
+	assert.equal(f.notes.has('note.md'), true); assert.equal(f.commits(), 0);
 });
 
 test('desktop still receives desktop plugins; unknown manifests and corrupt or denied objects remain errors', async () => {

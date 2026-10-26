@@ -116,16 +116,25 @@ export class NotebookSynchronizer {
 	async #remoteFile(path) {
 		if (this.#remoteFiles.has(path)) return this.#remoteFiles.get(path);
 		this.assertActive();
-		const known = Object.entries(this.state.notes).find(([, note]) => note.path === path);
+		const known = Object.entries(this.state.notes).filter(([, note]) => note.path === path).sort((a, b) => b[1].revision - a[1].revision)[0];
 		const id = known?.[0] ?? await opaqueNoteId(this.keys, path);
 		const previous = known?.[1];
-		const entry = this.#remoteHeads.get(id) ?? (previous?.manifest ? { note: id, manifest: previous.manifest, removed: previous.removed } : undefined);
-		if (!entry || entry.removed) return undefined;
+		let entry = this.#remoteHeads.get(id) ?? (previous?.manifest ? { note: id, manifest: previous.manifest, removed: previous.removed } : undefined);
 		const load = address => this.#load(address);
-		const info = await inspectNote(this.keys, this.api.workspace, id, entry.manifest, load);
+		let info = entry && !entry.removed ? await inspectNote(this.keys, this.api.workspace, entry.note, entry.manifest, load) : undefined;
+		if (info?.path !== path) {
+			// Reinstalled or renamed files can have a non-derived identity. Match authenticated paths.
+			entry = undefined;
+			for (const current of this.#remoteHeads.values()) {
+				if (current.removed) continue;
+				const inspected = await inspectNote(this.keys, this.api.workspace, current.note, current.manifest, load);
+				if (inspected.path === path) { entry = current; info = inspected; break; }
+			}
+		}
+		if (!entry || !info || info.path !== path) { this.#remoteFiles.set(path, undefined); return undefined; }
 		const maximum = path.endsWith('/community-plugins.json') ? 1024 * 1024 : 65536;
 		if (info.path !== path || info.kind !== 'file' || info.bytes > maximum) throw Error('Invalid plugin compatibility metadata');
-		const result = await unpackNote(this.keys, this.api.workspace, id, entry.manifest, load, info);
+		const result = await unpackNote(this.keys, this.api.workspace, entry.note, entry.manifest, load, info);
 		this.#remoteFiles.set(path, result.contents);
 		while (this.#remoteFiles.size > 128) this.#remoteFiles.delete(this.#remoteFiles.keys().next().value);
 		return result.contents;
