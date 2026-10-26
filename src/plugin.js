@@ -2101,11 +2101,14 @@ export default class IndependentSync extends Plugin {
 				else if (existing === null) await this.app.vault.createBinary(path, buffer, options);
 				else throw new Error('A folder occupies the remote note path');
 				await this.refreshPreservedWrite(path, previousTime, mtime);
-				const written = this.app.vault.getAbstractFileByPath(path), changeAfter = this.fileChanges.get(path) ?? 0;
+				const changeAfter = this.fileChanges.get(path) ?? 0;
 				// Extra edits or missing SDK notifications require ordinary read/hash.
-				if (written instanceof TFile && written.stat?.size === bytes.length && changeAfter === changeBefore + 1 &&
-					(mtime === undefined || Math.trunc(written.stat.mtime) === mtime) && Number.isFinite(written.stat.ctime))
-					return { stamp: JSON.stringify([written.stat.size, written.stat.mtime, written.stat.ctime, changeAfter]) };
+				if (changeAfter === changeBefore + 1) {
+					const written = this.app.vault.getAbstractFileByPath(path);
+					if (written instanceof TFile && written.stat?.size === bytes.length &&
+						(mtime === undefined || Math.trunc(written.stat.mtime) === mtime) && Number.isFinite(written.stat.ctime))
+						return { stamp: JSON.stringify([written.stat.size, written.stat.mtime, written.stat.ctime, changeAfter]) };
+				}
 			},
 			remove: async (path) => {
 				if (this.stopped) throw new Error('Plugin is unloading');

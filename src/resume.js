@@ -46,7 +46,7 @@ export class ReceiveCache {
    this.check();
    if (bytes.length !== entry.size || await fingerprint(bytes) !== address) throw Error('Cache digest mismatch');
    this.metrics.reusedBytes += bytes.length; return bytes;
-  } catch (error) {
+  } catch {
    this.check(); this.metrics.corruptObjects++;
    await this.adapter.remove(`${this.folder}/${name}`).catch(() => {});
    this.files.delete(name); this.bytes -= entry.size; return null;
