@@ -12,6 +12,7 @@ import {
 	Platform,
 	Plugin,
 	PluginSettingTab,
+	requireApiVersion,
 	Setting,
 	TFile,
 	TFolder,
@@ -2130,6 +2131,7 @@ export default class IndependentSync extends Plugin {
 			mobile: Platform.isMobile,
 		});
 		const scopedHost = configurationHost(this.app.vault, host, scope, {
+			mobileBlocked: Object.values(state.notes).filter(note => note.platformSkipped === 'desktop-plugin').map(note => note.path),
 			windows: Platform.isWin === true,
 			stopped: () => this.stopped || api.signal.aborted,
 			onPluginStateChanged: () => { this.pluginStateRestartPending = true; },
@@ -2332,6 +2334,7 @@ export default class IndependentSync extends Plugin {
 	}
 
 	onunload() {
+		this.tab?.disposeLegacySettings?.();
 		this.syncSetupWindow?.close();
 		this.capacityWindow?.close();
 		this.noteEncryption?.dispose();
@@ -3128,6 +3131,7 @@ export default class IndependentSync extends Plugin {
 			area.createEl('p', {
 				text: `${new Date(row.started).toLocaleString(locale)} · ${names[row.direction]} · ${title} · ${states[row.status]} · ${formatStorageSize(row.bytes)}${row.direction === 'send' && row.total ? ` / ${formatStorageSize(row.total)} (${Math.floor((row.bytes / row.total) * 100)}%)` : ''}${row.status === 'running' && row.direction === 'receive' ? t('msg_c1a2a577cd') : ''}`,
 			});
+			if (row.skipReason === 'desktop-plugin') area.createEl('p', { text: this.journal.message(row) });
 			if (this.journal.canRetry(row, this.taskScope)) {
 				area.createEl('p', { text: this.journal.message(row) });
 				action(area, t('msg_a6d7a1c530'), async () => this.synchronize(row));
@@ -4322,10 +4326,48 @@ export default class IndependentSync extends Plugin {
 		}
 	}
 }
-class IndependentSettings extends PluginSettingTab {
+export class IndependentSettings extends PluginSettingTab {
 	constructor(app, plugin) {
 		super(app, plugin);
 		this.owner = plugin;
+	}
+	// CHG-20261026-04: older hosts call display(), newer hosts render the same definitions.
+	disposeLegacySettings() {
+		this.legacyVisible = false;
+		for (const cleanup of this.legacyCleanups ?? []) cleanup();
+		this.legacyCleanups = [];
+	}
+	hide() {
+		this.disposeLegacySettings();
+		super.hide?.();
+	}
+	update() {
+		if (requireApiVersion('1.13.0')) return super.update();
+		if (this.legacyVisible) this.renderLegacySettings();
+	}
+	display() {
+		this.renderLegacySettings();
+	}
+	renderLegacySettings() {
+		this.disposeLegacySettings();
+		this.containerEl.empty();
+		this.legacyVisible = true;
+		const render = (definitions, container, group) => {
+			for (const definition of definitions) {
+				if (definition.type === 'group') {
+					const wrapper = container.createDiv({ cls: definition.cls });
+					const listEl = wrapper.createDiv();
+					render(definition.items, listEl, { listEl });
+					continue;
+				}
+				const setting = new Setting(container).setName(definition.name);
+				if (definition.desc !== undefined) setting.setDesc(definition.desc);
+				const cleanup = definition.render?.(setting, group);
+				if (typeof cleanup === 'function') this.legacyCleanups.push(cleanup);
+			}
+		};
+		try { render(this.getSettingDefinitions(), this.containerEl); }
+		catch (error) { this.disposeLegacySettings(); throw error; }
 	}
 	getSettingDefinitions() {
 		const plugin = this.owner,

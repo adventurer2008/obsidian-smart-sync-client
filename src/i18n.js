@@ -424,6 +424,7 @@ export const messages = {
 	msg_4c079853d0: '删除云端',
 	msg_848a148ba5: '保留冲突并处理',
 	msg_dda3f1ce08: '按规则跳过',
+	'configuration.desktopSkipped': '已跳过：仅支持电脑的插件不应用到手机或平板，其余内容继续同步。',
 	msg_02d4e6c7d7: '只更新记录',
 	msg_fb895c45fc: '待同步变更',
 	msg_1b4e8dcd88:
@@ -696,6 +697,7 @@ export const messages = {
 };
 // Draft only: no English language option is released.
 export const englishDraft = {
+	'configuration.desktopSkipped': 'Skipped: desktop-only plugins are not applied on mobile; other content continues syncing.',
 	'notes.recentEnabled': 'Enable recent files',
 	'notes.recentEnabledHelp': 'Use the clock tab in the right sidebar or the Recent files command. Turning this off stops recording opened files.',
 	'notes.noteSearchEnabled': 'Enable note search',

@@ -35,3 +35,7 @@ Synchronization needs an approved account and the matching regional service. Con
 Copyright (c) 2026 lihy. New Client candidates after the existing 0.1.81 release use [Apache License 2.0](LICENSE). Existing releases through 0.1.81 retain their original MIT terms and assets. Dependency licenses remain in [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md). Apache-2.0 permits commercial reuse; it grants no hosted-service access or Server rights.
 
 [PROVENANCE.json](PROVENANCE.json) records the source snapshot and unchanged runtime/resource hashes. Regional distribution names are updated under CHG-20261021-06. This source publication does not issue a new plugin version or replace installed binaries.
+
+## Host compatibility
+
+The 1.0.5 candidate supports Obsidian 1.12.7 and newer through shared legacy and declarative settings definitions. Offline installation does not provide offline cloud synchronization. Native-host acceptance is recorded separately from synthetic tests.

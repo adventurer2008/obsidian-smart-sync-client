@@ -1,5 +1,13 @@
 # Source change record
 
+## 1.0.5 candidate — CHG-20261026-04 — Obsidian 1.12.7 settings compatibility
+
+Requirements: U388/R398; DEC379; U389/R399; DEC380; U390/R400; DEC381; U391/R401; DEC382. The user reported a blank settings tab with the latest offline plugin on Obsidian 1.12.7 and requested compatibility, then authorized a new version containing all unpublished changes. Render the existing shared settings definitions through the legacy display entry point on older hosts; keep the modern host renderer, settings, collapsed sections and refresh actions. Dispose listeners and timers on refresh, close and unload. Lower the new candidate's minimum app version to 1.12.7 without altering published compatibility entries. Include CHG-20261026-03 device vault-size reporting with its paired Server migration, plus all previously released behavior. The user approved the quick local release profile; retained paired verification and deployment gates still apply. Native 1.12.7 acceptance is recorded separately; no native acceptance is implied by synthetic tests.
+
+## 1.0.5 candidate — CHG-20261026-06 — Mobile plugin platform policy
+
+Requirements: U390/R400; DEC381. Use authenticated current remote manifests to skip desktop-only plugin code, styles and settings on mobile, independent of arrival order. Continue notes and attachments, preserve shared desktop activation entries, record a bounded skip reason and recover previously skipped files when a plugin becomes mobile-compatible. Unknown compatibility, corrupt metadata and authorization failures remain explicit errors. Preserve direct-write safety, device isolation, conflicts and source modification times. This is a general platform policy, with no plugin-ID exceptions.
+
 ## Unreleased — CHG-20261026-03 — Local vault sizes in device management
 
 Requirements: U387/R397; DEC378. Show each device's last reported local note/attachment byte total and measurement time. Retain offline samples and display No data yet for devices that have never reported. Count SDK file metadata without reading content or including hidden settings/caches; resample at most every 30 seconds during presence and immediately on device-view refresh. Unknown or invalid metadata never becomes a fabricated zero. Preserve authentication, revocation, synchronization and original modification times. Requires the paired Server additive device-vault-usage migration; this source change has not been installed, deployed or released. Windows Client tests (152), WSL targeted Client/Server tests (8/20), regional builds, isolation and lint passed (five existing warnings); native-device visual acceptance remains pending.
