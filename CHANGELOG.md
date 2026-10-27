@@ -408,3 +408,5 @@ CHG-20261027-21 matching dialog wording: user requested updating the Add device 
 ## 1.0.10 delivery confirmation — CHG-20261027-ULTRA-RELEASE-EXEC
 
 The user-authorized China release1.0.10 is published. All11 release assets passed anonymous download/hash verification and latest points to1.0.10. Settings refresh/disclosure, narrow-cover/large-font/iPad layout and tray save-deferral fixes are included. Synthetic/browser and isolated native-Electron evidence remains distinct from physical mobile/Obsidian acceptance, which is pending. Original modification times and existing functions are preserved.
+
+CHG-20261027-111-RELEASE validation follow-up: the first full fixed-candidate integration run passed391/395 tests but four existing settings tests stopped because the shared synthetic SDK element lacked querySelectorAll. Add connected-descendant class/tag lookup and preserve createEl class names in the public test double; no runtime gate or assertion is removed. Retain the failed candidate evidence and rebuild a new immutable candidate. The focused public settings/on-open suite passes12/12; final combined checks remain required.
