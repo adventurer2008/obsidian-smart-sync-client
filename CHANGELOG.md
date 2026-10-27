@@ -1,5 +1,15 @@
 # Source change record
 
+## 1.1.0 release preparation — CHG-20261028-110-RELEASE — UI refresh and synchronization performance
+
+Requirement: the user superseded the planned 1.0.12 assignment with 1.1.0, identified the UI refresh as a major highlight and authorized full release validation and delivery after the work is complete. Include all pending BUTTON-STYLE, narrow enlarged-text repair, DOWNLOAD-SPEED and JOURNAL-SPEED changes, plus maintained UI regression gates. Preserve all functionality, encryption, original modification times, Stop and recovery. Use the full profile; staging, production, public publication and physical-device acceptance retain separate evidence. Earlier release assets remain unchanged.
+
+## 1.0.12 planned — CHG-20261028-UI-REGRESSION-GATE — Accepted button style and repeatable UI coverage
+
+Requirement: the user accepted the desktop and phone previews, requested shipping this button style with the next release, and making recent UI checks repeatable cases in the complete release flow. Retain the existing 1.0.12 assignment. Internal release tooling now maintains the settings layout/refresh/rotation/maximized-window matrix with Chromium and WebKit on Windows and WSL. At 280px viewport and 32px UI text, let long identity actions wrap and the sync/Stop controls use separate lines to prevent clipping with the outlined style. Normal phone/desktop layouts remain as previewed. No version change, installation, publication or deployment.
+
+Validation: WSL Chromium/WebKit full UI matrix832 cases/5120 state inspections passed. The initial Windows matrix retained one cold WebKit navigation timeout; its six-state isolated check passed and the final fixed release candidate will rerun the complete matrix with a separate60s navigation timeout. Release-gate regressions passed on Windows and WSL; physical-device acceptance remains separate.
+
 ## 1.0.12 planned — CHG-20261028-112-SCOPE — Consolidate unpublished improvements
 
 Requirement: the user accepted both performance improvements and requested including them with all other unpublished content in1.0.12. Queue DOWNLOAD-SPEED bounded on-demand reads/latest-note priority, JOURNAL-SPEED recovery-safe batch checkpoints/atomic intent retirement and BUTTON-STYLE consistent outlined actions, including their complete implementations and regressions. Server has no new unpublished runtime change in this inventory. Preserve all existing functionality, encryption, original modification times and recovery.

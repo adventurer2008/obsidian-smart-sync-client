@@ -483,3 +483,9 @@
   opacity: 0.6;
   cursor: default;
 }
+/* Keep outlined actions readable on narrow covers at enlarged UI text sizes. */
+@container wujie (max-width:319px) {
+  .smart-sync-common.smart-sync-overview-card > .setting-item.smart-sync-manual-action > .setting-item-control { flex-wrap:wrap; }
+  .smart-sync-common.smart-sync-overview-card > .setting-item.smart-sync-manual-action > .setting-item-control > button.mod-cta { flex:1 0 auto; min-width:max-content; }
+  .smart-sync-common.smart-sync-overview-card > .setting-item.smart-sync-identity-row > .setting-item-control button { white-space:normal; overflow-wrap:anywhere; }
+}
