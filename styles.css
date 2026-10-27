@@ -456,3 +456,24 @@
 .smart-sync-lan-details[open] > summary .smart-sync-lan-entry::before { content:'▼ '; }
 .smart-sync-lan-details > p { margin:6px 0; line-height:1.6; overflow-wrap:anywhere; }
 .is-mobile .smart-sync-lan-details > summary { min-height:44px; align-content:center; }
+
+/* CHG-20261027-19: compact identity rows on every device, with safe large-text wrapping. */
+.smart-sync-common > .setting-item.smart-sync-identity-row,
+.is-mobile .smart-sync-common > .setting-item.smart-sync-identity-row {
+  flex-direction:row; flex-wrap:wrap; align-items:center; gap:6px 8px; padding-block:8px;
+}
+.smart-sync-common > .setting-item.smart-sync-identity-row > .setting-item-info,
+.is-mobile .smart-sync-common > .setting-item.smart-sync-identity-row > .setting-item-info {
+  display:flex; flex-direction:row; align-items:center; flex:1 1 0; width:auto;
+  min-width:min(100%, calc(5em + 8px)); align-self:center; margin:0; gap:8px;
+}
+.smart-sync-identity-row .setting-item-name { flex:0 0 auto; white-space:nowrap; }
+.smart-sync-identity-row .setting-item-description { flex:1 1 auto; min-width:0; margin:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.smart-sync-identity-row .setting-item-info[role="button"] { cursor:pointer; }
+.smart-sync-identity-row .setting-item-info[role="button"]:focus-visible { outline:2px solid var(--interactive-accent); outline-offset:2px; }
+.smart-sync-common > .setting-item.smart-sync-identity-row > .setting-item-control,
+.is-mobile .smart-sync-common > .setting-item.smart-sync-identity-row > .setting-item-control {
+  flex:0 0 auto; width:auto; max-width:100%; margin:0; justify-content:flex-end; gap:8px;
+}
+.smart-sync-identity-row .setting-item-control button { padding-inline:10px; }
+.smart-sync-devices-row .setting-item-description { display:none; }

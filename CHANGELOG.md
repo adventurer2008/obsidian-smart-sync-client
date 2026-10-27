@@ -1,5 +1,11 @@
 # Source change record
 
+## Unreleased — CHG-20261027-19 — Single-line identity information
+
+Requirements: U425/R435; DEC416. The user requested compact account, notebook and device information and asked whether iPad, phone and desktop can support it. Give each block its own inline label/value/action row across both host containers. Long values ellipsize without removal; pointer/Enter/Space opens a read-only full-value modal, scoped to the current identity and detached on view cleanup. Device pairing instructions remain in the existing Add device flow and are hidden from the compact overview row. Retain existing action routes, 44px mobile targets, safe wrapping at large text and all synchronization functions.
+
+Validation: fixed Node26.12.1 Client tests202/202 and both regional builds/isolation passed. A focused regression exercises full-value pointer/keyboard access, stale-scope refusal and cleanup. Sixteen real local-browser fixture combinations across modern/legacy containers, actual pane widths320/390/600/about749px and16/24px text found no row/button overflow and mobile controls at least44px. Default text keeps each identity block in one row; enlarged text may wrap safely. Pure synthetic preview, not physical iPad/phone acceptance. No publication or installation.
+
 ## Unreleased — CHG-20261027-18 — Inline connection details
 
 Requirements: U424/R434; DEC415. The user approved showing only connection state on the settings homepage and folding transfer counters into details, and asked where details would be. Add a native Connection details disclosure immediately below the existing LAN status, opening in place rather than navigating elsewhere. Default closed; retain the current open state across view refreshes. Keep measured LAN/cloud payloads and fallback counters in the disclosure and explain that fallback means switching to cloud, not rolling back notes. Preserve live updates, identity/disposal guards and synchronization behavior. Six LAN/settings regressions and both regional builds/isolation passed. Initial test expected only the six settings groups; refine its selector to those unchanged groups and separately assert the new disclosure/default state/preserved open state. Source and synthetic preview only; no installation or publication.

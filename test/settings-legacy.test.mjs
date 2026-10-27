@@ -6,7 +6,8 @@ registerHooks({ resolve(specifier, context, next) { return specifier === 'obsidi
 globalThis.window = globalThis;
 const { IndependentSettings } = await import('../src/plugin.js');
 const { default: IndependentSync } = await import('../src/plugin.js');
-const { PluginSettingTab } = await import('./obsidian-double.mjs');
+const { PluginSettingTab, modals } = await import('./obsidian-double.mjs');
+const { Setting } = await import('./settings-dom-sdk.mjs');
 const { Platform } = await import('./obsidian-double.mjs');
 const { cleanConfiguration } = await import('../src/configuration.js');
 
@@ -34,6 +35,28 @@ function fixture(t) {
 	t.after(() => { tab.hide(); dom.window.close(); });
 	return { tab, plugin, timers };
 }
+
+test('compact identity value opens fully with pointer or keyboard and rejects a changed scope', t => {
+	const { tab, plugin } = fixture(t);
+	plugin.secret = key => key === 'account' ? 'synthetic-account-key' : '';
+	plugin.accountEmail = 'a-very-long-synthetic-account@example.invalid';
+	const flatten = items => items.flatMap(item => item.items ? flatten(item.items) : [item]);
+	const definition = flatten(tab.getSettingDefinitions()).find(item => item.name === '当前账号');
+	const setting = new Setting(tab.containerEl);
+	const info = setting.settingEl.createDiv({ cls: 'setting-item-info' });
+	const description = info.createDiv({ cls: 'setting-item-description' });
+	setting.setDesc = text => { description.textContent = text; return setting; };
+	const dispose = definition.render(setting);
+	const before = modals.length;
+	info.click();
+	assert.equal(modals.length, before + 1);
+	assert.equal(modals.at(-1).contentEl.children[0].text, plugin.accountEmail);
+	info.dispatchEvent(new info.ownerDocument.defaultView.KeyboardEvent('keydown', { key: 'Enter' }));
+	assert.equal(modals.length, before + 2);
+	plugin.data.settings.workspace = 'different-scope';
+	info.click(); assert.equal(modals.length, before + 2);
+	dispose(); info.click(); assert.equal(modals.length, before + 2);
+});
 
 test('legacy host renders all shared definitions offline, refreshes and releases listeners/timers', async t => {
 	const { tab, plugin, timers } = fixture(t);

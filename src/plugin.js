@@ -4862,23 +4862,34 @@ export class IndependentSettings extends PluginSettingTab {
 			row(
 				t(name),
 				(setting) => {
+					let fullValue;
+					const info = setting.settingEl?.querySelector('.setting-item-info');
 					const update = () => {
 						const identity = plugin.overviewIdentity;
-						setting.setDesc(
-							!plugin.data.settings.workspace
+						fullValue = !plugin.data.settings.workspace
 								? (name === 'overview.account' && plugin.secret('account') ? (plugin.accountEmail || t('notebooks.accountSignedIn')) : t(name === 'overview.account' ? 'overview.signedOut' : 'sync.notConnected'))
 								: identityScope() === scopeKey && identity?.scope === scopeKey && identity[field]
 									? identity[field]
-									: t(fallback),
-						);
+									: t(fallback);
+						setting.setDesc(fullValue);
+						if (info) { info.title = fullValue; info.setAttribute('aria-label', `${t(name)}：${fullValue}`); }
 					};
 					update();
+					const showValue = () => {
+						if (plugin.stopped || identityScope() !== scopeKey) return;
+						new ChoiceWindow(this.app, t(name), area => area.createEl('p', { text: fullValue })).open();
+					};
+					const showFromKey = event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); showValue(); } };
+					if (info) {
+						info.setAttribute('role', 'button'); info.tabIndex = 0;
+						info.addEventListener('click', showValue); info.addEventListener('keydown', showFromKey);
+					}
 					for (const [label, method, argument] of buttons)
 						bindAction(setting, t(label), () => plugin[method](argument));
 					setting.settingEl?.classList.add('smart-sync-identity-row');
 					plugin.statusListeners ??= new Set();
 					plugin.statusListeners.add(update);
-					return () => plugin.statusListeners.delete(update);
+					return () => { plugin.statusListeners.delete(update); info?.removeEventListener('click', showValue); info?.removeEventListener('keydown', showFromKey); };
 				},
 				t(name === 'overview.account' ? 'overview.accountSearch' : 'overview.notebookSearch'),
 			);
@@ -4934,6 +4945,7 @@ export class IndependentSettings extends PluginSettingTab {
 			t('overview.devices'),
 			(setting) => {
 				setting.setDesc(t(connected ? 'overview.approveHelp' : 'overview.pairHelp'));
+				setting.settingEl?.classList.add('smart-sync-devices-row');
 				if (connected) {
 					bindAction(setting, t('overview.deviceManagement'), () => plugin.devices());
 					bindAction(setting, t('overview.addDevice'), () => plugin.addDevice());
