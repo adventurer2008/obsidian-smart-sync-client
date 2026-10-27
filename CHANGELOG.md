@@ -1,5 +1,9 @@
 # Source change record
 
+## Unreleased — CHG-20261027-14 — Compact synchronization actions and rename records
+
+Requirements: U421/R431; DEC412. The user requested renaming the Chinese Sync tasks and records entry to Sync records and reducing loose spacing in the narrow preview. Update its shared label, command/title and Chinese status references. Make the manual-sync/Stop group and records group compact inline actions in both legacy/modern containers, remove their separating borders and full-width empty rows, and reduce mobile identity-row gaps. Retain all actions, responsive wrapping and mobile 44px touch targets. No publication or replacement of released 1.0.7 assets.
+
 ## Unreleased — CHG-20261027-13 — Inset settings overview content
 
 Requirements: U420/R430; DEC411. After updating to 1.0.7 the user reported that settings content sits too close to the left card edge on desktop and iPad. Overview row styling removes horizontal padding; add a shared, bounded 16–24px inline inset to both modern and legacy overview containers. Preserve controls, mobile wrapping, original modification times and synchronization behavior. This is a follow-up source fix; do not replace published 1.0.7 assets or deploy automatically. Browser/layout and build verification recorded after execution; physical iPad acceptance remains separate.
@@ -272,3 +276,5 @@ Requirement: U346/R356; DEC337. Stop showing a completed normal payment as a per
 Requirements: U347/R357; DEC338. Collect all maintained changes since 0.1.82 for staging-first delivery with full regression. Include CN purchase and renewal, the 100MB free plan and paid upgrades, current/upcoming periods, compact checkout and account cards, and Community CSS corrections. Preserve synchronization, original file modification times and regional isolation. Server 0.1.27 verifies payments and owns entitlement, refund and mail state. Global billing stays disabled. Real payment/refund, inbox receipt and device acceptance are separate gates; no production promotion or public Release is authorized.
 
 CHG-20261027-13 validation: actual local browser fixtures using Obsidian 1.14.5 CSS covered modern/legacy containers, desktop/tablet/phone before/after and 20 mobile width/font combinations. Visible pane widths ranged 320–749px (larger requested widths were constrained by the browser panel); font sizes 16/24px. No measured row/button overflow, all mobile buttons at least 44px tall, wide-pane actions share a line, narrow panes remain stacked. Modern tablet synthetic overview height fell from894px to678px; legacy from926px to698px. These are synthetic layout checks, not physical-device acceptance. Both regional builds/isolation and diff checks passed. No installation or publication.
+
+CHG-20261027-14 validation: fixed Node26.12.1 Client regression 201/201, both regional builds and isolation passed. Sixteen actual browser fixture combinations found no row/button overflow and all mobile buttons at least44px. At default16px font the three actions share a line even at320/390px; larger text wraps safely. Synthetic preview only, no physical-device acceptance or publication.

@@ -401,3 +401,31 @@
     justify-content: flex-start;
   }
 }
+
+/* CHG-20261027-14: compact action groups wrap together without empty full-width rows. */
+.smart-sync-common > .setting-item.smart-sync-overview-action,
+.is-mobile .smart-sync-common > .setting-item.smart-sync-overview-action {
+  display: inline-flex;
+  flex: 0 1 auto;
+  width: auto;
+  margin: 4px 8px 8px 0;
+  padding: 0;
+  border: 0;
+  vertical-align: top;
+}
+.smart-sync-common > .setting-item.smart-sync-overview-action > .setting-item-control,
+.is-mobile .smart-sync-common > .setting-item.smart-sync-overview-action > .setting-item-control {
+  flex: 0 1 auto;
+  width: auto;
+  max-width: 100%;
+  justify-content: flex-start;
+  gap: 8px;
+}
+.smart-sync-common > .setting-item.smart-sync-overview-action button {
+  padding-inline: 12px;
+  white-space: nowrap;
+}
+.is-mobile .smart-sync-common > .setting-item.smart-sync-identity-row {
+  padding-block: 8px;
+  row-gap: 6px;
+}
