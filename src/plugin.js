@@ -59,6 +59,7 @@ import { desktopFiles } from './desktop.js';
 import { createBackgroundTray } from './background-tray.js';
 import {
 	emptyState,
+	IncrementalInventory,
 	NotebookSynchronizer,
 	pendingAttachment,
 	recordRename,
@@ -761,6 +762,7 @@ export default class IndependentSync extends Plugin {
 						for (const view of this.noteSearchViews) view.invalidate(file, oldPath);
 						this.idleRounds = 0;
 						this.inventoryRevision = (this.inventoryRevision ?? 0) + 1;
+						for (const inventory of this.incrementalInventories?.values() ?? []) inventory.changed(event, file?.path);
 						if (event === 'create' && file instanceof TFile && this.startupInventory.delete(file.path)) {
 							const stat = file.stat;
 							if (stat && [stat.size, stat.mtime, stat.ctime].every(Number.isFinite) && Object.values(this.data.connections).some(state => {
@@ -2172,6 +2174,8 @@ export default class IndependentSync extends Plugin {
 			stopped: () => this.stopped || api.signal.aborted,
 			onPluginStateChanged: () => { this.pluginStateRestartPending = true; },
 		});
+		this.incrementalInventories ??= new Map();
+		if (!this.incrementalInventories.has(connectionId)) this.incrementalInventories.set(connectionId, new IncrementalInventory());
 		this.idleScans ??= new Map();
 		if (!this.idleScans.has(connectionId)) this.idleScans.set(connectionId, {});
 		// Configuration files can change outside vault events, so they retain full scans.
@@ -2189,6 +2193,23 @@ export default class IndependentSync extends Plugin {
 		if (this.lanPeers) this.lanPeers.resumeCache = receiveCache;
 		const engine = new NotebookSynchronizer({
 			contentPriorities: this.contentPriorities.get(connectionId),
+			incrementalInventory: this.incrementalInventories.get(connectionId),
+			commitJournal: this.checkpoints ? {
+				current: () => this.data.commitJournals?.[connectionId],
+				write: async journal => {
+					this.ensureCurrent(api);
+					this.data.commitJournals ??= {};
+					this.data.commitJournals[connectionId] = journal;
+					await this.checkpoints.saveConfiguration(this.data);
+				},
+				clear: async () => {
+					const journal = this.data.commitJournals?.[connectionId];
+					delete this.data.commitJournals?.[connectionId];
+					try { await this.checkpoints.saveConfiguration(this.data); }
+					catch (error) { this.data.commitJournals[connectionId] = journal; throw error; }
+				},
+			} : undefined,
+			scanPolicy: allowIdleScan && configurationVersion !== undefined ? JSON.stringify([this.data.settings, this.lanPeers?.mode ?? 'both', configurationVersion]) : undefined,
 			saveRequired,
 			scanCache: this.idleScans.get(connectionId),
 			scanVersion: allowIdleScan && configurationVersion !== undefined ? () => JSON.stringify([this.inventoryRevision ?? 0, this.data.settings, this.lanPeers?.mode ?? 'both', configurationVersion]) : undefined,

@@ -1,5 +1,13 @@
 # Source change record
 
+## Unreleased — CHG-20261027-04 — Incremental inventory and durable commit recovery
+
+Requirements: U410/R420; DEC401. The user requested incremental scanning and commit recovery while retaining existing functions and original modification times, with tests and a measured before/after comparison. Independently implement the mechanisms without copying third-party source.
+
+Automatic cycles reuse a bounded, event-guided inventory for known modified files, with full inventory on startup, structural/policy/remote changes, errors and a 60-second audit. Manual/configuration scans, deletion checks and pre-publication body/time rechecks remain. Persist a bounded intent before publishing ordinary/batch uploads or deletions; reconcile uncertain results using authenticated existing revision history after restart. Reuse lightweight configuration persistence and retain checkpoint batching. Recovery repairs metadata without writing local content or replacing original modification times.
+
+Validation: Node 26.12.1 Client tests passed (Windows 201; WSL 200 plus one platform skip), both regional builds/isolation passed, Community lint has zero errors and five existing warnings. Integration regressions cover real loopback service/disk checkpoint restart, lost replies, single/batch deletion, conflicts, rename, cancellation, 512 MiB convergence and original times; one Windows transient rename failure passed unchanged on retry, and WSL build-fixture platform configuration was corrected before retesting. Synthetic 10,000-file warm-inventory medians fell by about 86–87% for one/three edits; cold 500-file batching cost about 9% more, and forced individual publication cost about 109% more. These are local synthetic measurements, not mobile/public-network acceptance. No installation, version change, release or deployment.
+
 ## 1.0.6 cumulative delivery — CHG-20261026-24
 
 Requirements: U401/R411; U403/R413; U404/R414; DEC392/394/395. The user explicitly included the completed background-tray and compact-task-panel changes in the current production delivery. Preserve persistent manual-stop semantics while a window is hidden or restored. Run unified fixed-candidate verification before release; earlier preview acceptance and synthetic checks are not production proof.
