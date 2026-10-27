@@ -70,6 +70,9 @@ const englishEditionFailures = {
 	EDITION_SERVICE_MISMATCH: 'This connection belongs to another sync service. Use the matching edition. Local notes are preserved.',
 };
 export const messages = {
+	'overview.card': '同步概览',
+	'overview.compactSpace': '本地 {local} · 云端 {server}',
+	'overview.pairHint': '新设备先获取六位码，再在本设备点“添加设备”批准。',
 	'lan.disabled': '已关闭',
 	'lan.statusTitle': '局域网连接状态',
 	'lan.unsupported': '当前宿主不支持直连，使用云端',
@@ -707,6 +710,9 @@ export const messages = {
 };
 // Draft only: no English language option is released.
 export const englishDraft = {
+	'overview.card': 'Sync overview',
+	'overview.compactSpace': 'Local {local} · Cloud {server}',
+	'overview.pairHint': 'Get a six-digit code on the new device, then approve it with Add device here.',
 	'lan.details': 'Connection details',
 	'lan.fallbackHelp': 'Fallbacks count direct transfers that switched to the cloud, not note version rollbacks.',
 	'configuration.desktopSkipped': 'Skipped: desktop-only plugins are not applied on mobile; other content continues syncing.',

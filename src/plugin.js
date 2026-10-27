@@ -4711,7 +4711,6 @@ export class IndependentSettings extends PluginSettingTab {
 				'msg_b848f4c702',
 				'version.title',
 				'msg_d871435514',
-				'msg_507c2d5815',
 				'msg_36e7a43a1c',
 				'msg_6dc05b92e9',
 			].map((key) => t(key)),
@@ -4770,7 +4769,10 @@ export class IndependentSettings extends PluginSettingTab {
 				const cleanup = definition.render?.(setting);
 				const element = setting.settingEl;
 				if (!element) return cleanup;
+				this.containerEl.classList.add('smart-sync-settings-page');
 				(group?.listEl ?? element.parentElement).classList.add('smart-sync-common');
+				if ([t('version.title'), t('msg_b848f4c702'), '我的套餐'].includes(definition.name))
+					(group?.listEl ?? element.parentElement).classList.add('smart-sync-layout-root');
 				if (definition.name === t('version.title')) element.classList.add('smart-sync-version');
 				if (definition.name === t('msg_b848f4c702')) element.classList.add('smart-sync-title');
 				if (definition.name === t('sections.status') || actions.has(definition.name)) {
@@ -4788,6 +4790,14 @@ export class IndependentSettings extends PluginSettingTab {
 				return cleanup;
 			},
 		});
+		const overviewItem = definition => {
+			const decorated = present(definition);
+			return { ...decorated, render: (setting, group) => {
+				const cleanup = decorated.render(setting, group);
+				(group?.listEl ?? setting.settingEl?.parentElement)?.classList.add('smart-sync-overview-card');
+				return cleanup;
+			} };
+		};
 		const connected = Boolean(config.workspace);
 		const identityScope = () =>
 			`${plugin.data.settings.origin}|${plugin.data.settings.workspace}|${plugin.data.localId}`;
@@ -4797,10 +4807,20 @@ export class IndependentSettings extends PluginSettingTab {
 			let disposed = false;
 			let phase = plugin.overviewStatusText ?? plugin.status.textContent ?? plugin.status.text ?? t('sections.disconnected');
 			let server = t('overview.spaceUnknown'), local = t('overview.spaceUnknown'), sizeLoading = false, lastDescription;
+			const descriptionEl = setting.descEl ?? setting.settingEl?.querySelector('.setting-item-description');
+			const phaseEl = descriptionEl?.createSpan({ cls: 'smart-sync-status-phase' });
+			const spaceEl = descriptionEl?.createSpan({ cls: 'smart-sync-status-storage' });
 			const update = (text) => {
 				phase = text;
 				const description = connected ? t('overview.statusSpace', { state: phase, server, local }) : phase;
-				if (description !== lastDescription) { setting.setDesc(description); lastDescription = description; }
+				if (description !== lastDescription) {
+					if (phaseEl && spaceEl) {
+						phaseEl.setText(phase);
+						phaseEl.classList.toggle('is-synced', phase === t('overview.synced'));
+						spaceEl.setText(connected ? t('overview.compactSpace', { server, local }) : '');
+					} else setting.setDesc(description);
+					lastDescription = description;
+				}
 			};
 			const refreshSizes = async () => {
 				if (disposed || sizeLoading || !connected || identityScope() !== scopeKey) return;
@@ -4872,24 +4892,15 @@ export class IndependentSettings extends PluginSettingTab {
 									? identity[field]
 									: t(fallback);
 						setting.setDesc(fullValue);
-						if (info) { info.title = fullValue; info.setAttribute('aria-label', `${t(name)}：${fullValue}`); }
+						if (info) info.title = fullValue;
 					};
 					update();
-					const showValue = () => {
-						if (plugin.stopped || identityScope() !== scopeKey) return;
-						new ChoiceWindow(this.app, t(name), area => area.createEl('p', { text: fullValue })).open();
-					};
-					const showFromKey = event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); showValue(); } };
-					if (info) {
-						info.setAttribute('role', 'button'); info.tabIndex = 0;
-						info.addEventListener('click', showValue); info.addEventListener('keydown', showFromKey);
-					}
 					for (const [label, method, argument] of buttons)
 						bindAction(setting, t(label), () => plugin[method](argument));
-					setting.settingEl?.classList.add('smart-sync-identity-row');
+					setting.settingEl?.classList.add('smart-sync-identity-row', field === 'label' ? 'smart-sync-library-row' : 'smart-sync-account-row');
 					plugin.statusListeners ??= new Set();
 					plugin.statusListeners.add(update);
-					return () => { plugin.statusListeners.delete(update); info?.removeEventListener('click', showValue); info?.removeEventListener('keydown', showFromKey); };
+					return () => plugin.statusListeners.delete(update);
 				},
 				t(name === 'overview.account' ? 'overview.accountSearch' : 'overview.notebookSearch'),
 			);
@@ -4946,6 +4957,7 @@ export class IndependentSettings extends PluginSettingTab {
 			(setting) => {
 				setting.setDesc(t(connected ? 'overview.approveHelp' : 'overview.pairHelp'));
 				setting.settingEl?.classList.add('smart-sync-devices-row');
+				setting.settingEl?.createEl('p', { cls: 'smart-sync-pair-help', text: t(connected ? 'overview.pairHint' : 'overview.pairHelp') });
 				if (connected) {
 					bindAction(setting, t('overview.deviceManagement'), () => plugin.devices());
 					bindAction(setting, t('overview.addDevice'), () => plugin.addDevice());
@@ -4996,13 +5008,13 @@ export class IndependentSettings extends PluginSettingTab {
 		});
 		return [
 			...header.map(present),
-			present(status),
-			present(lan),
-			present(account),
+			{ type: 'group', name: t('overview.card'), cls: 'smart-sync-overview-group', items: [
+				...(accountConnected ? [overviewItem(notebook)] : []),
+				overviewItem(account), overviewItem(devices), overviewItem(status),
+				...common.filter(item => !header.includes(item)).map(overviewItem),
+				overviewItem(lan),
+			] },
 			...(billing ? [present(billing)] : []),
-			...(accountConnected ? [present(notebook)] : []),
-			present(devices),
-			...common.filter((item) => !header.includes(item)).map(present),
 			fold(t('overview.moreAccount'), t('overview.moreAccountHelp'), [
 				open(t('msg_87e1f4cf91'), 'eraseAccount'),
 			]),
