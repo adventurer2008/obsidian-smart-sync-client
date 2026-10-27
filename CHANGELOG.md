@@ -1,10 +1,13 @@
 # Source change record
 
-## Unreleased — CHG-20261027-17 — Compact paired-device summaries
+## 1.0.9 planned — CHG-20261027-17 — Compact paired-device summaries
 
 Requirements: U423/R433; DEC414. The user requested placing Paired devices and Refresh on one header row and showing only the vault measurement timestamp in device summaries, then requested a screenshot. Put the existing refresh action in the native modal title (retain a fallback for test/older hosts), remove duplicate visible activity time while preserving its full value in device details, and flow state, vault size/measurement and revoke action inline where width permits. Keep one full-width card per device, safe narrow wrapping, online/offline/unknown values, all revoke permissions/confirmations and mobile 44px refresh target. Three device/vault regressions and both regional builds/isolation passed; local screenshot uses synthetic devices, not physical-host acceptance. Not published or installed.
 
 User preview refinement: align the revoke action to the trailing edge of every card. Use a wrapping flex row and an automatic inline margin so the action stays right-aligned even when it moves onto another line. Preserve summary content, permissions and confirmations. Synthetic preview verified and regional builds passed; no publication.
+
+User acceptance and release assignment (2026-10-27): the user approved the final compact device preview, including title/Refresh on one row, one visible measurement timestamp and right-aligned revoke actions, and requested delivery with the next version. Queue the complete CHG-20261027-17 change for 1.0.9 after released 1.0.8; no standalone deployment, installation or replacement of existing assets. This records visual preview acceptance, not physical-device or production acceptance. Documentation-only assignment; existing verification retained.
+
 
 ## 1.0.8 release preparation — CHG-20261027-15
 
