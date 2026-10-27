@@ -1,5 +1,9 @@
 # Source change record
 
+## 1.1.0 release preparation — CHG-20261028-110-BATCH-CLOCK — Deterministic batch recovery regression
+
+Full release validation retained a failure in the 128-file atomic checkpoint test when real encrypted preparation exceeded its one-second batch wait bound under concurrent load. Freeze only the test's Date clock so this size-bound case deterministically submits 128 files. Keep all atomic retirement, failure/restart, notification, exact revision and original-mtime assertions; do not alter runtime batching or remove the failed evidence. A new immutable candidate must rerun the full release flow.
+
 ## 1.1.0 release preparation — CHG-20261028-110-RELEASE — UI refresh and synchronization performance
 
 Requirement: the user superseded the planned 1.0.12 assignment with 1.1.0, identified the UI refresh as a major highlight and authorized full release validation and delivery after the work is complete. Include all pending BUTTON-STYLE, narrow enlarged-text repair, DOWNLOAD-SPEED and JOURNAL-SPEED changes, plus maintained UI regression gates. Preserve all functionality, encryption, original modification times, Stop and recovery. Use the full profile; staging, production, public publication and physical-device acceptance retain separate evidence. Earlier release assets remain unchanged.
