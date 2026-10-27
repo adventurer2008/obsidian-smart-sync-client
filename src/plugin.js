@@ -1220,6 +1220,8 @@ export default class IndependentSync extends Plugin {
 			await this.downloadNoteAttachments(this.app.workspace.getActiveFile());
 	}
 	async downloadNoteAttachments(file) {
+		// New navigation supersedes queued work and stops the old note after its current attachment.
+		const request = this.attachmentOpenRequest = (this.attachmentOpenRequest ?? 0) + 1;
 		if (!(file instanceof TFile) || !file.path.toLowerCase().endsWith('.md')) return;
 		const settings = this.data.settings;
 		if (
@@ -1234,7 +1236,8 @@ export default class IndependentSync extends Plugin {
 		if (
 			this.stopped || this.stopping || this.data.manualSyncStopped ||
 			this.running ||
-			scope !== `${settings.origin}|${settings.workspace}` ||
+			request !== this.attachmentOpenRequest ||
+			scope !== `${this.data.settings.origin}|${this.data.settings.workspace}` ||
 			settings.attachmentMiB !== 0 ||
 			settings.direction === 'paused'
 		)
@@ -1277,6 +1280,7 @@ export default class IndependentSync extends Plugin {
 				this.ensureCurrent(api);
 				if (
 					this.stopped ||
+					request !== this.attachmentOpenRequest || this.stopping || this.data.manualSyncStopped ||
 					this.data.settings.direction === 'paused' ||
 					this.data.settings.attachmentMiB !== 0
 				)

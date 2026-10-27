@@ -472,8 +472,8 @@ export class NotebookSynchronizer {
 	}
 	async #load(address) {
 		this.assertActive();
-		const task = this.#active,
-			before = task?.bytes ?? 0;
+		const task = this.#active;
+		let reported = 0;
 		if (this.#cachedObjects.has(address)) {
 			const bytes = this.#cachedObjects.get(address);
 			this.#cachedObjects.delete(address);
@@ -487,12 +487,13 @@ export class NotebookSynchronizer {
 		if (this.#windowManifests.has(address)) return this.#windowManifests.get(address);
 		const bytes = await this.timed('download', () => this.api.load(address, ({ loaded, total }) => {
 			if (!task) return;
-			task.bytes = before + loaded;
-			task.total = Math.max(task.total, before + total, task.bytes);
+			task.bytes += Math.max(0, loaded - reported);
+			reported = Math.max(reported, loaded);
+			task.total = Math.max(task.total, task.bytes + Math.max(0, total - loaded));
 			void this.onTask({ ...task, status: 'progress' }).catch(() => {});
 		}));
 		if (task) {
-			task.bytes = before + bytes.length;
+			task.bytes += Math.max(0, bytes.length - reported);
 			task.total = Math.max(task.total, task.bytes);
 			await this.onTask({ ...task, status: 'progress' });
 		}
@@ -852,6 +853,8 @@ export class NotebookSynchronizer {
 			const wantsBytes =
 				force || info.path.toLowerCase().endsWith('.md') || info.path.startsWith('__smart_sync_configuration__/') || (this.attachmentLimit > 0 && info.bytes <= this.attachmentLimit);
 			if (wantsBytes) {
+				// Explicit attachment opens use a bounded window; background cycles retain their existing scheduling.
+				const downloadOptions = { concurrency: force ? 4 : 1, signal: this.api.signal };
 				const resumedLoad = info.bytes > 8 * 1024 * 1024 && this.api.resumeCache
 					? this.api.resumeCache.loader(load, info.segments.map(piece => piece.address)) : load;
 				if (
@@ -871,12 +874,13 @@ export class NotebookSynchronizer {
 						sinkFor,
 						info,
 						this.onTiming,
+						downloadOptions,
 					);
 				} else {
 					const file =
 						decoded ??
 						(await this.api.peerContents?.(entry.note, entry.manifest, info, undefined, this.onTiming)) ??
-						(await unpackNote(this.keys, this.api.workspace, entry.note, entry.manifest, resumedLoad, info, this.onTiming));
+						(await unpackNote(this.keys, this.api.workspace, entry.note, entry.manifest, resumedLoad, info, this.onTiming, downloadOptions));
 					this.assertActive();
 					const written = await this.host.write(info.path, file.contents, info.mtime);
 					if (typeof written?.stamp === 'string' && this.host.stamp && written.stamp === await this.host.stamp(info.path)) {
