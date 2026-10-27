@@ -1,5 +1,12 @@
 # Source change record
 
+## Unreleased — CHG-20261027-TRAY-SAVE-DEFERRAL — Finish vault close after host saves
+
+Requirement: on 2026-10-27 the user confirmed that the released 1.0.9 tray menu Close this vault still left both tray icons. The host can prevent the first unload while awaiting save promises and then close again. Do not interpret will-prevent-unload alone as cancellation: retain the explicit close intent through that retry. An explicit tray restore or close error restores normal background behavior; repeated close clicks during pending saves do not start another attempt. Destroy this vault's tray during pagehide/unload while renderer-to-main calls still work, with closed/dispose retained as fallback. Never force-destroy the production window or quit other vaults.
+
+Validation: two added regressions fail on the released implementation and pass with the fix; 212/212 combined Client tests, both regional builds/isolation and Community lint (zero errors, five existing warnings) passed under Node26.12.1. An isolated native Electron43.7.7 runtime test using real BrowserWindows, Tray objects, remote calls and deferred beforeunload saves reproduced the old stuck window/tray, then verified the fix waits for the save, closes only its window, destroys its tray before closed and preserves the other window/tray. This is a synthetic Electron harness, not a real Obsidian vault session. Real-user two-vault acceptance remains pending. No version change, installation, publication or service deployment. Unrelated concurrent styles.css changes are excluded from this fix.
+
+
 ## 1.0.9 release preparation — CHG-20261027-109-RELEASE
 
 Requirement: on 2026-10-27 the user authorized all planned changes plus per-user application history in one quick production release. Include the final accepted integrated settings overview, inline connection details, compact paired devices, bounded LAN contention waiting/cache reuse and vault-local tray closing; pair Server 0.1.35 for application history under matching user details. Preserve encryption, all existing actions and original modification times. Quick validation omits only the two approved local content-churn rounds; all other paired, staging, production and public artifact gates remain. Preparation is not publication; physical acceptance remains separate.
