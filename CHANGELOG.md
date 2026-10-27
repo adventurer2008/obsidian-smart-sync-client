@@ -1,6 +1,8 @@
 # Source change record
 
-## Unreleased — CHG-20261027-04 — Incremental inventory and durable commit recovery
+## 1.0.7 planned — CHG-20261027-04 — Incremental inventory and durable commit recovery
+
+Release assignment — U411/R421; DEC402; CHG-20261027-05: on 2026-10-27 the user requested inclusion in the next release. Queue both incremental inventory and commit recovery for 1.0.7 alongside the existing planned fixes. Preserve the recorded performance/correctness boundaries and original modification times. This assignment does not publish or install a version, deploy a service or replace released 1.0.6 assets.
 
 Requirements: U410/R420; DEC401. The user requested incremental scanning and commit recovery while retaining existing functions and original modification times, with tests and a measured before/after comparison. Independently implement the mechanisms without copying third-party source.
 
