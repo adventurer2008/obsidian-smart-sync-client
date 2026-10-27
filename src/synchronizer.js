@@ -559,9 +559,9 @@ export class NotebookSynchronizer {
 			return 1;
 		}
 	}
-	async #persist() {
+	async #persist(count = 1) {
 		unsavedStates.add(this.state);
-		this.#pendingSaves++;
+		this.#pendingSaves += count;
 		if (
 			!this.#batching ||
 			this.#pendingSaves >= this.checkpointSize ||
@@ -577,8 +577,9 @@ export class NotebookSynchronizer {
 			journal.entries.every(item => (this.state.notes[item.note]?.revision ?? 0) >= item.receipt.sequence);
 		if (retire) delete this.state.pendingCommit;
 		try {
-			await this.save(this.snapshotBeforeSave ? structuredClone(this.state) : this.state);
-			if (retire) await this.commitJournal.clear();
+			await this.save(this.snapshotBeforeSave ? structuredClone(this.state) : this.state,
+				retire && this.commitJournal.atomicCheckpoint === true ? { retireCommit: journal } : undefined);
+			if (retire) await this.commitJournal.clear({ checkpointed: this.commitJournal.atomicCheckpoint === true });
 		} catch (error) {
 			if (retire) this.state.pendingCommit = journal;
 			this.#checkpointFailed = true; throw error;
@@ -1274,6 +1275,7 @@ export class NotebookSynchronizer {
 		const used = new Set(Object.keys(this.state.notes));
 		let queuedBytes = 0, queuedStartedAt = 0;
 		const flushUploads = async () => {
+			const groupedCheckpoint = this.commitJournal && this.checkpointSize > 1;
 			const jobs = this.#queuedUploads.splice(0);
 			queuedBytes = 0;
 			queuedStartedAt = 0;
@@ -1305,8 +1307,10 @@ export class NotebookSynchronizer {
 					byPath.set(job.path, [job.id, this.state.notes[job.id]]);
 					if (job.contents !== undefined) rememberBase(this.state, job.id, job.contents);
 					this.#completed.push({ ...job.task, status: 'done', workMilliseconds: Math.max(0, performance.now() - job.task.workStartedAt), completedAt: performance.now() });
-					await this.#persist();
+					if (!groupedCheckpoint) await this.#persist();
 				}
+				// The durable intent covers the entire bounded batch until every receipt is applied.
+				if (groupedCheckpoint) await this.#persist(jobs.length);
 				await this.#finishCommit(false, true);
 			} catch (error) {
 				for (const job of jobs) await this.onTask({ ...job.task, status: 'failed', error }).catch(() => {});

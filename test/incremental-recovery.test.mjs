@@ -147,6 +147,27 @@ function journalStore() {
  return {current:()=>structuredClone(durable),write:async value=>{writes++;durable=structuredClone(value);},clear:async()=>{durable=undefined;},writes:()=>writes};
 }
 
+for (const failCheckpoint of [false, true]) test(`whole-batch checkpoint retires intent atomically and survives applied-save failure=${failCheckpoint}`, async () => {
+ const f=fixture(); for(let n=0;n<128;n++)f.set(`batch${n}.md`,`body ${n}`);
+ let saved=emptyState(), durableJournal, fail=failCheckpoint, clearWrites=0, done=0;
+ const sizes=[];
+ const journal={atomicCheckpoint:true,current:()=>structuredClone(durableJournal),write:async value=>{durableJournal=structuredClone(value);},
+  clear:async({checkpointed=false}={})=>{if(!checkpointed)clearWrites++;durableJournal=undefined;}};
+ const engine=()=>f.engine({state:structuredClone(saved),direction:'send',batchTransfer:true,batchFiles:128,batchWaitMs:1000,
+  checkpointSize:100,checkpointInterval:1000000,commitJournal:journal,
+  save:async(state,{retireCommit}={})=>{
+   sizes.push(Object.keys(state.notes).length);
+   if(retireCommit && fail){fail=false;throw Error('atomic checkpoint unavailable');}
+   saved=structuredClone(state);if(retireCommit)durableJournal=undefined;
+  },onTask:async event=>{if(event.status==='done'){assert.ok(saved.notes[event.note]?.downloaded);assert.equal(saved.pendingCommit,undefined);done++;}}});
+ if(failCheckpoint){await assert.rejects(engine().run(),/atomic checkpoint unavailable/);assert.equal(durableJournal.phase,'prepared');}
+ await engine().run();
+ assert.equal(f.revisions.length,128);assert.equal(Object.keys(saved.notes).length,128);assert.equal(durableJournal,undefined);
+ assert.ok(sizes.every(size=>size===0||size===128));
+ if(!failCheckpoint){assert.equal(clearWrites,0);assert.equal(done,128);}
+ for(const path of f.files.keys())assert.equal(f.times.get(path),originalTime);
+});
+
 test('lightweight journals retain checkpoint batching and recover all uncheckpointed receipts after a restart', async () => {
  const f=fixture(),journal=journalStore();
  for(let n=0;n<80;n++)f.set(`n${n}.md`,`body ${n}`);
