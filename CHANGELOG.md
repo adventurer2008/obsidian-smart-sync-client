@@ -382,3 +382,8 @@ CHG-20261027-21 copy refinement: shorten the approved pairing hint to “新设�
 CHG-20261027-21 final wording: user explicitly selected the exact sentence “新设备获取六位码，本机点‘添加设备’批准。” for the1.0.9 pairing hint. Replace the earlier abbreviated wording and retain the guidance regression. Text-only refinement; no installation or publication.
 
 CHG-20261027-21 matching dialog wording: user requested updating the Add device dialog hint to match the concise homepage instructions. Its Chinese approval help now reads “新设备获取六位码，本机点‘批准新设备’批准。” using the actual dialog button label. Homepage continues to name its Add device entry. Existing pairing flow and approval actions unchanged; queue with1.0.9, no installation or publication.
+
+
+## 1.0.10 delivery confirmation — CHG-20261027-ULTRA-RELEASE-EXEC
+
+The user-authorized China release1.0.10 is published. All11 release assets passed anonymous download/hash verification and latest points to1.0.10. Settings refresh/disclosure, narrow-cover/large-font/iPad layout and tray save-deferral fixes are included. Synthetic/browser and isolated native-Electron evidence remains distinct from physical mobile/Obsidian acceptance, which is pending. Original modification times and existing functions are preserved.
