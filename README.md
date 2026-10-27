@@ -38,6 +38,6 @@ Copyright (c) 2026 lihy. New Client candidates after the existing 0.1.81 release
 
 ## Host compatibility
 
-On desktop, Advanced → Run in background with tray icon (immediately after Enable note search) is on by default. Closing a vault window keeps it running behind the branded tray icon; click the icon to restore the window or use its menu to quit Obsidian. Turning the switch off restores normal closing. This does not configure launch at login or hide the window on startup. Mobile does not show this setting. Hosts without usable Electron tray support retain normal closing.
+On desktop, Advanced → Run in background with tray icon (immediately after Enable note search) is on by default. Closing a vault window keeps it running behind the branded tray icon; click the icon to restore the window or use its menu to close only that vault; other open vaults keep running. Turning the switch off restores normal closing. This does not configure launch at login or hide the window on startup. Mobile does not show this setting. Hosts without usable Electron tray support retain normal closing.
 
 Version 1.0.5 supports Obsidian 1.12.7 and newer through shared legacy and declarative settings definitions. Offline installation does not provide offline cloud synchronization. Native-host acceptance is recorded separately from synthetic tests.
