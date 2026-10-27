@@ -72,7 +72,7 @@ const englishEditionFailures = {
 export const messages = {
 	'overview.card': '同步概览',
 	'overview.compactSpace': '本地 {local} · 云端 {server}',
-	'overview.pairHint': '新设备取六位码，本机点“添加设备”批准。',
+	'overview.pairHint': '新设备获取六位码，本机点‘添加设备’批准。',
 	'lan.disabled': '已关闭',
 	'lan.statusTitle': '局域网连接状态',
 	'lan.unsupported': '当前宿主不支持直连，使用云端',
