@@ -313,7 +313,7 @@ export const messages = {
 	'overview.addDevice': '添加设备',
 	'overview.switchHelp':
 		'更换笔记库前，请先在顶部退出当前账号，本机笔记会保留。创建笔记库需要使用账号登录密钥。',
-	'overview.approveHelp': '在新设备上获取六位码，再由这台已连接的设备批准。',
+	'overview.approveHelp': '新设备获取六位码，本机点‘批准新设备’批准。',
 	'overview.pairHelp': '也可以由已经连接的设备批准，让这台设备加入同步。',
 	'overview.moreAccount': '更多账号操作',
 	'overview.moreAccountHelp': '注销账号并删除全部云端数据，原登录密钥将失效',

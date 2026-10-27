@@ -321,3 +321,5 @@ CHG-20261027-21 isolated-source verification: archived staged tree e4c168b384a2f
 CHG-20261027-21 copy refinement: shorten the approved pairing hint to “新设备取六位码，本机点‘添加设备’批准。” while retaining the new-device, six-digit-code and approval instructions. Seven settings regressions passed. The actual-definition mobile preview at390px viewport/300px hint width renders it in one20.47px line (20.48px line height); narrow or enlarged-text layouts may still wrap safely. Queue with1.0.9; no publication.
 
 CHG-20261027-21 final wording: user explicitly selected the exact sentence “新设备获取六位码，本机点‘添加设备’批准。” for the1.0.9 pairing hint. Replace the earlier abbreviated wording and retain the guidance regression. Text-only refinement; no installation or publication.
+
+CHG-20261027-21 matching dialog wording: user requested updating the Add device dialog hint to match the concise homepage instructions. Its Chinese approval help now reads “新设备获取六位码，本机点‘批准新设备’批准。” using the actual dialog button label. Homepage continues to name its Add device entry. Existing pairing flow and approval actions unchanged; queue with1.0.9, no installation or publication.
