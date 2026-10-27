@@ -1182,10 +1182,36 @@ export default class IndependentSync extends Plugin {
 	}
 	async setAttachmentDownload(mode) {
 		if (!['always', 'on-note-open'].includes(mode)) throw Error('Invalid attachment mode');
-		if (this.running) throw operationBusy();
-		await this.setting('attachmentMiB', mode === 'always' ? 256 : 0);
+		if (this.running && !this.stopRun) throw operationBusy();
+		const binding = this.editorBinding();
+		const previousSave = this.attachmentSave;
+		// Stop drains writes asynchronously. Reserve the settings change now so a
+		// manual/automatic cycle cannot resume with the old policy during the save.
+		this.configurationPending = (this.configurationPending ?? 0) + 1;
+		const saving = (async () => {
+			await previousSave?.catch(() => {});
+			await this.stopRun;
+			if (this.stopped || binding !== this.editorBinding()) throw Error('Configuration scope changed');
+			if (this.running) throw operationBusy();
+			const previous = this.data.settings.attachmentMiB;
+			const connection = this.data.connections[`${new URL(this.data.settings.origin).origin}|${this.data.settings.workspace}`];
+			const cursor = connection?.cursor;
+			const plan = this.pendingPlan;
+			try { await this.setting('attachmentMiB', mode === 'always' ? 256 : 0); }
+			catch (error) {
+				this.data.settings.attachmentMiB = previous;
+				if (connection) connection.cursor = cursor;
+				this.pendingPlan = plan;
+				throw error;
+			}
+		})().finally(() => {
+			this.configurationPending--;
+			if (this.attachmentSave === saving) this.attachmentSave = undefined;
+		});
+		this.attachmentSave = saving;
+		await saving;
 		this.tab?.update();
-		if (mode === 'on-note-open')
+		if (mode === 'on-note-open' && !this.configurationPending)
 			await this.downloadNoteAttachments(this.app.workspace.getActiveFile());
 	}
 	async downloadNoteAttachments(file) {
@@ -4543,8 +4569,14 @@ export class IndependentSettings extends PluginSettingTab {
 						})
 						.setValue(config.attachmentMiB === 0 ? 'on-note-open' : 'always')
 						.onChange(async (value) => {
-							await plugin.setAttachmentDownload(value);
-							this.update();
+							input.setDisabled(true);
+							try { await plugin.setAttachmentDownload(value); }
+							catch (error) { plugin.notify(failureMessage(error)); }
+							finally {
+								input.setValue(plugin.data.settings.attachmentMiB === 0 ? 'on-note-open' : 'always');
+								input.setDisabled(false);
+								this.update();
+							}
 						}),
 				),
 			),

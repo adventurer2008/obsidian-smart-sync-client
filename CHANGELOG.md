@@ -1,5 +1,7 @@
 # Source change record
 
+Commit assignment (2026-10-27; CHG-20261027-02/03): the user explicitly requested committing all five pending files and including both fixes, their regression tests and this record in 1.0.7. Revalidated the combined current tree with Node 26.12.1: 201/201 Client tests, both regional builds and isolation checks passed; Community lint has zero errors and five existing warnings. Physical phone/vivo acceptance remains pending. This source commit does not install, publish, deploy or replace 1.0.6 assets; version metadata is assigned during release preparation.
+
 ## 1.0.7 planned — CHG-20261027-04 — Incremental inventory and durable commit recovery
 
 Release assignment — U411/R421; DEC402; CHG-20261027-05: on 2026-10-27 the user requested inclusion in the next release. Queue both incremental inventory and commit recovery for 1.0.7 alongside the existing planned fixes. Preserve the recorded performance/correctness boundaries and original modification times. This assignment does not publish or install a version, deploy a service or replace released 1.0.6 assets.
@@ -9,6 +11,22 @@ Requirements: U410/R420; DEC401. The user requested incremental scanning and com
 Automatic cycles reuse a bounded, event-guided inventory for known modified files, with full inventory on startup, structural/policy/remote changes, errors and a 60-second audit. Manual/configuration scans, deletion checks and pre-publication body/time rechecks remain. Persist a bounded intent before publishing ordinary/batch uploads or deletions; reconcile uncertain results using authenticated existing revision history after restart. Reuse lightweight configuration persistence and retain checkpoint batching. Recovery repairs metadata without writing local content or replacing original modification times.
 
 Validation: Node 26.12.1 Client tests passed (Windows 201; WSL 200 plus one platform skip), both regional builds/isolation passed, Community lint has zero errors and five existing warnings. Integration regressions cover real loopback service/disk checkpoint restart, lost replies, single/batch deletion, conflicts, rename, cancellation, 512 MiB convergence and original times; one Windows transient rename failure passed unchanged on retry, and WSL build-fixture platform configuration was corrected before retesting. Synthetic 10,000-file warm-inventory medians fell by about 86–87% for one/three edits; cold 500-file batching cost about 9% more, and forced individual publication cost about 109% more. These are local synthetic measurements, not mobile/public-network acceptance. No installation, version change, release or deployment.
+
+## 1.0.7 planned — CHG-20261027-03 — Persist attachment policy after stopping
+
+Requirement: on 2026-10-27 the user reported that their vivo phone continued downloading all attachments and the selector returned to Always, even after pressing Stop and selecting On note open. The source rejects policy changes while the asynchronous Stop operation is still draining, and the selector previously left the rejected value visible without reporting the error. This is a confirmed source defect consistent with the report; the phone's exact event timing has not been captured.
+
+Reserve policy changes while Stop drains, wait for its completion, serialize policy saves and prevent a new synchronization cycle until persistence finishes. On storage failure restore the prior policy, feed cursor and pending review plan. Disable the selector while applying, restore its saved value and show an error on rejection. Preserve explicit manual resumption, downloaded copies, note-open downloads and original modification times. Queue with the existing 1.0.7 work; do not replace installed or published 1.0.6 assets.
+
+Validation: 184 Client synthetic tests passed with Node 26.12.1, including Stop-drain selection, policy persistence across restart/manual resume, blocked resume during saving, storage-failure rollback and selector error feedback. Both regional builds and isolation checks passed; Community lint reported zero errors and five existing warnings. Physical vivo acceptance remains pending. No installation, publication or service deployment.
+
+## 1.0.7 planned — CHG-20261027-02 — Mobile settings layout repair
+
+Release assignment: on 2026-10-27 the user requested inclusion in the next release after installed 1.0.6. Queue this fix for 1.0.7; do not publish immediately or replace 1.0.6 assets. CHG-20261027-02 distinguishes this repair from the private 1.0.6 delivery receipt numbered CHG-20261027-01.
+
+Requirement: user Android screenshots of installed 1.0.6 show clipped account/library buttons, a wrapped Sync now label and large empty identity rows; the user requested a fix. Reset text/control flex bases for mobile column rows, stack identity controls within the pane, give action rows full width and wrap whole manual-action buttons instead of splitting their labels. Preserve desktop layout, mobile touch targets and all controls. This patch does not replace published 1.0.6 assets or install/publish a new version. Physical-device acceptance remains pending.
+
+Validation: 181 Client tests, both regional builds and isolation checks passed; Community lint has zero errors and five existing warnings. A local Chrome fixture using the installed Obsidian 1.14.5 host stylesheet exercised 48 layout combinations across legacy/modern containers, mobile/desktop, 320/390/600/768 px viewports and 16/24 px fonts, with additional mobile column overrides. Mobile cases keep controls inside the pane, identity rows bounded, and the two manual-action labels on one line with at least 44 px touch targets. The previous stylesheet reproduced clipped controls and a split Sync now label in the modern mobile fixture. This is synthetic layout evidence, not acceptance on the reporting Android phone or its theme/WebView.
 
 ## 1.0.6 cumulative delivery — CHG-20261026-24
 
