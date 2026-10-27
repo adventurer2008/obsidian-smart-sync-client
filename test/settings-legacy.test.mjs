@@ -70,7 +70,7 @@ test('integrated overview preserves all identity and synchronization routes and 
 		if (cleanup) cleanups.push(cleanup);
 		for (const control of setting.controls) if (control.kind === 'button') await control.click();
 	}
-	assert.match(tab.containerEl.querySelector('.smart-sync-pair-help').textContent, /新设备先获取六位码/);
+	assert.match(tab.containerEl.querySelector('.smart-sync-pair-help').textContent, /新设备取六位码.*添加设备.*批准/);
 	assert.deepEqual(calls, ['manageNotebooks', 'signOut', 'devices', 'addDevice', 'requestSynchronization', 'stopSynchronization', 'logs']);
 	for (const cleanup of cleanups) cleanup();
 });
