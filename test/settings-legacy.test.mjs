@@ -28,7 +28,7 @@ function fixture(t) {
 	t.mock.method(window, 'clearInterval', id => timers.delete(id));
 	const plugin = { data: { localId: 'synthetic', settings: { origin: 'https://example.invalid', workspace: '', direction: 'both', interval: 60, excludedExtensions: [], configuration: cleanConfiguration({}) } },
 		manifest: { version: '1.0.5' }, status: { text: 'Disconnected' }, secret: () => '', registerInterval() {},
-		lanSummary: () => 'Offline', checkClientVersion: async () => undefined, statusListeners: new Set(),
+		lanSummary: (details = false) => details ? '局域网已收 1 KB · 回退 3 次' : 'Offline', checkClientVersion: async () => undefined, statusListeners: new Set(),
 		setting: async (key, value) => { plugin.data.settings[key] = value; } };
 	const tab = new IndependentSettings({}, plugin); tab.containerEl = dom.window.document.querySelector('main');
 	t.after(() => { tab.hide(); dom.window.close(); });
@@ -43,13 +43,20 @@ test('legacy host renders all shared definitions offline, refreshes and releases
 	const count = definitions.reduce((sum, item) => sum + (item.items?.length ?? 1), 0);
 	tab.display();
 	assert.equal(tab.containerEl.querySelectorAll('.setting-item').length, count);
-	assert.equal(tab.containerEl.querySelectorAll('details').length, definitions.filter(item => item.type === 'group').length);
+	assert.equal(tab.containerEl.querySelectorAll('details.smart-sync-section').length, definitions.filter(item => item.type === 'group').length);
+	const connectionDetails = tab.containerEl.querySelector('details.smart-sync-lan-details');
+	assert.equal(connectionDetails.open, false);
+	assert.equal(connectionDetails.querySelector('summary').textContent, '连接详情');
+	assert.match(connectionDetails.textContent, /局域网已收 1 KB.*回退 3 次/);
+	connectionDetails.open = true;
+	connectionDetails.dispatchEvent(new connectionDetails.ownerDocument.defaultView.Event('toggle'));
 	assert.ok(count > 50); assert.equal(timers.size, 2);
-	const first = tab.containerEl.querySelector('details'); first.open = true;
+	const first = tab.containerEl.querySelector('details.smart-sync-section'); first.open = true;
 	first.dispatchEvent(new first.ownerDocument.defaultView.Event('toggle'));
 	const toggle = [...tab.containerEl.querySelectorAll('.setting-item')].flatMap(el => el.setting.controls).find(control => control.kind === 'toggle');
 	await toggle.change(false); assert.equal(plugin.data.settings.autoChanges, false);
-	tab.update(); assert.equal(timers.size, 2); assert.equal(tab.containerEl.querySelector('details').open, true);
+	tab.update(); assert.equal(timers.size, 2); assert.equal(tab.containerEl.querySelector('details.smart-sync-section').open, true);
+	assert.equal(tab.containerEl.querySelector('details.smart-sync-lan-details').open, true);
 	assert.equal(plugin.statusListeners.size, 3); // Overview, LAN and the adjacent quick-stop state.
 	tab.hide(); assert.equal(timers.size, 0); assert.equal(plugin.statusListeners.size, 0);
 	finishVersion('9.0.0'); await Promise.resolve();

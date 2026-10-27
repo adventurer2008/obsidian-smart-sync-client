@@ -76,6 +76,8 @@ export const messages = {
 	'lan.connected': '已直连 {count} 台设备',
 	'lan.cloud': '暂无直连，使用云端',
 	'lan.summary': '{state}。本次连接密文：局域网已收 {received}、已发 {sent}；云端已收 {cloud}；回退 {fallbacks} 次。',
+	'lan.details': '连接详情',
+	'lan.fallbackHelp': '回退次数指直连未取得内容后转用云端的次数，不是笔记版本回退。',
 	'sync.waitingStage': '仍在等待：{stage}。可停止本轮；若仍无法结束，请保存后重启 Obsidian。',
 	'sync.stage.connecting': '连接同步服务',
 	'sync.stage.unlocking': '解锁同步密钥',
@@ -705,6 +707,8 @@ export const messages = {
 };
 // Draft only: no English language option is released.
 export const englishDraft = {
+	'lan.details': 'Connection details',
+	'lan.fallbackHelp': 'Fallbacks count direct transfers that switched to the cloud, not note version rollbacks.',
 	'configuration.desktopSkipped': 'Skipped: desktop-only plugins are not applied on mobile; other content continues syncing.',
 	'notes.recentEnabled': 'Enable recent files',
 	'notes.recentEnabledHelp': 'Use the clock tab in the left sidebar or the Recent files command. Turning this off stops recording opened files.',

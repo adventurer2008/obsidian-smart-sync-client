@@ -1,5 +1,9 @@
 # Source change record
 
+## Unreleased — CHG-20261027-18 — Inline connection details
+
+Requirements: U424/R434; DEC415. The user approved showing only connection state on the settings homepage and folding transfer counters into details, and asked where details would be. Add a native Connection details disclosure immediately below the existing LAN status, opening in place rather than navigating elsewhere. Default closed; retain the current open state across view refreshes. Keep measured LAN/cloud payloads and fallback counters in the disclosure and explain that fallback means switching to cloud, not rolling back notes. Preserve live updates, identity/disposal guards and synchronization behavior. Six LAN/settings regressions and both regional builds/isolation passed. Initial test expected only the six settings groups; refine its selector to those unchanged groups and separately assert the new disclosure/default state/preserved open state. Source and synthetic preview only; no installation or publication.
+
 ## 1.0.9 planned — CHG-20261027-17 — Compact paired-device summaries
 
 Requirements: U423/R433; DEC414. The user requested placing Paired devices and Refresh on one header row and showing only the vault measurement timestamp in device summaries, then requested a screenshot. Put the existing refresh action in the native modal title (retain a fallback for test/older hosts), remove duplicate visible activity time while preserving its full value in device details, and flow state, vault size/measurement and revoke action inline where width permits. Keep one full-width card per device, safe narrow wrapping, online/offline/unknown values, all revoke permissions/confirmations and mobile 44px refresh target. Three device/vault regressions and both regional builds/isolation passed; local screenshot uses synthetic devices, not physical-host acceptance. Not published or installed.

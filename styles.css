@@ -442,3 +442,10 @@
 .smart-sync-device-card > p + p::before { content:' · '; }
 .smart-sync-device-card > .setting-item { display:inline-flex; flex:0 0 auto; width:auto; margin:0 0 0 auto; padding:0 0 0 12px; background:transparent; }
 .smart-sync-device-card > .setting-item .setting-item-control { width:auto; margin:0; padding:0; }
+
+/* CHG-20261027-18: keep connection diagnostics behind an inline disclosure. */
+.smart-sync-common .setting-item.smart-sync-lan-status { row-gap:4px; }
+.smart-sync-lan-status > .smart-sync-lan-details { flex:0 0 100%; width:100%; min-width:0; font-size:var(--font-ui-small); }
+.smart-sync-lan-details > summary { cursor:pointer; color:var(--text-muted); list-style-position:inside; }
+.smart-sync-lan-details > p { margin:6px 0; line-height:1.6; overflow-wrap:anywhere; }
+.is-mobile .smart-sync-lan-details > summary { min-height:44px; align-content:center; }

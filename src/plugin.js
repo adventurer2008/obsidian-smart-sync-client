@@ -1841,13 +1841,13 @@ export default class IndependentSync extends Plugin {
 		}).open();
 		return report;
 	}
-	lanSummary() {
+	lanSummary(details = false) {
 		const stats = this.lanPeers?.snapshot();
 		const state = !this.data.settings.workspace ? t('sync.notConnected')
 			: this.data.settings.lanAcceleration === false ? t('lan.disabled')
 			: stats?.supported === false ? t('lan.unsupported')
 			: stats?.connected ? t('lan.connected', { count: stats.connected }) : t('lan.cloud');
-		return t('lan.summary', { state, received: formatStorageSize(stats?.receivedBytes ?? 0), sent: formatStorageSize(stats?.sentBytes ?? 0), cloud: formatStorageSize(stats?.cloudBytes ?? 0), fallbacks: stats?.fallbacks ?? 0 });
+		return details ? t('lan.summary', { state, received: formatStorageSize(stats?.receivedBytes ?? 0), sent: formatStorageSize(stats?.sentBytes ?? 0), cloud: formatStorageSize(stats?.cloudBytes ?? 0), fallbacks: stats?.fallbacks ?? 0 }) : state;
 	}
 	workspaceApi(origin, ...args) {
 		assertEditionOrigin(origin);
@@ -4898,9 +4898,22 @@ export class IndependentSettings extends PluginSettingTab {
 		]);
 		const lan = row(t('lan.statusTitle'), setting => {
 			let timer, disposed = false;
+			setting.settingEl?.classList.add('smart-sync-lan-status');
+			const details = setting.settingEl?.createEl('details', { cls: 'smart-sync-lan-details' });
+			details?.createEl('summary', { text: t('lan.details') });
+			if (details) {
+				details.open = this.expanded.has('lan.details');
+				details.addEventListener('toggle', () => {
+					if (details.open) this.expanded.add('lan.details');
+					else this.expanded.delete('lan.details');
+				});
+			}
+			const metrics = details?.createEl('p');
+			details?.createEl('p', { text: t('lan.fallbackHelp') });
 			const update = () => {
 				if (disposed || plugin.stopped || identityScope() !== scopeKey) { window.clearInterval(timer); return; }
 				setting.setDesc(plugin.lanSummary());
+				metrics?.setText(plugin.lanSummary(true));
 			};
 			update(); timer = window.setInterval(update, 1000); plugin.registerInterval(timer);
 			return () => { disposed = true; window.clearInterval(timer); };
