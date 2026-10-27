@@ -1,5 +1,9 @@
 # Source change record
 
+## 1.0.7 release preparation — CHG-20261027-10
+
+Requirements: U416/R426; DEC407. The user authorized including all implemented unreleased changes in a full China production release. Include mobile settings layout, Stop-drain attachment policy persistence, incremental inventory and durable commit recovery; pair with Server 0.1.33 for the approved concise mail and purchase storage notice, plus concise public documentation from fixed private tools. Preserve original modification times and existing features. Full fixed-candidate Windows/WSL, staging, production and anonymous public asset verification remain required. iPad acceptance was reported passed by the user; vivo policy/mobile layout physical checks remain pending, not synthetic passes. This preparation is not publication.
+
 Commit assignment (2026-10-27; CHG-20261027-02/03): the user explicitly requested committing all five pending files and including both fixes, their regression tests and this record in 1.0.7. Revalidated the combined current tree with Node 26.12.1: 201/201 Client tests, both regional builds and isolation checks passed; Community lint has zero errors and five existing warnings. Physical phone/vivo acceptance remains pending. This source commit does not install, publish, deploy or replace 1.0.6 assets; version metadata is assigned during release preparation.
 
 ## 1.0.7 planned — CHG-20261027-04 — Incremental inventory and durable commit recovery
