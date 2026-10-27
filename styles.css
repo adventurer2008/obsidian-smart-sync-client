@@ -429,3 +429,16 @@
   padding-block: 8px;
   row-gap: 6px;
 }
+
+/* CHG-20261027-17: one device summary and a shared title/refresh row. */
+.smart-sync-device-header { display:flex; flex-wrap:wrap; align-items:center; gap:8px 16px; padding-inline-end:28px; }
+.smart-sync-device-header > .setting-item { margin:0 0 0 auto; padding:0; border:0; background:transparent; }
+.smart-sync-device-header > .setting-item .setting-item-info,
+.smart-sync-device-card > .setting-item .setting-item-info { display:none; }
+.smart-sync-device-list { display:flex; flex-direction:column; gap:8px; }
+.is-mobile .smart-sync-device-header button { min-height:44px; }
+.smart-sync-device-card { padding:10px 12px; width:100%; box-sizing:border-box; }
+.smart-sync-device-card > p { display:inline; line-height:1.7; }
+.smart-sync-device-card > p + p::before { content:' · '; }
+.smart-sync-device-card > .setting-item { display:inline-flex; width:auto; margin:0 0 0 10px; padding:0; vertical-align:middle; background:transparent; }
+.smart-sync-device-card > .setting-item .setting-item-control { width:auto; margin:0; padding:0; }

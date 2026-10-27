@@ -202,7 +202,7 @@ export const messages = {
 	'device.this': '此设备',
 	'device.loading': '正在读取设备列表…',
 	'device.unnamed': '未设置名称',
-	'device.state': '{label} · {status} · 活跃 {seen}',
+	'device.state': '{label} · {status}',
 	'device.online': '在线',
 	'device.offline': '离线',
 	'device.never': '暂无记录',

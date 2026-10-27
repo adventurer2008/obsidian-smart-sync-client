@@ -1,5 +1,9 @@
 # Source change record
 
+## Unreleased — CHG-20261027-17 — Compact paired-device summaries
+
+Requirements: U423/R433; DEC414. The user requested placing Paired devices and Refresh on one header row and showing only the vault measurement timestamp in device summaries, then requested a screenshot. Put the existing refresh action in the native modal title (retain a fallback for test/older hosts), remove duplicate visible activity time while preserving its full value in device details, and flow state, vault size/measurement and revoke action inline where width permits. Keep one full-width card per device, safe narrow wrapping, online/offline/unknown values, all revoke permissions/confirmations and mobile 44px refresh target. Three device/vault regressions and both regional builds/isolation passed; local screenshot uses synthetic devices, not physical-host acceptance. Not published or installed.
+
 ## 1.0.8 release preparation — CHG-20261027-15
 
 Requirements: U422/R432; DEC413. The user authorized all implemented unreleased changes for a quick China production release: shared overview inset, compact wide-mobile layout, concise Sync records actions and references; pair Server0.1.34 for the approved compact operator UI and application actions, and include the existing public note-encryption documentation. Quick approval skips only the two local content-churn large-file rounds; retain focused regression, remaining integration/integrity tests, build/source checks, all Windows/WSL paired jobs and staging/production/public gates. Preserve every existing function and original modification time. Preparation is not publication; physical-device layout acceptance remains separate.

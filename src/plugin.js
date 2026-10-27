@@ -4058,12 +4058,11 @@ export default class IndependentSync extends Plugin {
 			}
 		};
 		const dialog = new ChoiceWindow(this.app, t('msg_43935c12b5'), (container) => {
+			if (!dialog.titleEl) action(container, t('device.refresh'), refresh);
 			if (!entries) {
 				container.createEl('p', { text: loadError ?? t('device.loading') });
-				if (loadError) action(container, t('device.refresh'), refresh);
 				return;
 			}
-			action(container, t('device.refresh'), refresh);
 			const revoked = entries.filter(device => device.revoked);
 			const active = entries.some(device => !device.revoked) ? container.createDiv({ cls: 'smart-sync-device-list' }) : undefined;
 			const history = revoked.length ? container.createEl('details', { cls: 'smart-sync-device-history' }) : undefined;
@@ -4079,9 +4078,6 @@ export default class IndependentSync extends Plugin {
 							: device.online
 								? t('device.online')
 								: t('device.offline'),
-						seen: device.lastSeen
-							? new Date(device.lastSeen).toLocaleString(locale, { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })
-							: t('device.never'),
 					}),
 				});
 				deviceInfo.title = `${device.id}${device.accountDevice ? ` · ${t('notebooks.accountDevice')}` : ''}${device.lastSeen ? ` · ${new Date(device.lastSeen).toLocaleString(locale)}` : ''}`;
@@ -4117,6 +4113,10 @@ export default class IndependentSync extends Plugin {
 		});
 		dialog.onClose = () => { closed = true; dialog.contentEl.empty(); };
 		dialog.open();
+		if (dialog.titleEl) {
+			dialog.titleEl.classList.add('smart-sync-device-header');
+			action(dialog.titleEl, t('device.refresh'), refresh);
+		}
 		dialog.ready = refresh();
 		await dialog.ready;
 		return dialog;
