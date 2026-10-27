@@ -1,12 +1,25 @@
 # Source change record
 
-## Unreleased — CHG-20261027-22 — Responsive overview with enlarged mobile text
+## 1.0.10 planned — CHG-20261027-110-SCOPE
+
+Release assignment (2026-10-27): the user requested the tray save-deferral fix together with all other unreleased changes in Client 1.0.10. Queue d719e60 (vault close intent through host saves and early tray teardown), afa342d (enlarged mobile text and iPad toolbar alignment), and the in-progress native device-row refresh pairing-hint deduplication with its regression. Include complete successor implementations and tests when freezing the candidate; do not omit an item because it originated in another chat. Preserve existing functionality, full identities, pairing guidance, 44px mobile targets and original modification times. Pending work is not yet accepted by this assignment.
+
+This records release scope only. Keep current version metadata and published 1.0.9 assets unchanged; no installation, publication or service deployment. Retain the recorded synthetic/native-Electron versus real-Obsidian acceptance boundaries, and validate the final combined committed candidate during release preparation.
+
+
+## 1.0.10 planned — CHG-20261027-23 — Consolidate unpublished Client changes
+
+Requirements: U428/R438; DEC419. The user accepted the responsive repair and requested including it together with all other unpublished changes in1.0.10. Queue CHG22 mobile font/iPad alignment repairs, TRAY-SAVE-DEFERRAL vault-local close after deferred host saves and the pending native-settings pairing-hint refresh repair. Reused native device rows remove the previous custom pairing hint before rendering the current connected/disconnected instruction, retaining one hint across repeated refreshes. The new regression exercises both account states over repeated renders.
+
+Validation: fixed Node26.12.1 combined Client suite213/213 passed; regional builds/isolation and the160 responsive cases are recorded under CHG22. Real mobile and two-vault Obsidian acceptance remain pending. This is release scheduling and source consolidation; version metadata remains1.0.9 until release preparation. No publication, installation, service deployment or replacement of existing release assets. Server has no new unpublished runtime change in this inventory.
+
+## 1.0.10 planned — CHG-20261027-22 — Responsive overview with enlarged mobile text
 
 Requirements: U427/R437; DEC418. The user reported a lowered Sync records button on iPad 1.0.9 and supplied phone screenshots at different system font sizes showing vertically squeezed device labels, excessive stacking and split action labels. Align action groups at their top edge, constrain feedback within the manual group and reserve toolbar width from current UI font metrics. On narrow containers, put identity labels/actions before a full-width value row; wrap whole action buttons when space runs out. Reserve intrinsic width for the device label and wrap device actions instead. Keep full values, pairing guidance, accessible feedback, all existing routes and 44px mobile targets. Notebook text follows the host UI font; plan headings balance wrapping.
 
 Validation: Node26.12.1 both regional builds/isolation and diff whitespace checks passed. 160 real-browser synthetic-host cases cover legacy/modern containers, phone320/390, iPad1024, PC1440, actual UI text16/20/24/28/32px and idle/success/error/long feedback. No checked element overflow, vertical device label, same-row button misalignment or mobile target below44px; iPad/PC action buttons remain on one row. Earlier synthetic large-font checks incorrectly let the native mobile class override the fixture font variables; the fixture now drives the host preferred font size and reads the actual computed label font. At very large text/narrow widths, whole actions and values may wrap intentionally. Physical mobile acceptance remains pending; source fix only, no installation/publication or version change.
 
-## Unreleased — CHG-20261027-TRAY-SAVE-DEFERRAL — Finish vault close after host saves
+## 1.0.10 planned — CHG-20261027-TRAY-SAVE-DEFERRAL — Finish vault close after host saves
 
 Requirement: on 2026-10-27 the user confirmed that the released 1.0.9 tray menu Close this vault still left both tray icons. The host can prevent the first unload while awaiting save promises and then close again. Do not interpret will-prevent-unload alone as cancellation: retain the explicit close intent through that retry. An explicit tray restore or close error restores normal background behavior; repeated close clicks during pending saves do not start another attempt. Destroy this vault's tray during pagehide/unload while renderer-to-main calls still work, with closed/dispose retained as fallback. Never force-destroy the production window or quit other vaults.
 

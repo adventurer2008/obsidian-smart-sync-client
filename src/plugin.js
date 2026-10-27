@@ -4957,6 +4957,8 @@ export class IndependentSettings extends PluginSettingTab {
 			(setting) => {
 				setting.setDesc(t(connected ? 'overview.approveHelp' : 'overview.pairHelp'));
 				setting.settingEl?.classList.add('smart-sync-devices-row');
+				// Native settings refreshes can reuse the row and leave custom children.
+				for (const previous of setting.settingEl?.querySelectorAll('.smart-sync-pair-help') ?? []) previous.remove();
 				setting.settingEl?.createEl('p', { cls: 'smart-sync-pair-help', text: t(connected ? 'overview.pairHint' : 'overview.pairHelp') });
 				if (connected) {
 					bindAction(setting, t('overview.deviceManagement'), () => plugin.devices());
