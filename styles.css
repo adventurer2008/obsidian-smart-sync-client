@@ -437,8 +437,8 @@
 .smart-sync-device-card > .setting-item .setting-item-info { display:none; }
 .smart-sync-device-list { display:flex; flex-direction:column; gap:8px; }
 .is-mobile .smart-sync-device-header button { min-height:44px; }
-.smart-sync-device-card { padding:10px 12px; width:100%; box-sizing:border-box; }
+.smart-sync-device-card { display:flex; flex-wrap:wrap; align-items:center; row-gap:6px; padding:10px 12px; width:100%; box-sizing:border-box; }
 .smart-sync-device-card > p { display:inline; line-height:1.7; }
 .smart-sync-device-card > p + p::before { content:' · '; }
-.smart-sync-device-card > .setting-item { display:inline-flex; width:auto; margin:0 0 0 10px; padding:0; vertical-align:middle; background:transparent; }
+.smart-sync-device-card > .setting-item { display:inline-flex; flex:0 0 auto; width:auto; margin:0 0 0 auto; padding:0 0 0 12px; background:transparent; }
 .smart-sync-device-card > .setting-item .setting-item-control { width:auto; margin:0; padding:0; }
