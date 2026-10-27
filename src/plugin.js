@@ -4921,6 +4921,7 @@ export class IndependentSettings extends PluginSettingTab {
 		const lan = row(t('lan.statusTitle'), setting => {
 			let timer, disposed = false;
 			setting.settingEl?.classList.add('smart-sync-lan-status');
+			for (const previous of setting.settingEl?.querySelectorAll('.smart-sync-lan-details') ?? []) previous.remove();
 			const details = setting.settingEl?.createEl('details', { cls: 'smart-sync-lan-details' });
 			const summary = details?.createEl('summary');
 			summary?.createSpan({ cls: 'smart-sync-lan-title', text: t('lan.statusTitle') });
@@ -4929,6 +4930,7 @@ export class IndependentSettings extends PluginSettingTab {
 			if (details) {
 				details.open = this.expanded.has('lan.details');
 				details.addEventListener('toggle', () => {
+					if (disposed) return;
 					if (details.open) this.expanded.add('lan.details');
 					else this.expanded.delete('lan.details');
 				});
@@ -4942,7 +4944,12 @@ export class IndependentSettings extends PluginSettingTab {
 				metrics?.setText(plugin.lanSummary(true));
 			};
 			update(); timer = window.setInterval(update, 1000); plugin.registerInterval(timer);
-			return () => { disposed = true; window.clearInterval(timer); };
+			return () => {
+				disposed = true; window.clearInterval(timer);
+				if (details?.open) this.expanded.add('lan.details');
+				else this.expanded.delete('lan.details');
+				details?.remove();
+			};
 		});
 		const billing = edition.edition === 'cn' ? row('我的套餐', setting => {
 			const credential = plugin.secret('account') || plugin.secret('access');
@@ -4959,12 +4966,13 @@ export class IndependentSettings extends PluginSettingTab {
 				setting.settingEl?.classList.add('smart-sync-devices-row');
 				// Native settings refreshes can reuse the row and leave custom children.
 				for (const previous of setting.settingEl?.querySelectorAll('.smart-sync-pair-help') ?? []) previous.remove();
-				setting.settingEl?.createEl('p', { cls: 'smart-sync-pair-help', text: t(connected ? 'overview.pairHint' : 'overview.pairHelp') });
+				const help = setting.settingEl?.createEl('p', { cls: 'smart-sync-pair-help', text: t(connected ? 'overview.pairHint' : 'overview.pairHelp') });
 				if (connected) {
 					bindAction(setting, t('overview.deviceManagement'), () => plugin.devices());
 					bindAction(setting, t('overview.addDevice'), () => plugin.addDevice());
 				} else bindAction(setting, t('overview.pair'), () => plugin.pairThisDevice());
 				setting.settingEl?.classList.add('smart-sync-identity-row');
+				return () => help?.remove();
 			},
 			t('overview.deviceSearch'),
 		);

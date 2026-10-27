@@ -446,4 +446,10 @@
   .smart-sync-common.smart-sync-overview-card > .setting-item.smart-sync-identity-row:not(.smart-sync-devices-row) > .setting-item-control { flex:0 0 auto; margin-inline-start:auto; }
   .smart-sync-common.smart-sync-overview-card > .setting-item.smart-sync-identity-row > .setting-item-control button { white-space:nowrap; }
 }
+/* Keep whole device actions readable on very narrow foldable covers with enlarged text. */
+@container wujie (max-width:319px) {
+  .smart-sync-common.smart-sync-overview-card > .setting-item.smart-sync-devices-row { grid-template-columns:minmax(0,1fr); }
+  .smart-sync-common.smart-sync-overview-card > .setting-item.smart-sync-devices-row > .setting-item-control { justify-self:stretch; justify-content:flex-end; }
+  .smart-sync-overview-card .smart-sync-devices-row button { flex-shrink:0; }
+}
 @media(max-width:370px) { .smart-sync-common.smart-sync-overview-card { padding:16px 16px 0; } .smart-sync-common.smart-sync-overview-card > .smart-sync-lan-status { width:calc(100% + 32px); margin-inline:-16px; padding-inline:16px; } }
