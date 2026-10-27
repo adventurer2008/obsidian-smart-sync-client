@@ -1,5 +1,26 @@
 # Source change record
 
+## 1.0.11 release preparation — CHG-20261027-111-RELEASE
+
+Requirement: the user authorized production delivery of the two completed unpublished repairs: phone/Pad on-open attachment resolution and maximized host settings width. The requested ultra profile cannot accept changes to attachment resolution in src/synchronizer.js or file-open lifecycle code; retain the existing classifier and use full validation for this combined candidate. Freeze complete source and regression inputs, preserve all user functions, encryption and original modification times. Prepare China 1.0.11; Global stays gated. Production, public publication and physical-device acceptance remain separate until verified.
+
+## 1.0.11 planned — CHG-20261027-NEXT-RELEASE-SCOPE — Consolidate unpublished repairs
+
+Release assignment (2026-10-27): the user requested preparing all unpublished changes together for the next version. China 1.0.10 is already publicly released. Queue the complete ON-OPEN-ATTACHMENTS phone/Pad deferred short-link and restored-note repair, its regressions, and the FULLSCREEN-SETTINGS host-width repair for Client 1.0.11. Include their complete successor implementations and final combined validation before freezing the candidate. Current checks remain synthetic; physical phone/Pad and real-host acceptance remain pending. Public README/user-guide encryption/contact revisions are documentation work, not a new runtime feature. This is scheduling only: do not change version metadata, install, publish, deploy or overwrite 1.0.10 assets.
+
+## Unreleased — CHG-20261027-ON-OPEN-ATTACHMENTS — Resolve missing attachment short links
+
+Requirement: the user reported that opening notes on both phone and Pad left embedded images missing with Download when opening notes selected. Deferred attachments do not exist in the local metadata link index. Resolve their shortest links against the cloud attachment inventory, preferring the note-relative path, then the vault path, then a unique path suffix. Retain ambiguity protection across pending and already downloaded files; do not guess between duplicate names. Handle the active note when the workspace layout is restored, alongside the existing file-open event. Preserve manual Stop, direction/scope guards and the existing authenticated download and original-mtime path.
+
+Validation: synthetic mobile plugin lifecycle checks cover both missing embedded images, file-open, restored active note and avoiding duplicate downloads. Resolver checks cover encoded spaces, aliases, explicit relative paths, local/root precedence, duplicate names, external links and parent traversal. Physical phone/Pad acceptance and the actual cloud presence of the reported images remain unverified. Source repair only; no installation, publication, version change or service deployment.
+
+
+## Unreleased — CHG-20261027-FULLSCREEN-SETTINGS — Respect the host settings pane width
+
+Requirement: after1.0.10 the user reported that a maximized Obsidian1.14.5 settings window collapses the plugin into a narrow vertical strip. The host already centers settings through percentage-based inline padding; limiting the same padded root to960px subtracts that padding from an artificially capped box. Let the plugin settings root fill its host pane, retaining host padding and inner group/card layouts. Preserve all actions, responsive breakpoints and synchronization behavior.
+
+Validation: a fixture using installed Obsidian1.14.5 CSS and the actual modal/sidebar/content-pane hierarchy reproduced the failure at1792px: root960px within1508px available, overview152px wide and a clipped Sync now action. The fix fills1508px and restores the host's normal700px content width. 288 Chromium/WebKit cases cover normal/maximized/4K widths, mobile widths, legacy/native-row-reuse hosts,13/16/24/32px text and light/dark themes; each checks idle, maximizing during sync and restoring/stopping. Another24 maximized cases include native implicit header grouping and verify the brand header remains present. All312 cases passed, as did214 Client tests, both regional builds/isolation and Community lint (0 errors,5 existing warnings). Earlier layout fixtures lacked the host's outer settings padding, so their passes did not cover this defect. Browser fixtures are synthetic and do not replace real-host acceptance. No installation, publication, version change, service deployment or replacement of1.0.10 assets.
+
 ## 1.0.10 release preparation — CHG-20261027-ULTRA-RELEASE-EXEC
 
 Requirement: the user explicitly authorized implementing and testing ultra release tooling and delivering today's complete1.0.10 scope through it. Include settings refresh node replacement/disclosure state, narrow-cover action wrapping, enlarged mobile fonts/iPad toolbar and tray save-deferral/early teardown. Today explicitly includes the reviewed host-lifecycle exception; retain tray tests and recorded isolated native-Electron evidence. Preserve full unit checks, targeted body/source-mtime and Stop integration, regional builds/isolation, source/artifact CI binding and staging/production/public verification. Omitted heavy jobs are recorded as omitted, never passed. This preparation does not itself confirm publication or physical-device acceptance.
