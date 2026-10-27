@@ -446,6 +446,13 @@
 /* CHG-20261027-18: keep connection diagnostics behind an inline disclosure. */
 .smart-sync-common .setting-item.smart-sync-lan-status { row-gap:4px; }
 .smart-sync-lan-status > .smart-sync-lan-details { flex:0 0 100%; width:100%; min-width:0; font-size:var(--font-ui-small); }
-.smart-sync-lan-details > summary { cursor:pointer; color:var(--text-muted); list-style-position:inside; }
+.smart-sync-lan-status > .setting-item-info { display:none; }
+.smart-sync-lan-details > summary { display:flex; flex-wrap:wrap; align-items:center; gap:4px 12px; cursor:pointer; list-style:none; }
+.smart-sync-lan-details > summary::-webkit-details-marker { display:none; }
+.smart-sync-lan-title { color:var(--text-normal); }
+.smart-sync-lan-state, .smart-sync-lan-entry { color:var(--text-muted); }
+.smart-sync-lan-title, .smart-sync-lan-entry { white-space:nowrap; }
+.smart-sync-lan-entry::before { content:'▶ '; font-size:0.8em; }
+.smart-sync-lan-details[open] > summary .smart-sync-lan-entry::before { content:'▼ '; }
 .smart-sync-lan-details > p { margin:6px 0; line-height:1.6; overflow-wrap:anywhere; }
 .is-mobile .smart-sync-lan-details > summary { min-height:44px; align-content:center; }

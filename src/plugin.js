@@ -4900,7 +4900,10 @@ export class IndependentSettings extends PluginSettingTab {
 			let timer, disposed = false;
 			setting.settingEl?.classList.add('smart-sync-lan-status');
 			const details = setting.settingEl?.createEl('details', { cls: 'smart-sync-lan-details' });
-			details?.createEl('summary', { text: t('lan.details') });
+			const summary = details?.createEl('summary');
+			summary?.createSpan({ cls: 'smart-sync-lan-title', text: t('lan.statusTitle') });
+			const connectionState = summary?.createSpan({ cls: 'smart-sync-lan-state' });
+			summary?.createSpan({ cls: 'smart-sync-lan-entry', text: t('lan.details') });
 			if (details) {
 				details.open = this.expanded.has('lan.details');
 				details.addEventListener('toggle', () => {
@@ -4913,6 +4916,7 @@ export class IndependentSettings extends PluginSettingTab {
 			const update = () => {
 				if (disposed || plugin.stopped || identityScope() !== scopeKey) { window.clearInterval(timer); return; }
 				setting.setDesc(plugin.lanSummary());
+				connectionState?.setText(plugin.lanSummary());
 				metrics?.setText(plugin.lanSummary(true));
 			};
 			update(); timer = window.setInterval(update, 1000); plugin.registerInterval(timer);

@@ -46,7 +46,9 @@ test('legacy host renders all shared definitions offline, refreshes and releases
 	assert.equal(tab.containerEl.querySelectorAll('details.smart-sync-section').length, definitions.filter(item => item.type === 'group').length);
 	const connectionDetails = tab.containerEl.querySelector('details.smart-sync-lan-details');
 	assert.equal(connectionDetails.open, false);
-	assert.equal(connectionDetails.querySelector('summary').textContent, '连接详情');
+	assert.equal(connectionDetails.querySelector('.smart-sync-lan-title').textContent, '局域网连接状态');
+	assert.equal(connectionDetails.querySelector('.smart-sync-lan-state').textContent, 'Offline');
+	assert.equal(connectionDetails.querySelector('.smart-sync-lan-entry').textContent, '连接详情');
 	assert.match(connectionDetails.textContent, /局域网已收 1 KB.*回退 3 次/);
 	connectionDetails.open = true;
 	connectionDetails.dispatchEvent(new connectionDetails.ownerDocument.defaultView.Event('toggle'));
