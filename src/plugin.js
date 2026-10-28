@@ -3215,9 +3215,29 @@ export default class IndependentSync extends Plugin {
 		return body;
 	}
 	renderTaskRows(area) {
-		this.taskStatusRows?.get(area)?.setText(t('task.stateLine', { state: this.taskSyncState() }));
-		area.empty();
-		if (this.taskSaveFailed) area.createEl('p', { text: t('msg_294afd29d6') });
+		const setText = (node, text) => { if (node.textContent !== text) node.setText(text); };
+		const status = this.taskStatusRows?.get(area);
+		if (status) setText(status, t('task.stateLine', { state: this.taskSyncState() }));
+		this.taskRowViews ??= new WeakMap();
+		let view = this.taskRowViews.get(area);
+		if (!view) {
+			area.empty();
+			view = { error: area.createEl('p'), summary: area.createEl('p'), page: area.createEl('p'), list: area.createDiv(), rows: new Map() };
+			const pagination = new Setting(area.createDiv());
+			bindAction(pagination, t('msg_c9b9ae7a61'), async () => {
+				this.taskPage = Math.max(0, (this.taskPage ?? 0) - 1); this.refreshTasks();
+			});
+			bindAction(pagination, t('msg_8a8542f696'), async () => {
+				this.taskPage = (this.taskPage ?? 0) + 1; this.refreshTasks();
+			});
+			const details = area.createEl('details');
+			details.createEl('summary', { text: t('task.recordDetails') });
+			details.createEl('p', { text: t('msg_1202d86812') });
+			view.diagnostics = details.createEl('p');
+			this.taskRowViews.set(area, view);
+		}
+		view.error.hidden = !this.taskSaveFailed;
+		setText(view.error, this.taskSaveFailed ? t('msg_294afd29d6') : '');
 		const all = this.journal.select(this.taskScope);
 		const cycle = [...all].reverse().find((row) => row.direction === 'cycle');
 		const batch = cycle
@@ -3227,8 +3247,7 @@ export default class IndependentSync extends Plugin {
 			['done', 'skipped', 'deferred'].includes(row.status),
 		).length;
 		const failed = batch.filter((row) => ['failed', 'interrupted'].includes(row.status)).length;
-		area.createEl('p', {
-			text: cycle
+		setText(view.summary, cycle
 				? t('msg_4bf9ffadb3', {
 						completed: completed,
 						length: batch.length,
@@ -3241,8 +3260,7 @@ export default class IndependentSync extends Plugin {
 									? t('msg_aa5d3b7313')
 									: t('msg_c96c0e3fa1'),
 					})
-				: t('msg_3e69303d70'),
-		});
+				: t('msg_3e69303d70'));
 		const names = {
 			send: t('msg_9e07e3c053'),
 			receive: t('msg_6e68458688'),
@@ -3258,47 +3276,43 @@ export default class IndependentSync extends Plugin {
 			deferred: t('msg_935fc43ed9'),
 			skipped: t('msg_fdfd26af96'),
 		};
-		const rows = this.journal.select(this.taskScope).slice().reverse();
+		const rows = all.slice().reverse();
 		this.taskPage = Math.min(this.taskPage ?? 0, Math.max(0, Math.ceil(rows.length / 50) - 1));
-		area.createEl('p', {
-			text: t('msg_26db91f789', {
+		setText(view.page, t('msg_26db91f789', {
 				length: rows.length,
 				value1: this.taskPage + 1,
 				value2: Math.max(1, Math.ceil(rows.length / 50)),
-			}),
-		});
-		for (const row of rows.slice(this.taskPage * 50, (this.taskPage + 1) * 50)) {
+			}));
+		const visible = rows.slice(this.taskPage * 50, (this.taskPage + 1) * 50);
+		const wanted = new Set(visible.map(row => row.id));
+		for (const [id, cached] of view.rows) if (!wanted.has(id)) { cached.node.remove(); view.rows.delete(id); }
+		for (const [index, row] of visible.entries()) {
 			const title =
 				row.direction === 'cycle'
 					? t('msg_d8876950ea')
 					: (this.journal.names.get(`${row.scope}:${row.note}`) ??
 						t('msg_3099d6379d', { value0: row.note.slice(0, 12) }));
-			area.createEl('p', {
-				text: `${new Date(row.started).toLocaleString(locale)} · ${names[row.direction]} · ${title} · ${states[row.status]} · ${formatStorageSize(row.bytes)}${row.direction === 'send' && row.total ? ` / ${formatStorageSize(row.total)} (${Math.floor((row.bytes / row.total) * 100)}%)` : ''}${row.status === 'running' && row.direction === 'receive' ? t('msg_c1a2a577cd') : ''}`,
-			});
-			if (row.skipReason === 'desktop-plugin') area.createEl('p', { text: this.journal.message(row) });
-			if (this.journal.canRetry(row, this.taskScope)) {
-				area.createEl('p', { text: this.journal.message(row) });
-				action(area, t('msg_a6d7a1c530'), async () => this.synchronize(row));
+			const text = `${new Date(row.started).toLocaleString(locale)} · ${names[row.direction]} · ${title} · ${states[row.status]} · ${formatStorageSize(row.bytes)}${row.direction === 'send' && row.total ? ` / ${formatStorageSize(row.total)} (${Math.floor((row.bytes / row.total) * 100)}%)` : ''}${row.status === 'running' && row.direction === 'receive' ? t('msg_c1a2a577cd') : ''}`;
+			const retry = this.journal.canRetry(row, this.taskScope), skipped = row.skipReason === 'desktop-plugin';
+			const message = retry || skipped ? this.journal.message(row) : '';
+			const signature = JSON.stringify([this.taskScope, text, retry, skipped, message]);
+			let cached = view.rows.get(row.id);
+			if (!cached) { cached = { node: view.list.createDiv() }; view.rows.set(row.id, cached); }
+			if (cached.signature !== signature) {
+				cached.node.empty();
+				cached.node.createEl('p', { text });
+				if (skipped) cached.node.createEl('p', { text: message });
+				if (retry) {
+					cached.node.createEl('p', { text: message });
+					action(cached.node, t('msg_a6d7a1c530'), async () => this.synchronize(row));
+				}
+				cached.signature = signature;
 			}
+			if (view.list.children[index] !== cached.node) view.list.insertBefore(cached.node, view.list.children[index] ?? null);
 		}
-		const pagination = new Setting(area.createDiv());
-		bindAction(pagination, t('msg_c9b9ae7a61'), async () => {
-			this.taskPage = Math.max(0, (this.taskPage ?? 0) - 1);
-			this.refreshTasks();
-		});
-		bindAction(pagination, t('msg_8a8542f696'), async () => {
-			this.taskPage = (this.taskPage ?? 0) + 1;
-			this.refreshTasks();
-		});
-		const details = area.createEl('details');
-		details.createEl('summary', { text: t('task.recordDetails') });
-		details.createEl('p', { text: t('msg_1202d86812') });
-		details.createEl('p', {
-			text: t('msg_b4391a4866', {
+		setText(view.diagnostics, t('msg_b4391a4866', {
 				value0: this.diagnosticPending ?? this.data.taskOutbox?.length ?? 0,
-			}),
-		});
+			}));
 	}
 	logEvent(text) {
 		this.events.push({ at: Date.now(), text });

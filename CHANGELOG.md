@@ -1,5 +1,15 @@
 # Source change record
 
+## Next release after 1.1.0 — CHG-20261028-SMALL-FILE-PIPELINE — Bounded read-ahead and local overhead
+
+Requirement: improve small-file synchronization in the approved order: next-window prefetch, incremental task-list rendering, then checkpoint capture overhead. The user explicitly cancelled parallel file receiving. Develop in an isolated checkout without replacing installed plugins or changing active comparison vaults. No release, service deployment or version change is authorized by this change.
+
+Prepare at most one next batch in private caches while the current batch receives. Receive, file writes and cursor/checkpoint publication remain serial. Drain speculative work on exit, retain authorization/cancellation failures and preserve ordinary per-file verification/fallback. Existing per-window byte/item bounds, attachment policy, original mtime and durable recovery rules remain in force; buffering can retain the current and next window simultaneously.
+
+Keep task-list rows keyed by task identity and update only changed rows and summary text. Retain paging, retry actions, scope isolation, save-failure messages and expanded record details. Reuse checkpoint serialization only when every primitive record field is unchanged; nested/unknown shapes retain full serialization so in-place edits cannot be missed. No checkpoint cadence, format, integrity check or publication barrier is relaxed.
+
+Validation and limits: see [small-file pipeline validation](docs/validation/small-file-pipeline-2026-10-28.md). Synthetic tests and CPU-only capture timings do not establish an end-to-end speedup or native-host acceptance. Baseline comparison downloads use unchanged installed binaries; optimized host and physical-device acceptance remains separate.
+
 ## Next release after 1.1.0 — CHG-20261028-NOTE-BOTTOM — Synchronized file and folder positions
 
 Requirement: the user requested Move to bottom / Remove from bottom directly below Pin / Unpin for files and folders, confirmed the same cross-device standard as pins and assigned it to the next release. Siblings sort as top, normal, bottom before native grouping/name/time rules; items within each group retain their applicable sorting. Support batch actions, cancellation, rename/move, deletion, restart, workspace isolation and rollback after a failed local save. Top and bottom are mutually exclusive. Note history follows the new bottom action.
