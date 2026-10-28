@@ -675,6 +675,9 @@ export default class IndependentSync extends Plugin {
 			if (!this.canPinEntry(file)) return;
 			menu.addItem(item => item.setTitle(t(this.isNotePinned(file.path) ? 'pin.unpin' : 'pin.pin'))
 				.setIcon('pin').onClick(() => { void this.toggleNotePin(file).catch(error => this.notify(failureMessage(error))); }));
+			if (file instanceof TFile && file.path.toLowerCase().endsWith('.md'))
+				menu.addItem(item => item.setTitle(t('history.contextMenu')).setIcon('history')
+					.onClick(() => { void this.history(undefined, file.path); }));
 		}));
 		if (workspace.on) this.registerEvent(workspace.on('files-menu', (menu, files) => {
 			const entries = files.filter(file => this.canPinEntry(file));

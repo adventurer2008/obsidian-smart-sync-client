@@ -1,5 +1,13 @@
 # Source change record
 
+## Next release after 1.1.0 — CHG-20261028-HISTORY-CONTEXT-MENU — Discoverable per-note history and restore
+
+Release assignment (2026-10-28): the user explicitly requested including this context-menu feature in the next release. Client 1.1.0 has already been published from cd2a33f and does not contain this change. Include the complete implementation, translations and regression below when freezing the next candidate, alongside its other assigned changes. The next version number remains unassigned; this scheduling does not publish a release, change version metadata or replace 1.1.0 assets. Update the user guide and release notes with the new right-click entry during release preparation.
+
+Requirement: the user could not find the history command and requested a note context-menu action directly below Pin. Add View note history and restore immediately after Pin/Unpin for individual Markdown notes. Pass the right-clicked note path explicitly, even if a different note becomes active before clicking. Reuse the existing history preview, comparison and confirmed cloud-revision restoration flow; preserve existing pin, folder and multi-selection actions.
+
+Validation: Node 26.12.1 Client 233/233 passed, including context-menu placement after Pin/Unpin, targeting the clicked note after active-note changes, and preserving folder, attachment and multi-selection menus. Both regional builds/isolation and Community lint passed (zero errors, five existing warnings). No installation, publication or deployment; native-host acceptance remains separate.
+
 ## 1.1.0 release preparation — CHG-20261028-110-BATCH-CLOCK — Deterministic batch recovery regression
 
 Full release validation retained a failure in the 128-file atomic checkpoint test when real encrypted preparation exceeded its one-second batch wait bound under concurrent load. Freeze only the test's Date clock so this size-bound case deterministically submits 128 files. Keep all atomic retirement, failure/restart, notification, exact revision and original-mtime assertions; do not alter runtime batching or remove the failed evidence. A new immutable candidate must rerun the full release flow.
