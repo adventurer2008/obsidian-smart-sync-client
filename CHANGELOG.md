@@ -2,6 +2,8 @@
 
 ## Next release after 1.1.0 — CHG-20261028-SMALL-FILE-PIPELINE — Bounded read-ahead and local overhead
 
+Release assignment (2026-10-28): the user explicitly assigned implementation commit `2e81c51` to the next release together with the other accepted changes. Include all three optimizations and their regression evidence when freezing that candidate. Parallel file receiving remains cancelled. The next version number is unassigned; this assignment does not install a plugin, publish a release, deploy a service or replace existing 1.1.0 assets. Native-host acceptance and the applicable full release gates remain required.
+
 Requirement: improve small-file synchronization in the approved order: next-window prefetch, incremental task-list rendering, then checkpoint capture overhead. The user explicitly cancelled parallel file receiving. Develop in an isolated checkout without replacing installed plugins or changing active comparison vaults. No release, service deployment or version change is authorized by this change.
 
 Prepare at most one next batch in private caches while the current batch receives. Receive, file writes and cursor/checkpoint publication remain serial. Drain speculative work on exit, retain authorization/cancellation failures and preserve ordinary per-file verification/fallback. Existing per-window byte/item bounds, attachment policy, original mtime and durable recovery rules remain in force; buffering can retain the current and next window simultaneously.
