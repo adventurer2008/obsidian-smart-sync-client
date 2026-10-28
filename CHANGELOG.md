@@ -1,5 +1,9 @@
 # Source change record
 
+## 1.1.1 release preparation — CHG-20261028-111-RELEASE — Four accepted improvements
+
+Requirement: the user explicitly approved releasing all four accepted changes together as 1.1.1 after the full test process passes: HISTORY-CONTEXT-MENU, NOTE-BOTTOM, SYNC-ACCENT and SMALL-FILE-PIPELINE. Pair with Server0.1.36 for authenticated cross-device positions and the reviewed additive pin-position table. Keep parallel file receiving cancelled. Preserve existing functions, encryption, source mtime, Stop and durable recovery; use the full profile, fixed source/artifact bindings, Windows/WSL checks, UI matrix, staging/production acceptance, backups/rollback and anonymous public-asset verification. Do not overwrite old assets. Preparation is not a claim that release gates or real-device acceptance passed.
+
 ## Next release after 1.1.0 — CHG-20261028-SMALL-FILE-PIPELINE — Bounded read-ahead and local overhead
 
 Release assignment (2026-10-28): the user explicitly assigned implementation commit `2e81c51` to the next release together with the other accepted changes. Include all three optimizations and their regression evidence when freezing that candidate. Parallel file receiving remains cancelled. The next version number is unassigned; this assignment does not install a plugin, publish a release, deploy a service or replace existing 1.1.0 assets. Native-host acceptance and the applicable full release gates remain required.
