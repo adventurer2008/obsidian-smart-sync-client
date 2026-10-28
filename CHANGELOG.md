@@ -1,5 +1,9 @@
 # Source change record
 
+## 1.1.1 release preparation — CHG-20261028-111-RELEASE-REGRESSION — Retain inspected metadata in serial fallback
+
+The full candidate r1-1-1-full-20261028 stopped with four Client integration failures before staging. Preserve the failed evidence. Retain the bounded, authenticated manifest cache across serial/non-batch receive windows so a path-only large attachment revision does not fetch its manifest twice; preserve the existing exact one-request assertion, body/mtime and no-segment-transfer checks. A new regression exercises the same serial fallback. The private task-panel checks must inspect the new nested row DOM without dropping retry/completion assertions; asynchronous space rendering must wait for its actual value with a bounded deadline instead of assuming completion within50ms. Freeze a new immutable full candidate; no failed gate is relabelled passed.
+
 ## 1.1.1 release preparation — CHG-20261028-111-RELEASE — Four accepted improvements
 
 Requirement: the user explicitly approved releasing all four accepted changes together as 1.1.1 after the full test process passes: HISTORY-CONTEXT-MENU, NOTE-BOTTOM, SYNC-ACCENT and SMALL-FILE-PIPELINE. Pair with Server0.1.36 for authenticated cross-device positions and the reviewed additive pin-position table. Keep parallel file receiving cancelled. Preserve existing functions, encryption, source mtime, Stop and durable recovery; use the full profile, fixed source/artifact bindings, Windows/WSL checks, UI matrix, staging/production acceptance, backups/rollback and anonymous public-asset verification. Do not overwrite old assets. Preparation is not a claim that release gates or real-device acceptance passed.

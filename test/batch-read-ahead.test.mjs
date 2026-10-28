@@ -23,8 +23,26 @@ async function fixture({ count = 6, batchFiles = 2, mixed = false } = {}) {
 	const state = emptyState();
 	const engine = new NotebookSynchronizer({ api, keys, host, state, direction: 'receive', batchTransfer: true, batchFiles,
 		checkpointSize: 100, save: async next => { saved.push(structuredClone(next)); if (saved.length > 2) saved.shift(); } });
-	return { engine, api, host, packets, files, times, writes, saved, state };
+	return { engine, api, host, packets, files, times, writes, saved, state, objects, entries };
 }
+
+test('serial fallback retains a priority-inspected rename manifest without downloading it twice', async () => {
+	const f = await fixture({ count: 1 });
+	await f.engine.run();
+	const original = f.files.get('0.md');
+	const renamed = await packNote(keys, workspace, 'moved.bin', original, undefined, f.packets[0].id, 'file', mtime);
+	for (const object of renamed.objects) f.objects.set(object.address, object.body);
+	f.entries.push({ sequence: 2, note: renamed.id, manifest: renamed.manifest, removed: false });
+	f.host.remove = async path => { f.files.delete(path); f.times.delete(path); };
+	f.engine.batchTransfer = false;
+	const load = f.api.load; let manifests = 0;
+	f.api.load = async address => { if (address === renamed.manifest) manifests++; return load(address); };
+	await f.engine.run();
+	assert.equal(manifests, 1);
+	assert.deepEqual(f.files.get('moved.bin'), original);
+	assert.equal(f.times.get('moved.bin'), mtime);
+	assert.equal(f.state.cursor, 2);
+});
 
 test('one next batch prepares while the current file write waits, without concurrent receive or advancing its cursor', async () => {
 	const f = await fixture(); let release, ready, batches = 0;

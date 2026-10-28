@@ -508,6 +508,13 @@ export class NotebookSynchronizer {
 		// Prepare a private window. Read-ahead must never replace the active
 		// receiver's caches or mutate its task, cursor or checkpoint state.
 		const window = { cached: new Map(), manifests: new Map(), info: new Map(), covered: entries.length };
+		// Priority inspection may already have fetched a rename manifest. Keep
+		// its bounded authenticated bytes even when batch transfer is disabled.
+		const wantedRetained = new Set(entries.filter(entry => !entry.removed).map(entry => entry.manifest));
+		let retainedBudget = 128 * 1024;
+		for (const [address, body] of retained) if (wantedRetained.has(address) && body.length <= retainedBudget) {
+			window.manifests.set(address, body); retainedBudget -= body.length;
+		}
 		if (!this.batchTransfer || typeof this.api.loadBatch !== 'function') return window;
 		const live = entries.filter(entry => !entry.removed && !this.#alreadyApplied(entry));
 		if (!live.length) return window;
