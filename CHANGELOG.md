@@ -1,5 +1,13 @@
 # Source change record
 
+## Next release after 1.1.0 — CHG-20261028-SYNC-ACCENT — Restore the primary synchronization color
+
+Release assignment (2026-10-28): the user accepted the desktop and phone previews and explicitly requested including this appearance with the next release. Queue the complete accent restoration and corresponding UI expectation change alongside the other assigned changes. The next version number remains unassigned. Keep 1.1.0 metadata and published assets unchanged until a separately prepared release candidate.
+
+Requirement: after 1.1.0 the user requested restoring the earlier color of the Sync now action and asked for screenshots. Restore the host theme's accent fill and on-accent text for that primary action, including its hover state; retain the outlined Stop and Sync records buttons, 5px corners, responsive layout and mobile touch targets. Internal UI checks now expect the primary accent surface separately from secondary action surfaces. No runtime logic, installation, publication or replacement of 1.1.0 assets.
+
+Validation: actual-definition synthetic previews at desktop1440px and phone390px confirm the primary accent fill, outlined secondary actions, 5px corners and no clipped action labels; phone actions retain44px height. Both regional builds/isolation passed. The full matrix and real-host/physical-device acceptance were not rerun for this screenshot preview.
+
 ## Next release after 1.1.0 — CHG-20261028-HISTORY-CONTEXT-MENU — Discoverable per-note history and restore
 
 Release assignment (2026-10-28): the user explicitly requested including this context-menu feature in the next release. Client 1.1.0 has already been published from cd2a33f and does not contain this change. Include the complete implementation, translations and regression below when freezing the next candidate, alongside its other assigned changes. The next version number remains unassigned; this scheduling does not publish a release, change version metadata or replace 1.1.0 assets. Update the user guide and release notes with the new right-click entry during release preparation.
