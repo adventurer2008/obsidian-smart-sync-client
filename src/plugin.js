@@ -2,7 +2,7 @@ import { edition, assertEditionOrigin, logViewType } from './edition.js';
 import { mountBillingCard, capacityWarning } from './billing.js';
 import { t, locale, formatStorageSize, localizedFailure as failureMessage } from './i18n.js';
 import { ConnectionCheckpoints } from './checkpoint.js';
-import { notePinState, queueNotePin, moveNotePins, pinPathSet, synchronizeNotePins } from './pinning.js';
+import { notePinState, queueNotePosition, moveNotePins, pinPathSet, synchronizeNotePins } from './pinning.js';
 import { registerNoteSearch } from './search.js';
 import { registerNoteEncryption } from './note-encryption.js';
 import {
@@ -372,7 +372,7 @@ export function frontmatterUpdatedTime(frontmatter) {
 	}
 	return latest;
 }
-export function explorerComparator(options, readUpdated, readPinned) {
+export function explorerComparator(options, readUpdated, readPinned, readBottomed) {
 	const names = new Intl.Collator('zh-CN', { numeric: true, sensitivity: 'base' });
 	const dates = new WeakMap();
 	const folder = file => Array.isArray(file.children);
@@ -411,7 +411,8 @@ export function explorerComparator(options, readUpdated, readPinned) {
 	};
 	return (left, right) => {
 		const a = left.file ?? left, b = right.file ?? right;
-		const pinned = Number(readPinned?.(b) === true) - Number(readPinned?.(a) === true);
+		const rank = file => readPinned?.(file) === true ? -1 : readBottomed?.(file) === true ? 1 : 0;
+		const pinned = rank(a) - rank(b);
 		if (pinned) return pinned;
 		if (folder(a) !== folder(b) && options.grouping !== 'mixed')
 			return (folder(a) ? -1 : 1) * (options.grouping === 'files-first' ? -1 : 1);
@@ -462,7 +463,7 @@ export function explorerSortingAtDepth(value, depth = 1) {
 	return effective;
 }
 
-export function attachExplorerSorting(view, readOptions, readUpdated, readPinned) {
+export function attachExplorerSorting(view, readOptions, readUpdated, readPinned, readBottomed) {
 	if (typeof view?.getSortedFolderItems !== 'function' || typeof view.requestSort !== 'function') return undefined;
 	const own = Object.getOwnPropertyDescriptor(view, 'getSortedFolderItems');
 	const original = view.getSortedFolderItems;
@@ -478,8 +479,9 @@ export function attachExplorerSorting(view, readOptions, readUpdated, readPinned
 			title.classList.toggle('smart-sync-note-pinned', readPinned?.(item.file ?? item) === true);
 			decorated.add(title);
 		}
-		if (options.enabled) return items.slice().sort(explorerComparator(options, readUpdated, readPinned));
-		return readPinned ? items.slice().sort((a,b) => Number(readPinned(b.file ?? b) === true) - Number(readPinned(a.file ?? a) === true)) : items;
+		if (options.enabled) return items.slice().sort(explorerComparator(options, readUpdated, readPinned, readBottomed));
+		const rank = item => readPinned?.(item.file ?? item) === true ? -1 : readBottomed?.(item.file ?? item) === true ? 1 : 0;
+		return readPinned || readBottomed ? items.slice().sort((a,b) => rank(a) - rank(b)) : items;
 	};
 	view.getSortedFolderItems = wrapped;
 	return () => {
@@ -666,7 +668,7 @@ export default class IndependentSync extends Plugin {
 		if (this.app.vault.on)
 			for (const event of ['create', 'modify', 'delete', 'rename'])
 				this.registerEvent(this.app.vault.on(event, () => {
-					if (!this.data.settings.explorerSorting.enabled && !this.pinnedPaths?.size) return;
+					if (!this.data.settings.explorerSorting.enabled && !this.pinnedPaths?.size && !this.bottomedPaths?.size) return;
 					window.clearTimeout(this.explorerSortTimer);
 					this.explorerSortTimer = window.setTimeout(() => this.refreshExplorerSorting(), 150);
 				}));
@@ -675,6 +677,8 @@ export default class IndependentSync extends Plugin {
 			if (!this.canPinEntry(file)) return;
 			menu.addItem(item => item.setTitle(t(this.isNotePinned(file.path) ? 'pin.unpin' : 'pin.pin'))
 				.setIcon('pin').onClick(() => { void this.toggleNotePin(file).catch(error => this.notify(failureMessage(error))); }));
+			menu.addItem(item => item.setTitle(t(this.isNoteBottomed(file.path) ? 'pin.unbottom' : 'pin.bottom'))
+				.setIcon('arrow-down-to-line').onClick(() => { void this.setNoteBottoms([file], !this.isNoteBottomed(file.path)).catch(error => this.notify(failureMessage(error))); }));
 			if (file instanceof TFile && file.path.toLowerCase().endsWith('.md'))
 				menu.addItem(item => item.setTitle(t('history.contextMenu')).setIcon('history')
 					.onClick(() => { void this.history(undefined, file.path); }));
@@ -687,6 +691,11 @@ export default class IndependentSync extends Plugin {
 				menu.addItem(item => item.setTitle(t(pinned ? 'pin.pin' : 'pin.unpin')).setIcon('pin')
 					.onClick(() => { void this.setNotePins(entries, pinned).catch(error => this.notify(failureMessage(error))); }));
 			}
+			for (const bottomed of [true, false]) {
+				if (!entries.some(file => this.isNoteBottomed(file.path) !== bottomed)) continue;
+				menu.addItem(item => item.setTitle(t(bottomed ? 'pin.bottom' : 'pin.unbottom')).setIcon('arrow-down-to-line')
+					.onClick(() => { void this.setNoteBottoms(entries, bottomed).catch(error => this.notify(failureMessage(error))); }));
+			}
 		}));
 		if (this.app.vault.on) {
 			this.registerEvent(this.app.vault.on('rename', (file, from) => {
@@ -698,9 +707,9 @@ export default class IndependentSync extends Plugin {
 			this.registerEvent(this.app.vault.on('delete', file => {
 				const { pins, notes } = this.notePinContext();
 				let changed = false;
-				for (const path of pinPathSet(pins, notes)) if (path === file.path || path.startsWith(`${file.path}/`)) {
+				for (const path of new Set([...pinPathSet(pins, notes), ...pinPathSet(pins, notes, 'bottomed')])) if (path === file.path || path.startsWith(`${file.path}/`)) {
 					changed = true;
-					queueNotePin(pins, notes, path, false);
+					queueNotePosition(pins, notes, path, 'normal');
 					pins.pending[path].deleted = true;
 				}
 				if (!changed) return;
@@ -1077,7 +1086,7 @@ export default class IndependentSync extends Plugin {
 		const local = this.data.notePins.local;
 		if (binding !== 'local' && local) {
 			for (const operation of Object.values(local.pending).sort((a,b) => a.counter - b.counter))
-				if (!operation.deleted) queueNotePin(pins, {}, operation.path, operation.pinned);
+				if (!operation.deleted) queueNotePosition(pins, {}, operation.path, operation.bottomed ? 'bottom' : operation.pinned ? 'top' : 'normal');
 			delete this.data.notePins.local;
 		}
 		return { pins, notes: this.data.connections[binding]?.notes ?? {}, binding };
@@ -1085,6 +1094,10 @@ export default class IndependentSync extends Plugin {
 	isNotePinned(path) {
 		const { pins, notes } = this.notePinContext();
 		return pinPathSet(pins, notes).has(path);
+	}
+	isNoteBottomed(path) {
+		const { pins, notes } = this.notePinContext();
+		return pinPathSet(pins, notes, 'bottomed').has(path);
 	}
 	async toggleActiveNotePin() {
 		const file = this.app.workspace.getActiveFile();
@@ -1098,13 +1111,20 @@ export default class IndependentSync extends Plugin {
 		return (file instanceof TFile || file instanceof TFolder) && Boolean(file.path);
 	}
 	async setNotePins(files, pinned) {
+		return this.setNotePositions(pinned ? files : files.filter(file => this.isNotePinned(file.path)), pinned ? 'top' : 'normal');
+	}
+	async setNoteBottoms(files, bottomed) {
+		return this.setNotePositions(bottomed ? files : files.filter(file => this.isNoteBottomed(file.path)), bottomed ? 'bottom' : 'normal');
+	}
+	async setNotePositions(files, position) {
 		if (this.stopped) return;
+		const pinned = position === 'top', bottomed = position === 'bottom';
 		const { pins, notes } = this.notePinContext();
 		const changes = new Map();
 		for (const file of files) {
-			if (!this.canPinEntry(file) || changes.has(file.path) || this.isNotePinned(file.path) === pinned) continue;
+			if (!this.canPinEntry(file) || changes.has(file.path) || (this.isNotePinned(file.path) === pinned && this.isNoteBottomed(file.path) === bottomed)) continue;
 			const previous = pins.pending[file.path];
-			queueNotePin(pins, notes, file.path, pinned);
+			queueNotePosition(pins, notes, file.path, position);
 			changes.set(file.path, { previous, operation: pins.pending[file.path] });
 		}
 		if (!changes.size) return;
@@ -1117,14 +1137,15 @@ export default class IndependentSync extends Plugin {
 			throw error;
 		}
 		this.refreshExplorerSorting();
-		this.notify(t(pinned ? 'pin.pinnedPending' : 'pin.unpinnedPending'));
+		this.notify(t(bottomed ? 'pin.bottomedPending' : pinned ? 'pin.pinnedPending' : 'pin.normalPending'));
 		this.requestChangedSynchronization();
 	}
 	refreshExplorerSorting() {
 		if (this.stopped) return;
 		const { pins, notes } = this.notePinContext();
 		this.pinnedPaths = pinPathSet(pins, notes);
-		const enabled = this.data.settings.explorerSorting.enabled || this.pinnedPaths.size > 0;
+		this.bottomedPaths = pinPathSet(pins, notes, 'bottomed');
+		const enabled = this.data.settings.explorerSorting.enabled || this.pinnedPaths.size > 0 || this.bottomedPaths.size > 0;
 		const views = new Set((this.app.workspace.getLeavesOfType?.('file-explorer') ?? []).map(leaf => leaf.view));
 		for (const [view, detach] of this.explorerSortViews) {
 			if (!views.has(view) || !enabled) {
@@ -1136,7 +1157,7 @@ export default class IndependentSync extends Plugin {
 		for (const view of views) {
 			if (!this.explorerSortViews.has(view)) {
 				const detach = attachExplorerSorting(view, () => this.stopped ? { enabled: false } : this.data.settings.explorerSorting,
-					file => this.updatedNoteTime(file), file => !this.stopped && this.pinnedPaths.has(file.path));
+					file => this.updatedNoteTime(file), file => !this.stopped && this.pinnedPaths.has(file.path), file => !this.stopped && this.bottomedPaths.has(file.path));
 				if (detach) this.explorerSortViews.set(view, detach);
 			}
 			if (this.explorerSortViews.has(view)) view.requestSort();
@@ -2341,7 +2362,7 @@ export default class IndependentSync extends Plugin {
 			peers.provideNote = localNoteProvider({ keys, workspace: api.workspace, state, host: scopedHost, cache: receiveCache, accepts: path => !engine.excluded(path) });
 			api.peerContents = (note, manifest, info, sinkFor, onTiming) => receivePeerNote(peers, keys, api.workspace, note, manifest, info, sinkFor, onTiming);
 		}
-		return { api, keys, engine, host: scopedHost, pinsSupported: info.notePins === 1 };
+		return { api, keys, engine, host: scopedHost, pinsSupported: info.notePins === 1, positionsSupported: info.notePositions === 1 };
 	}
 	async exclusive(task) {
 		if (this.stopped) throw new Error('Plugin is unloaded');
@@ -2634,7 +2655,7 @@ export default class IndependentSync extends Plugin {
 					version: this.manifest.version,
 				});
 				if (!coalesceCycle) await this.persistTasks();
-				const { engine, keys, pinsSupported } = await this.connection({ allowIdleScan: automatic && !retryRow && !approval });
+				const { engine, keys, pinsSupported, positionsSupported } = await this.connection({ allowIdleScan: automatic && !retryRow && !approval });
 				if (engine.remoteMode === 'paused' || (!approval && engine.direction === 'paused')) {
 					this.journal.update(cycle, { status: 'skipped' });
 					await this.persistTasks();
@@ -2679,7 +2700,7 @@ export default class IndependentSync extends Plugin {
 				if (!pinsSupported && Object.keys(pins.pending).length) throw Object.assign(new Error('Pin service upgrade required'), { code: 'PIN_SERVICE_UPGRADE' });
 				if (pinsSupported) {
 					try {
-						await synchronizeNotePins({ api: engine.api, keys, state: pins, notes: engine.state.notes,
+						await synchronizeNotePins({ api: engine.api, keys, state: pins, notes: engine.state.notes, positions: positionsSupported,
 							direction: engine.remoteMode !== 'both' ? engine.remoteMode : engine.direction, save: () => this.saveData(this.data), active: () => {
 								this.ensureCurrent(engine.api); return !this.stopped;
 							} });

@@ -24,6 +24,8 @@ npm run check:community
 
 Regional outputs are in artifacts/cn and artifacts/global. The default build is for local development. These commands do not install plugins, deploy services or publish Releases. Windows and Linux CI run the same checks; a lint result does not constitute Community approval.
 
+The synthetic three-device position integration test also needs a local Server checkout. Set `SMART_SYNC_SERVER_DIR` to that checkout and run `node --test test/note-positions-integration.test.mjs`. Without that explicit path, this integration test is skipped; it does not access a hosted service or a real vault.
+
 ## Accounts, network and privacy
 
 Synchronization needs an approved account and the matching regional service. Content and paths are encrypted on the client; the service handles account/workspace identifiers, enrollment email, notebook/device labels, timestamps, ciphertext sizes, reported local vault byte totals and measurement times, and opaque identifiers. Keep the encryption passphrase safe; external login does not replace it. China plan prices and purchase notices appear at checkout; renewal is manual and does not enable automatic charges. Avoid running multiple sync providers on the same vault without resolving their interaction.

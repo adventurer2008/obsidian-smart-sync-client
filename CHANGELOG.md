@@ -1,5 +1,13 @@
 # Source change record
 
+## Next release after 1.1.0 — CHG-20261028-NOTE-BOTTOM — Synchronized file and folder positions
+
+Requirement: the user requested Move to bottom / Remove from bottom directly below Pin / Unpin for files and folders, confirmed the same cross-device standard as pins and assigned it to the next release. Siblings sort as top, normal, bottom before native grouping/name/time rules; items within each group retain their applicable sorting. Support batch actions, cancellation, rename/move, deletion, restart, workspace isolation and rollback after a failed local save. Top and bottom are mutually exclusive. Note history follows the new bottom action.
+
+Use an authenticated three-state register with an atomic legacy-pin projection and shared replay watermarks. Old clients retain the boolean pin feed, interpret bottom as unpinned and require an update to display bottom placement. Their later explicit pin/unpin clears the extended state. Capability-gated clients retain pending operations on an older service; upgrading replays the full position feed even if the legacy cursor already advanced. Position extension sequence binding ignores stale extensions after a service rollback. Do not write note contents or source mtime. Include Client and Server changes together in the next full release; next version unassigned, no installation/publication/deployment or changes to 1.1.0 assets.
+
+Validation: Windows Client236/236 (with explicit paired synthetic Server), Server149/149, both regional builds/isolation and Community lint passed (zero errors, five existing warnings). Three-device integration covers encrypted top/bottom/cancel, lost replies versus newer device edits, old-client writes, rename, deletion and unchanged body/mtime. Post-hardening Server149/149 passed on Windows and WSL; WSL Client235 passed with one Windows-only NTFS case skipped, including the paired three-device test. Latest targeted regressions passed4/4 on WSL. Reviewed additive old-new-old-new database migration/rollback preserved pins and replay watermarks. Physical-device/host and production acceptance remain pending.
+
 ## Next release after 1.1.0 — CHG-20261028-SYNC-ACCENT — Restore the primary synchronization color
 
 Release assignment (2026-10-28): the user accepted the desktop and phone previews and explicitly requested including this appearance with the next release. Queue the complete accent restoration and corresponding UI expectation change alongside the other assigned changes. The next version number remains unassigned. Keep 1.1.0 metadata and published assets unchanged until a separately prepared release candidate.

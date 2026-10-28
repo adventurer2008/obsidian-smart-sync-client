@@ -24,9 +24,9 @@ test('history follows Pin/Unpin and targets the clicked note rather than the act
   plugin.isNotePinned = () => pinned;
   const menu = new Menu(), clicked = new TFile('folder/selected.MD');
   for (const callback of events['file-menu']) callback(menu, clicked);
-  assert.deepEqual(menu.items.slice(0, 2).map(item => item.title), [t(pinned ? 'pin.unpin' : 'pin.pin'), t('history.contextMenu')]);
+  assert.deepEqual(menu.items.slice(0, 3).map(item => item.title), [t(pinned ? 'pin.unpin' : 'pin.pin'), t('pin.bottom'), t('history.contextMenu')]);
   app.workspace.getActiveFile = () => new TFile('changed.md');
-  menu.items[1].callback();
+  menu.items[2].callback();
   assert.deepEqual(calls.at(-1), [undefined, clicked.path]);
  }
  for (const entry of [new TFolder('folder'), new TFile('image.png')]) {
