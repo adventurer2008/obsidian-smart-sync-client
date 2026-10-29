@@ -93,19 +93,17 @@ The user reported Alpha.10 tests passed and approved stable publication includin
 No new breakpoint or control is introduced by the wording changes, but longer hints/startup text need the maintained narrow/touch, enlarged-text and dark/light matrix. Stable promotion keeps identity/vault scope, mixed-version protocol, encrypted contents, keys and original mtimes. Upgrade/rollback changes program files only and preserves each device's data.json/progress; rollback to older mobile code can restore the deleted-plugin failure. The native version gate rejects unknown/missing metadata and preserves caller-supplied transport; no failed write is automatically replayed.
 
 
-## CHG-20261029-SYNC-LEGACY-RETIREMENT-EXEC — 1.1.3入口收口并发布生产
+## Stable 1.1.3 — CHG-20261029-SYNC-RESPONSIBILITY
 
-Requirements: 用户本轮明确“按这个做吧，放下个版本，调整完放生产”。覆盖本项此前仅登记/暂不部署边界；授权实现、完整验证、预发、生产及下一正式版本交付。固定产品1.1.3，Server0.1.38；不覆盖1.1.2或历史发行资产。
+Purchasing, renewal and plan reads use the canonical payment service directly. Retired sync browser/business endpoints fail closed without redirection; sync/authentication/device protocols remain. The user webpage is served independently and invokes only the account/notebook/device APIs it needs. Operator-closed unpaid orders show a terminal label without resume-payment actions. Upgrade preserves each device's data.json, keys and sync checkpoints; old clients need an update for purchasing and plan reads.
 
-sync旧网页/支付/管理/下载入口彻底关闭，不兼容、不跳转；唯一公共健康页面/health，/ss2/health只保留内部监控，不对公网开放。插件既有同步/认证/设备/应用申请/套餐协议API保持，实际支付与申请由固定独立pay/manage负责。购买凭证只返回pay域名，移除Client旧authority重写，预发购买也使用pay域名的/pay-test路径；后台对象清理由manage使用固定内部通道请求同步存储所有者。user网页仍依赖Core提供既有设备API，不宣称新增user独立后端；同宿主/Nginx/数据库，不宣称资源或故障完全隔离。
+| Platform | Support and checks | Physical acceptance |
+| --- | --- | --- |
+| Windows | Shared HTTPS/native host integration; pinned unit/integration and full UI automation passed | Not performed this release |
+| macOS | Guarded shared sync and standard HTTPS handoff; Windows-only startup remains hidden | Unverified |
+| Desktop Linux | Shared implementation; WSL checks passed, distinct from desktop Obsidian | Unverified |
+| Android | Shared protocol plus identity-verified native payment fallback in the stable build; unknown versions fail safely | Foreground/background, lock, restart and network recovery remain unverified on devices; staging payment subpath native fallback not claimed |
+| iPhone/iOS | Shared HTTPS and Obsidian handoff; existing native feature guards retained | Unverified; desktop WebKit is simulation |
+| iPad/iPadOS | Shared HTTPS and narrow/split-view layout | Unverified on physical iPad |
 
-实施必须核对并处理在途订单及回调来源；不能把旧回调关闭当成订单已完成，不删除/伪造订单。旧版Hub/客户端可能需要升级才能使用旧购买/下载路径；同步协议、正文/加密/源mtime、身份/库隔离、进度及data.json不变。先完整门禁/预发、备份及代码配置回退验证，再生产。当前为实现待验证，不宣称上线。
-
-跨平台：Windows/macOS/Linux桌面/Android/iPhone/iOS/iPad/iPadOS均条件支持现有标准HTTPS与Obsidian购买交接，本次六平台真机均未验证。没有新UI/断点/桌面原生能力，OS启动行为不适用；共享窄屏/触控矩阵按发布门禁执行，物理前后台/锁屏/重启/断网恢复仍未验证。混合版本、凭证拒绝、账户/库隔离、重复回调和升级回退按影响回归；合成通过不等于真实商户扣款退款或全平台验收。
-
-
-## CHG-20261029-SYNC-RESPONSIBILITY — 同步职责硬边界
-
-用户再次强调sync只负责同步、认证、设备和/health，其他业务各走自己的；发现不符必须修改并主动报告。本次1.1.3范围据此扩展：Client套餐/购买API直接使用pay，sync不再中转billing/application；user页面改独立程序/目录/服务，标准用户设备API由user精确请求同步核心。Core仅保留同步所需只读配额策略，不加载商户提供方；生产独立角色不接受sync旧Host。独立程序仍共用宿主/Nginx/业务数据库，用户设备API依赖同步核心是有意的职责调用，不宣称完全故障隔离。
-
-发现生产3笔历史pending订单，二维码已过期，不能据此当作已取消或已支付；关闭旧回调前需逐笔只读查询支付渠道。旧客户端购买/套餐查询将在旧业务API关闭后需要升级，既有同步协议保持。Android正式支付API保留身份验签守卫的原生网络回退；预发pay路径隔离，预发原生回退未验证。实现、全门禁、迁移及真实设备验收分别记，不把计划标为完成。
+Fixed Windows/WSL UI matrices passed 832 cases and 5120 inspections each. Synthetic scope/isolation, mixed versions and source-mtime checks are not physical-device acceptance. No new OS startup/tray capability is introduced. Code rollback retains local state but older servers may lack the new payment identity endpoint; never silently re-enable retired URLs as a fallback. Shared host/database and maintenance coordination remain; independent programs do not imply complete failure isolation.

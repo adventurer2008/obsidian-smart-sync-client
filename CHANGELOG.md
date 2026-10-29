@@ -610,8 +610,6 @@ User-approved production follow-up: purchases and existing orders accept only th
 CHG-20261029-LEGACY-ORDER-CLOSE: explicitly closed unpaid orders display their terminal status and cannot offer a resume-payment action.
 
 
-## CHG-20261029-SYNC-RESPONSIBILITY — 同步职责硬边界
+### 1.1.3 delivery boundary
 
-用户再次强调sync只负责同步、认证、设备和/health，其他业务各走自己的；发现不符必须修改并主动报告。本次1.1.3范围据此扩展：Client套餐/购买API直接使用pay，sync不再中转billing/application；user页面改独立程序/目录/服务，标准用户设备API由user精确请求同步核心。Core仅保留同步所需只读配额策略，不加载商户提供方；生产独立角色不接受sync旧Host。独立程序仍共用宿主/Nginx/业务数据库，用户设备API依赖同步核心是有意的职责调用，不宣称完全故障隔离。
-
-发现生产3笔历史pending订单，二维码已过期，不能据此当作已取消或已支付；关闭旧回调前需逐笔只读查询支付渠道。旧客户端购买/套餐查询将在旧业务API关闭后需要升级，既有同步协议保持。Android正式支付API保留身份验签守卫的原生网络回退；预发pay路径隔离，预发原生回退未验证。实现、全门禁、迁移及真实设备验收分别记，不把计划标为完成。
+Canonical payment APIs and the independently served user webpage are delivered with existing sync/auth/device behavior retained. Retired business URLs return 404 without redirection. Pinned automated and public download checks passed; physical-device and real-merchant acceptance remain separate. See the cross-platform feature matrix for supported paths and limits.
