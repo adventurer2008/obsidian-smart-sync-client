@@ -42,4 +42,10 @@ Copyright (c) 2026 lihy. New Client candidates after the existing 0.1.81 release
 
 On desktop, Advanced → Run in background with tray icon (immediately after Enable note search) is on by default. Closing a vault window keeps it running behind the branded tray icon; click the icon to restore the window or use its menu to close only that vault; other open vaults keep running. Turning the switch off restores normal closing. This does not configure launch at login or hide the window on startup. Mobile does not show this setting. Hosts without usable Electron tray support retain normal closing.
 
+Windows Alpha candidates add a separate **Advanced → Launch to tray at login** switch, off by default. Explicitly enabling it creates a current-user Startup shortcut for this vault's exact host ID and also enables its background tray. Its marked startup URI opens this vault and hides it only after its tray is available; ordinary launches remain visible. Existing synchronization settings and manual-stop state are retained. Disable login startup before disabling the tray, uninstalling or reverting to a version without this feature. Plugin unload/restart does not delete an enabled startup shortcut. Other platforms do not display the switch. Synthetic tests do not substitute for a real Windows logout/reboot acceptance check.
+
 Version 1.0.5 supports Obsidian 1.12.7 and newer through shared legacy and declarative settings definitions. Offline installation does not provide offline cloud synchronization. Native-host acceptance is recorded separately from synthetic tests.
+
+Custom Obsidian user-data profiles cannot enable launch at login because the host may route a warm startup URI to another instance; normal tray operation remains available. Native default-profile login acceptance is still pending.
+
+User device management: https://user.wujiesync.cc/ . Downloads: https://user.wujiesync.cc/download/ . Existing synchronization settings and legacy download compatibility are retained.

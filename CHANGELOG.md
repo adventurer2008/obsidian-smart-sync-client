@@ -1,5 +1,53 @@
 # Source change record
 
+## CN Alpha 1.1.2-alpha.7 — CHG-20261029-WINDOWS-NATIVE-STARTUP
+
+Requirement: validate real Windows startup-to-tray, window restoration and multi-vault isolation in independent test vaults without disturbing live libraries/synchronization. Include the explicit quoted owning profile in shortcuts and reject touching another profile's bound entry. Native testing and installed-host inspection found that Obsidian's warm CLI transport is keyed by Windows user, so an explicit profile alone does not guarantee URI isolation. Refuse new login registration and activation in custom profiles, with a localized explanation; keep normal trays and cleanup of their own previous entries available. Existing unbound default-profile entries require explicit re-enabling. No account, key, sync progress or source mtime changes. Actual OS logout/reboot and default-profile startup remain unverified; no live-profile testing is performed.
+
+Validation: independent synthetic A/B vaults on real Obsidian1.14.4/1.14.5;15 initial native observations and11 post-fix checks cover tray events, minimize/close restoration, multi-vault isolation and safe refusal. Tray event emission is not physical tray clicking; direct handler dispatch is not OS login. Windows and WSL suites each270 passed/1 skipped; both editions build and isolation pass; lint0 errors/5 existing warnings. Four original Startup files retain their hashes, synthetic entries are removed and test processes are closed. Published to the authorized CN Alpha download site:15 HTTPS files verified,7 Alpha history versions retained,60 previous immutable files unchanged, Stable1.1.1 entry/assets unchanged and no service restart or user-vault installation. The user retains real login/tray acceptance. See docs/validation/windows-native-startup-2026-10-29.md.
+
+## Local Alpha 1.1.2-alpha.6 — CHG-20261029-CROSS-PLATFORM-AUDIT
+
+Requirement: re-audit recent features across platforms and multiple devices, report and repair issues, then deliver the next Alpha. Reproduced and fixed copied Windows startup preferences blocking tray changes on macOS/Linux and host registry loss preventing removal of an owned startup entry. Verify native registration before reporting activation or hiding; copied settings alone are insufficient. Repair invalid startup markers only on explicit opt-in. Track the owned registration path so a moved vault with the same native ID can remove its old entry, while copied vaults with different IDs cannot alter the source. Discard stale status and capacity responses after relevant identity/refresh changes. Preserve unsupported-platform hiding, byte counters, encrypted synchronization, source mtime, manual-stop intent and code-only rollback boundaries. Add platform, multi-vault/edition, lifecycle, isolation and mixed-device service regressions. Real device/reboot checks remain separate from synthetic execution.
+
+Validation: final Windows267 passed/1 optional skipped and WSL267 passed/1 platform skip (268 each), with the real isolated paired-service three-device regression enabled on WSL.84 actual notebook-dialog browser cases and72 shared-settings smoke cases/464 inspections pass across Chromium/WebKit, font sizes and themes. Both editions build/isolation and lint0 errors/5 existing warnings pass. CN Alpha publication verified15 HTTPS file hashes; current manager parser/download matches alpha.6 and rejects tampering. Older Alpha assets and Stable1.1.1 unchanged, sync service not restarted, no installed plugin/startup entry or test1–test4 data modified. See docs/validation/cross-platform-audit-2026-10-29.md for physical-device and legacy-move gaps.
+
+## Requirement — CHG-20261029-CROSS-PLATFORM-REQUIREMENT
+
+The user requires cross-device/platform consideration for every feature and proactive disclosure of issues. Persist the rule in workspace and Client instructions, add a six-platform feature/applicability/acceptance matrix and record current native acceptance gaps. Assess scenario relevance and select checks proportionate to impact; do not invent universal support or require irrelevant OS operations for text-only changes. No runtime, version, installed data or publication change is made by this documentation update.
+
+## Local Alpha 1.1.2-alpha.5 — CHG-20261029-WINDOWS-STARTUP-TRAY
+
+Requirement: add an opt-in Windows login startup switch inside Advanced. The user selected opening the current vault hidden to its own tray, retaining existing accounts, encryption keys and synchronization settings. Default off. Explicit enable creates only a per-vault Startup shortcut using the exact host vault ID; a marked protocol request hides only this enabled vault after layout/tray readiness. Normal launches remain visible; no tray means fail visible. Enabling also enables the tray; disable login startup before disabling it. No OS startup entry is created on plugin load, installation or by the build. Native operations are limited to the current user's owned per-vault shortcut, with rollback on failed settings persistence. No startup action resets a manual sync stop or alters sync intervals/data/mtime. Startup entries remain until explicitly turned off; unload/restart must not erase the user's choice. Physical logout/reboot and cold-start protocol timing require user host acceptance.
+
+Validation: final Windows254 passed/1 optional skipped and WSL253 passed/2 optional skipped (255 total each). Both editions build and pass the25-module isolation check; lint0 errors/5 existing warnings. The initial Chinese-copy gate failure is retained in candidate evidence and fixed without weakening its assertion. Published the CN Alpha candidate through the existing download-site flow:15 HTTPS assets match SHA256, actual manager feed/download accepts alpha.5 and rejects tampering, all earlier Alpha assets and Stable1.1.1 remain unchanged. No real Startup entry or installed plugin was modified by delivery. Details: docs/validation/windows-startup-tray-2026-10-29.md.
+
+## Local Alpha 1.1.2-alpha.4 — CHG-20261028-LAN-DETAILS-COPY
+
+Requirement: remove the fallback counter and explanatory paragraph highlighted in the connection details UI. Retain connection/device status and LAN received/sent and cloud received byte counters. Internal fallback behavior and diagnostic metrics remain unchanged. Publish through the existing Alpha channel, preserve historical assets and Stable1.1.1, and measure edit-to-online-verification time. Regress actual summary formatting and legacy UI details without relaxing transport fallback tests.
+
+Validation: Windows246 passed/1 skipped, WSL245 passed/2 skipped, no failures; CN build/isolation and lint passed (0 errors/5 existing warnings). Actual manager parses/downloads alpha.4 and rejects tampering;15 HTTPS file hashes match, previous Alpha assets and Stable1.1.1 unchanged. Tool-timed turnaround:2026-10-28 20:56:43–20:58:43 Asia/Shanghai,120 seconds. No installed plugin/user-data changes or service restart; native host acceptance remains pending.
+
+## Local Alpha 1.1.2-alpha.3 — CHG-20261028-NOTEBOOK-HELP-COPY
+
+Requirement: remove the trailing local-notes/sync-scope explanatory sentence from Manage notebooks. Keep the introductory sentence, all controls, confirmations, data retention and synchronization behavior unchanged. Publish the text-only change through the latest Alpha pointer, keeping older Alpha assets and Stable1.1.1 intact. Measure this requested edit-to-publication turnaround; real-host acceptance remains separate.
+
+Validation: Windows246 passed/1 skipped; WSL245 passed/2 skipped, no failures. CN build/isolation and community lint passed (0 errors/5 existing warnings). Published15 HTTPS files with matching SHA256. Both latest.json and the manager's current releases.json route are supported; existing Alpha history is preserved. Actual manager parse/download accepts alpha.3 and rejects tampering. Stable1.1.1 and old Alpha assets unchanged. Tool-timed edit-to-online-verification: 2026-10-28 20:40:36–20:44:04 Asia/Shanghai,208 seconds (3m28s); no native-host acceptance claimed.
+
+## Local Alpha 1.1.2-alpha.2 — CHG-20261028-NOTEBOOK-COMPACT
+
+Requirement: compact Manage notebooks after Alpha host feedback. Group refresh, unlock and create in one wrapping toolbar; use compact notebook rows with names and cloud sizes on the left and existing actions on the right when space permits. Preserve all actions, confirmations, account encryption and capacity behavior. Restrict CSS to this dialog, retain wrapping for narrow widths and 44px mobile touch targets. Deliver through the existing Alpha channel without modifying Stable1.1.1 or installed user data.
+
+Validation: Windows Node24.14: 246 passed, 1 skipped; WSL Node26.12.1: 245 passed, 2 skipped, no failures. CN build/isolation passed, community lint0 errors/5 existing warnings. Synthetic Chromium layouts at520px and320px have no horizontal overflow; real-host acceptance remains pending. Published alpha.2 via the authorized download-site channel: all14 HTTPS file hashes match, actual manager feed/download functions accept the version and reject tampering. Alpha.1 immutable assets and Stable1.1.1 remain unchanged; no installed plugin or user data modified.
+
+## Next release — CHG-20261028-NOTEBOOK-CLOUD-SIZE — Per-notebook cloud usage
+
+Local Alpha assignment: user approved a manually installable `1.1.2-alpha.1` CN candidate for host integration testing. Preserve `wujie-sync` identity and existing host secrets/data; deliver separate program-only files without installation, stable-channel publication or service deployment. The candidate is not a formal 1.1.2 release.
+
+Requirement: show each cloud notebook's size in Manage notebooks so users can distinguish current-notebook usage from the account-wide plan total. Display logical live-file usage using the authenticated summary endpoint, consistent with the overview. Render management controls before serial size requests; preserve the current-connection marker and all actions. Unknown or failed values are not zero. Discard results after refresh, close or identity changes. No content downloads, encryption changes, service deployment or installed-plugin replacement.
+
+Validation: Windows Node24.14 existing synthetic suite: 244 passed, 1 optional integration skipped, 0 failed (245 total); both regional builds passed. Native-host rendering and live-account capacity acceptance remain unperformed.
+
 ## 1.1.1 release preparation — CHG-20261028-111-RELEASE-REGRESSION — Retain inspected metadata in serial fallback
 
 The full candidate r1-1-1-full-20261028 stopped with four Client integration failures before staging. Preserve the failed evidence. Retain the bounded, authenticated manifest cache across serial/non-batch receive windows so a path-only large attachment revision does not fetch its manifest twice; preserve the existing exact one-request assertion, body/mtime and no-segment-transfer checks. A new regression exercises the same serial fallback. The private task-panel checks must inspect the new nested row DOM without dropping retry/completion assertions; asynchronous space rendering must wait for its actual value with a bounded deadline instead of assuming completion within50ms. Freeze a new immutable full candidate; no failed gate is relabelled passed.
@@ -500,3 +548,21 @@ CHG-20261027-111-RELEASE validation follow-up: the first full fixed-candidate in
 ## 1.0.11 delivery confirmation — CHG-20261027-111-RELEASE
 
 China1.0.11 is published with on-open deferred attachment short-link/restored-note handling and maximized settings width repairs. The existing ultra classifier rejected the attachment synchronization changes; full validation was used without widening omissions. Final combined Client346/346, Server148/148, Client integration395/395, content-integrity44/44, all nine Windows/WSL jobs, staging12+5 cold probes, production12 body/source-mtime probes and all11 anonymous release-asset hashes/latest passed. Physical phone/Pad acceptance remains pending. Preserve device-local data.json when updating; Global is not published.
+
+
+## Local Alpha 1.1.2-alpha.8 — CHG-20261029-PORTAL-INTEGRATION
+User authorized all completed registered changes in the next CN Alpha. Preserve alpha.7 startup/tray/configuration fixes. Replace the existing CN Alpha production purchase/renew action with the credential-free read-only pay URL; add no buttons. Existing-order actions, Stable/local/staging payment flows and callbacks retain their legacy paths. New Alpha purchase/renew actions cannot initiate real payment while that backend remains read-only. Private operational changes remain deployed separately, never bundled into Client. No real payment migration or standalone-backend writes are enabled.
+
+本次追加：user.wujiesync.cc提供受限用户网页及公开下载镜像；插件不新增用户中心/下载或支付测试按钮。新入口替换原位置，旧下载地址与付款功能暂保留，待运行两天后用户再次要求才清理，不自动删除。Wujie Hub优先新下载源并保留旧地址回退，单独发布测试包。
+
+## 1.1.2-alpha.9 — CHG-20261029-ANDROID-FALLBACK
+
+Android-only native requestUrl compatibility after primary network failure and signed service verification. Preserve origin, login, notebook binding, encryption and source mtimes; healthy Android and non-Android transports remain unchanged. No automatic replay of failed writes. Bounded cancellation and diagnostic probes retain user settings. Physical tablet acceptance remains pending.
+
+
+
+## 1.1.2 staging candidate — CHG-20261029-112-FULL-STAGING
+
+Collect all registered unpublished Client changes, including notebook usage/UI, Windows startup/tray and configuration ownership, Android guarded native transport and bounded diagnostics, and real CN purchase/renew/order browser handoff. Use the existing controls with the new pay authority; accept only exact authenticated legacy tickets during migration. No new user-center/download/preview controls. The user webpage and canonical download site use https://user.wujiesync.cc/ and https://user.wujiesync.cc/download/; synchronization stays at its existing service origin. Wujie Hub prefers the new feed and files, retaining the old download fallback with SHA-256 validation.
+
+This supersedes the unpublished alpha.8 read-only proposal above: Alpha is a release channel for real business, never a simulated or credential-free substitute. Source and tests now use real authenticated billing, while synthetic payment providers remain confined to automated tests. Full fixed-source validation and staging deployment are required; no new production core promotion or public stable release is claimed. Preserve local data.json, keys, progress, device/vault isolation and source mtimes. Physical platforms and actual merchant payment remain separately unverified until performed.
