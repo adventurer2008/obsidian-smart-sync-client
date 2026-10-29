@@ -1,11 +1,15 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { generateKeyPairSync, sign } from 'node:crypto';
-import { androidFallback } from '../src/android-transport.js';
+import { androidFallback, supportsAndroidNativeVersion } from '../src/android-transport.js';
 import { WorkspaceApi } from '../src/client.js';
 import { freshSalt, unlockWorkspace, packNote, unpackNote } from '../src/codec.js';
 
 const origin = 'https://synthetic.invalid';
+test('Android native release gate includes stable 1.1.2 and later without accepting unknown metadata', () => {
+	for (const version of ['1.1.2', '1.1.2-alpha.10', '1.1.3', '1.2.0', '2.0.0', '1.1.3-alpha.1']) assert.equal(supportsAndroidNativeVersion(version), true, version);
+	for (const version of [undefined, null, false, {}, '', 'synthetic QA', '1.1.1', '0.9.9-alpha.1', '01.1.2', '1.1.2-alpha.0', '1.1.2-alpha.01', '1.1.2-beta.1', '1.1.2+unknown', '999999999999999999999.1.2']) assert.equal(supportsAndroidNativeVersion(version), false, String(version));
+});
 const tick = () => new Promise(resolve => setImmediate(resolve));
 const bytes = value => new TextEncoder().encode(JSON.stringify(value)).buffer;
 function fixture(options = {}) {

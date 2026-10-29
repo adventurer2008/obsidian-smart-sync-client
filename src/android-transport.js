@@ -1,6 +1,16 @@
 import { verifyService } from './routing.js';
 import { waitForSignal } from './client.js';
 
+// CHG-20261029-112-STABLE: promote the guarded Android path, not unknown builds.
+export function supportsAndroidNativeVersion(version) {
+	if (typeof version !== 'string') return false;
+	const parsed = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-alpha\.[1-9]\d*)?$/.exec(version);
+	if (!parsed) return false;
+	const [major, minor, patch] = parsed.slice(1).map(Number);
+	if (![major, minor, patch].every(Number.isSafeInteger)) return false;
+	return major > 1 || (major === 1 && (minor > 1 || (minor === 1 && patch >= 2)));
+}
+
 // CHG-20261029-ANDROID-FALLBACK: memory-only, same-authority Android compatibility.
 export function androidFallback({ android, origin, requestUrl, fetcher = fetch, getPin = () => undefined, savePin = async () => {}, onDiagnostic = () => {}, runtime = {} }) {
 	if (!android || typeof requestUrl !== 'function' || new URL(origin).protocol !== 'https:') return fetcher;

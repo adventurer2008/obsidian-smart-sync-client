@@ -1,5 +1,27 @@
 # Source change record
 
+## Stable 1.1.2 candidate — CHG-20261029-112-STABLE
+
+Requirements: after reporting Alpha.10 testing passed, the user explicitly requested immediate stable 1.1.2 publication with all accepted Alpha.10 changes and both approved Chinese-copy requirements (startup wording plus the six follow-up hint rewrites). Preserve legacy payment, administration and download entry compatibility. This source prepares the stable candidate; service and public-release acceptance remain separately bound by the private release workflow.
+
+Promote the previously Alpha-only Android native fallback to recognized releases from 1.1.2 onward. Keep Android-only capability detection, HTTPS/signed authority validation, scope binding, concurrency/body limits, cancellation and no same-call failed-write replay unchanged. Missing, malformed, older or unknown-channel manifest versions retain the existing fetch path; non-Android is unchanged. Preserve the authenticated mobile plugin-tombstone fix, accounts/keys/workspace isolation, device-local data.json, progress and source mtimes. No new user-center/download or preview controls.
+
+The user's Alpha.10 acceptance is recorded as their reported test result, not blanket physical acceptance on Windows/macOS/Linux/Android/iPhone/iPad. Windows login/reboot and unsupported custom-profile boundaries remain; platform-specific lifecycle and real merchant payment acceptance are not inferred from this source change. Full candidate validation and publication will be recorded separately.
+
+Validation on the fixed Node 26.12.1: 37/37 targeted Android transport/diagnostic, legacy-settings and mobile-configuration checks passed; CN/Global builds and both 26-module dependency isolation checks passed; Community lint has zero errors and six existing warnings. Explicit caller-provided transport, unknown/missing versions, older versions and non-Android behavior are covered. These source checks do not claim final release, physical-host, OS-login/reboot or real-payment acceptance.
+
+## Planned for 1.1.2 — CHG-20261029-PLAIN-COPY-FOLLOWUP
+
+Requirement: the user approved all six proposed Chinese rewrites covering LAN fallback, unavailable tray, plugin switch restart, rename retry, deferred local downloads and retained deletion records, and explicitly assigned them to the 1.1.2 release scope. Apply the approved wording without changing runtime behavior, message identifiers or English text. Inclusion is planned; no installation or publication has been performed by this change.
+
+Validation: 34 existing checks pass across legacy settings, task-row DOM, LAN status, background tray, configuration scope and history context menus on Windows Node 24.14.0. CN/Global builds, both edition isolation checks and diff whitespace checks pass. The prescribed Node 26.12.1, physical host and narrow-screen acceptance remain unverified; see the platform matrix.
+
+## Planned for 1.1.2 — CHG-20261029-PLAIN-STARTUP-COPY
+
+Requirement: use the user-approved plain Chinese startup label and unregistered-device hint. Update the dependent tray warning to quote the same label. The six follow-up proposals were subsequently approved under CHG-20261029-PLAIN-COPY-FOLLOWUP; the user explicitly assigned both copy changes to the 1.1.2 release scope. No native startup, synchronization or settings behavior changes; no installation or publication.
+
+Validation: the existing legacy settings suite passes all 11 checks on Windows Node 24.14.0 (the shell default, not the prescribed Node 26.12.1). It checks the updated hint, the default-off state and Windows/mobile/macOS visibility. CN/Global builds, both edition isolation checks and diff whitespace checks pass on the same runtime. The prescribed Node 26.12.1 and physical-device, narrow-screen and reboot acceptance remain unverified; see the platform matrix.
+
 ## Alpha 1.1.2-alpha.10 candidate — CHG-20261029-MOBILE-PLUGIN-TOMBSTONE
 
 Requirement: an Android receiver must finish synchronization when a removed plugin's manifest remains in cloud history. Do not apply mobile installation compatibility checks to deletion records: they install no plugin code, and their manifest may no longer exist. Keep path/scope authorization, encrypted metadata verification, existing deletion/conflict handling, live-plugin compatibility checks and source mtimes unchanged. No production data repair or release is performed by this source change.

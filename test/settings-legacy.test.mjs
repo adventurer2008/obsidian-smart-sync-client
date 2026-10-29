@@ -189,17 +189,17 @@ test('launch to tray is opt-in inside Advanced on Windows only, follows tray set
 	const { tab, plugin } = fixture(t), original = window.require;
 	window.require = name => { assert.equal(name, 'node:process'); return { platform: 'win32' }; };
 	try {
-		const advanced = tab.getSettingDefinitions().find(group => group.items?.some(item => item.name === '开机启动到托盘'));
-		assert.ok(advanced); const index = advanced.items.findIndex(item => item.name === '开机启动到托盘');
+		const advanced = tab.getSettingDefinitions().find(group => group.items?.some(item => item.name === '开机后自动运行并最小化到托盘'));
+		assert.ok(advanced); const index = advanced.items.findIndex(item => item.name === '开机后自动运行并最小化到托盘');
 		assert.equal(advanced.items[index - 1].name, '后台运行与托盘');
 		tab.display();
-		const row = [...tab.containerEl.querySelectorAll('.setting-item')].find(el => el.setting.name === '开机启动到托盘');
+		const row = [...tab.containerEl.querySelectorAll('.setting-item')].find(el => el.setting.name === '开机后自动运行并最小化到托盘');
 		const toggle = row.setting.controls.find(control => control.kind === 'toggle'); assert.equal(toggle.value, false);
 		await toggle.change(true); assert.equal(plugin.data.settings.launchAtLogin, true);
 		Platform.isMobile = true;
-		assert.ok(!tab.getSettingDefinitions().some(group => group.items?.some(item => item.name === '开机启动到托盘')));
+		assert.ok(!tab.getSettingDefinitions().some(group => group.items?.some(item => item.name === '开机后自动运行并最小化到托盘')));
 		Platform.isMobile = false; window.require = () => ({ platform: 'darwin' });
-		assert.ok(!tab.getSettingDefinitions().some(group => group.items?.some(item => item.name === '开机启动到托盘')));
+		assert.ok(!tab.getSettingDefinitions().some(group => group.items?.some(item => item.name === '开机后自动运行并最小化到托盘')));
 	} finally { window.require = original; Platform.isMobile = false; }
 });
 
@@ -209,9 +209,9 @@ test('a copied startup flag with no native registration displays off instead of 
 	plugin.data.settings.launchAtLogin = true; plugin.startupStatus = false;
 	try {
 		tab.display();
-		const row = [...tab.containerEl.querySelectorAll('.setting-item')].find(el=>el.setting.name==='开机启动到托盘');
+		const row = [...tab.containerEl.querySelectorAll('.setting-item')].find(el=>el.setting.name==='开机后自动运行并最小化到托盘');
 		assert.equal(row.setting.controls.find(control=>control.kind==='toggle').value,false);
-		assert.match(row.setting.desc,/当前设备未确认/);
+		assert.equal(row.setting.desc,'这台电脑的开机启动尚未设置好，请关闭此选项后重新打开。');
 	} finally { window.require=original; }
 });
 

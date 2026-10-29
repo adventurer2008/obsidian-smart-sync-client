@@ -1,6 +1,6 @@
 import { edition, assertEditionOrigin, logViewType } from './edition.js';
 import * as ObsidianSdk from 'obsidian';
-import { androidFallback } from './android-transport.js';
+import { androidFallback, supportsAndroidNativeVersion } from './android-transport.js';
 import { mountBillingCard, capacityWarning } from './billing.js';
 import { t, locale, formatStorageSize, localizedFailure as failureMessage } from './i18n.js';
 import { ConnectionCheckpoints } from './checkpoint.js';
@@ -1898,7 +1898,7 @@ export default class IndependentSync extends Plugin {
 	workspaceApi(origin, ...args) {
 		assertEditionOrigin(origin);
 		const api = new WorkspaceApi(origin, ...args);
-		if (Platform.isAndroidApp === true && typeof this.manifest?.version === 'string' && this.manifest.version.includes('-alpha.') && args[2] === undefined) {
+		if (Platform.isAndroidApp === true && supportsAndroidNativeVersion(this.manifest?.version) && args[2] === undefined) {
 			const binding = JSON.stringify([this.data.localId, api.origin, this.data.settings.workspace]);
 			if (this.androidTransport?.binding !== binding) {
 				const pinId = `authority:${api.origin}`;

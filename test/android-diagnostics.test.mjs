@@ -37,13 +37,24 @@ test('stale account/notebook binding cannot enqueue diagnostics into the new sco
 	assert.equal(subject.data.androidTransportDiagnostics, undefined);
 	assert.equal(subject.data.taskOutbox.length, 0);
 });
-test('experimental transport is gated to Android Alpha builds, not stable or non-Android builds', t => {
+test('guarded transport includes Android stable releases while unknown metadata and non-Android retain default fetch', t => {
 	const previous = Platform.isAndroidApp;
 	t.after(() => { Platform.isAndroidApp = previous; });
-	for (const [android, version, expected] of [[true, '1.1.2-alpha.9', true], [true, '1.1.2', false], [true, undefined, false], [false, '1.1.2-alpha.9', false]]) {
+	for (const [android, version, expected] of [[true, '1.1.2-alpha.10', true], [true, '1.1.2', true], [true, '1.1.3', true], [true, undefined, false], [true, 'unknown', false], [true, '1.1.1', false], [false, '1.1.2', false], [false, '1.1.2-alpha.10', false]]) {
 		Platform.isAndroidApp = android;
 		const { subject } = fixture(); subject.manifest.version = version;
 		Sync.prototype.workspaceApi.call(subject, 'https://synthetic.invalid', 'synthetic-access');
 		assert.equal(Boolean(subject.androidTransport), expected);
 	}
+});
+
+test('stable Android preserves an explicitly supplied workspace transport', t => {
+	const previous = Platform.isAndroidApp;
+	t.after(() => { Platform.isAndroidApp = previous; });
+	Platform.isAndroidApp = true;
+	const { subject } = fixture(); subject.manifest.version = '1.1.2';
+	const supplied = async () => { throw Error('synthetic caller transport'); };
+	const api = Sync.prototype.workspaceApi.call(subject, 'https://synthetic.invalid', 'synthetic-access', 'a'.repeat(36), supplied);
+	assert.equal(api.fetcher, supplied);
+	assert.equal(subject.androidTransport, undefined);
 });
