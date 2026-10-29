@@ -607,6 +607,8 @@ Requirements: the user requests the entire in-flight release, including independ
 
 User-approved production follow-up: purchases and existing orders accept only the canonical payment authority, including isolated staging; remove legacy URL rewriting. Existing sync, encryption, account/vault scope, keys, state and source mtimes remain. Full release and physical-host acceptance are pending separately.
 
+CHG-20261029-LEGACY-ORDER-CLOSE: explicitly closed unpaid orders display their terminal status and cannot offer a resume-payment action.
+
 
 ## CHG-20261029-SYNC-RESPONSIBILITY — 同步职责硬边界
 
