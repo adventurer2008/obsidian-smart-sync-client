@@ -1,5 +1,11 @@
 # Source change record
 
+## Alpha 1.1.2-alpha.10 candidate — CHG-20261029-MOBILE-PLUGIN-TOMBSTONE
+
+Requirement: an Android receiver must finish synchronization when a removed plugin's manifest remains in cloud history. Do not apply mobile installation compatibility checks to deletion records: they install no plugin code, and their manifest may no longer exist. Keep path/scope authorization, encrypted metadata verification, existing deletion/conflict handling, live-plugin compatibility checks and source mtimes unchanged. No production data repair or release is performed by this source change.
+
+Validation: Windows Node 26.12.1 suite 291 passed, 1 skipped; six mobile-configuration tests passed; CN/Global builds, edition isolation and diff whitespace checks passed. Community lint: zero errors, six existing warnings. Synthetic mobile and desktop receivers process removed desktop-plugin manifest/code records, continue to a note with original mtime, and restart without writes to the service. Existing live desktop-plugin exclusion, unknown/corrupt manifest errors and denied-object tests passed. The user authorized inclusion in the unified Alpha.10 release; final release gates and publication are pending. WSL and physical Android/iOS/iPadOS and desktop-host acceptance remain unverified for this change; see the platform matrix.
+
 ## CN Alpha 1.1.2-alpha.7 — CHG-20261029-WINDOWS-NATIVE-STARTUP
 
 Requirement: validate real Windows startup-to-tray, window restoration and multi-vault isolation in independent test vaults without disturbing live libraries/synchronization. Include the explicit quoted owning profile in shortcuts and reject touching another profile's bound entry. Native testing and installed-host inspection found that Obsidian's warm CLI transport is keyed by Windows user, so an explicit profile alone does not guarantee URI isolation. Refuse new login registration and activation in custom profiles, with a localized explanation; keep normal trays and cleanup of their own previous entries available. Existing unbound default-profile entries require explicit re-enabling. No account, key, sync progress or source mtime changes. Actual OS logout/reboot and default-profile startup remain unverified; no live-profile testing is performed.
