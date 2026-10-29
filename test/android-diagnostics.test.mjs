@@ -40,7 +40,7 @@ test('stale account/notebook binding cannot enqueue diagnostics into the new sco
 test('experimental transport is gated to Android Alpha builds, not stable or non-Android builds', t => {
 	const previous = Platform.isAndroidApp;
 	t.after(() => { Platform.isAndroidApp = previous; });
-	for (const [android, version, expected] of [[true, '1.1.2-alpha.9', true], [true, '1.1.2', false], [false, '1.1.2-alpha.9', false]]) {
+	for (const [android, version, expected] of [[true, '1.1.2-alpha.9', true], [true, '1.1.2', false], [true, undefined, false], [false, '1.1.2-alpha.9', false]]) {
 		Platform.isAndroidApp = android;
 		const { subject } = fixture(); subject.manifest.version = version;
 		Sync.prototype.workspaceApi.call(subject, 'https://synthetic.invalid', 'synthetic-access');
