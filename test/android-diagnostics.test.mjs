@@ -4,6 +4,7 @@ import { registerHooks } from 'node:module';
 registerHooks({ resolve(specifier, context, next) { return specifier === 'obsidian' ? { url: new URL('./obsidian-double.mjs', import.meta.url).href, shortCircuit: true } : next(specifier, context); } });
 globalThis.window = globalThis;
 const { default: Sync } = await import('../src/plugin.js');
+const { Platform } = await import('./obsidian-double.mjs');
 function fixture() {
 	const data = { localId: 'synthetic-local', settings: { origin: 'https://synthetic.invalid', workspace: 'a'.repeat(36) }, taskOutbox: [] };
 	const subject = { data, manifest: { version: '1.1.2-alpha.9' }, saveData: async value => { assert.equal(value, data); }, queueDiagnostic: Sync.prototype.queueDiagnostic };
@@ -35,4 +36,14 @@ test('stale account/notebook binding cannot enqueue diagnostics into the new sco
 	await Sync.prototype.recordAndroidTransportDiagnostic.call(subject, event('native-selected'), binding);
 	assert.equal(subject.data.androidTransportDiagnostics, undefined);
 	assert.equal(subject.data.taskOutbox.length, 0);
+});
+test('experimental transport is gated to Android Alpha builds, not stable or non-Android builds', t => {
+	const previous = Platform.isAndroidApp;
+	t.after(() => { Platform.isAndroidApp = previous; });
+	for (const [android, version, expected] of [[true, '1.1.2-alpha.9', true], [true, '1.1.2', false], [false, '1.1.2-alpha.9', false]]) {
+		Platform.isAndroidApp = android;
+		const { subject } = fixture(); subject.manifest.version = version;
+		Sync.prototype.workspaceApi.call(subject, 'https://synthetic.invalid', 'synthetic-access');
+		assert.equal(Boolean(subject.androidTransport), expected);
+	}
 });

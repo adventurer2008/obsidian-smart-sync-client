@@ -1898,7 +1898,7 @@ export default class IndependentSync extends Plugin {
 	workspaceApi(origin, ...args) {
 		assertEditionOrigin(origin);
 		const api = new WorkspaceApi(origin, ...args);
-		if (Platform.isAndroidApp === true && args[2] === undefined) {
+		if (Platform.isAndroidApp === true && this.manifest.version.includes('-alpha.') && args[2] === undefined) {
 			const binding = JSON.stringify([this.data.localId, api.origin, this.data.settings.workspace]);
 			if (this.androidTransport?.binding !== binding) {
 				const pinId = `authority:${api.origin}`;
