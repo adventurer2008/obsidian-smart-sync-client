@@ -1,5 +1,9 @@
 # Source change record
 
+## 1.1.4 staging regression correction — CHG-20261102-114-REGRESSION2
+
+The first full private integration run retained 394 passes and two failures and was stopped before staging. Preserve the existing maximum of 48 decryptions for 24 small files: reuse authenticated classification results in a separate cache bounded to 128 KiB of manifest bytes, validate the note binding, consume cached entries during prefetch/receive and clear them on run exit. Add the same byte/mtime and decryption-budget regression publicly. The two-file lost-receipt integration fixture now uses two Markdown files so it still proves genuine atomic batch recovery without combining the new note and attachment phases. No weakened decryption limit, missing-byte assertion or skipped full gate. Freeze a new candidate; retain the initial failed evidence.
+
 ## 1.1.4 staging candidate — CHG-20261102-114-FULL-STAGING
 
 Requirement: the user requested the full release process through staging, then explicitly expanded 1.1.4 to all unpublished Client/Server changes. Freeze the complete current Client and latest Server/tools inputs, retain independently deployed pay/manage/user behavior and run the full Windows/WSL and staging gates. Do not promote production or publish a public Release in this task. Bump Client package/lock/manifest/compatibility metadata together to 1.1.4; include CHG-20261102-NOTES-FIRST below. Older headings marked Unreleased/Planned are historical descriptions: the small-file optimization branch is already an ancestor of main and is included, not re-imported. No protocol/schema or device-local credential/state migration is added.

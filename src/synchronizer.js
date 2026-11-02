@@ -412,6 +412,8 @@ export class NotebookSynchronizer {
 	#receivePaths = new Map();
 	#receiveFailures = new Map();
 	#receiveAttempts = new Set();
+	#classifiedInfo = new Map();
+	#classifiedBytes = 0;
 	#checkpointFailed = false;
 	run(target, ceiling) {
 		if (this.#running) return this.#running;
@@ -445,6 +447,8 @@ export class NotebookSynchronizer {
 				this.#cachedObjects.clear();
 				this.#windowManifests.clear();
 				this.#prefetchedInfo.clear();
+				this.#classifiedInfo.clear();
+				this.#classifiedBytes = 0;
 				this.#contentPoll = undefined;
 				this.#batching = false;
 				this.#running = undefined;
@@ -505,6 +509,22 @@ export class NotebookSynchronizer {
 		return (previous?.revision ?? 0) >= entry.sequence &&
 			(previous.revision !== entry.sequence || previous.downloaded || previous.removed || entry.removed || this.excluded(previous.path));
 	}
+	#classification(entry, consume = false) {
+		const cached = this.#classifiedInfo.get(entry.manifest);
+		if (cached?.note !== entry.note) return;
+		if (consume) { this.#classifiedInfo.delete(entry.manifest); this.#classifiedBytes -= cached.bytes; }
+		return cached.info;
+	}
+	#rememberClassification(entry, info, bytes) {
+		if (bytes > 128 * 1024) return;
+		const previous = this.#classifiedInfo.get(entry.manifest);
+		if (previous) { this.#classifiedInfo.delete(entry.manifest); this.#classifiedBytes -= previous.bytes; }
+		for (const [address, cached] of this.#classifiedInfo) {
+			if (this.#classifiedBytes + bytes <= 128 * 1024) break;
+			this.#classifiedInfo.delete(address); this.#classifiedBytes -= cached.bytes;
+		}
+		this.#classifiedInfo.set(entry.manifest, { note: entry.note, info, bytes }); this.#classifiedBytes += bytes;
+	}
 	async #prefetch(entries, retained = new Map(), metadataOnly = false) {
 		// Prepare a private window. Read-ahead must never replace the active
 		// receiver's caches or mutate its task, cursor or checkpoint state.
@@ -537,7 +557,7 @@ export class NotebookSynchronizer {
 				if (entry.removed || this.#alreadyApplied(entry)) { covered++; continue; }
 				if (!manifests.has(entry.manifest)) break;
 				let info;
-				try { info = await inspectNote(this.keys, this.api.workspace, entry.note, entry.manifest, async address => manifests.get(address)); }
+				try { info = this.#classification(entry, true) ?? await inspectNote(this.keys, this.api.workspace, entry.note, entry.manifest, async address => manifests.get(address)); }
 				catch { covered++; continue; } // The ordinary per-file task performs and reports the integrity failure.
 				window.info.set(entry.note + entry.manifest, info);
 				const previous = this.state.notes[entry.note];
@@ -678,7 +698,7 @@ export class NotebookSynchronizer {
 		}
 		const load = (address) => this.#load(address);
 		const infoKey = entry.note + entry.manifest;
-		const info = this.#prefetchedInfo.get(infoKey) ?? await inspectNote(this.keys, this.api.workspace, entry.note, entry.manifest, load);
+		const info = this.#prefetchedInfo.get(infoKey) ?? this.#classification(entry, true) ?? await inspectNote(this.keys, this.api.workspace, entry.note, entry.manifest, load);
 		this.#prefetchedInfo.delete(infoKey);
 		if (this.excluded(info.path, true)) return;
 		this.#active.path = info.path;
@@ -1018,7 +1038,7 @@ export class NotebookSynchronizer {
 					catch (error) { if ([401, 403].includes(error?.status) || error?.name === 'AbortError') throw error; }
 				}
 				manifest ??= await this.api.load(entry.manifest);
-				const info = await inspectNote(this.keys, this.api.workspace, entry.note, entry.manifest, async () => manifest);
+				const info = this.#classification(entry) ?? await inspectNote(this.keys, this.api.workspace, entry.note, entry.manifest, async () => manifest);
 				if (manifest.length <= 128 * 1024) {
 					let retained = [...this.#windowManifests.values()].reduce((sum, body) => sum + body.length, 0);
 					for (const [address, body] of this.#windowManifests) {
@@ -1054,6 +1074,7 @@ export class NotebookSynchronizer {
 				else try {
 					const body = metadata.cached.get(entry.manifest) ?? this.#windowManifests.get(entry.manifest) ?? await this.api.load(entry.manifest);
 					const info = await inspectNote(this.keys, this.api.workspace, entry.note, entry.manifest, async () => body);
+					this.#rememberClassification(entry, info, body.length);
 					path = info.path;
 					// Structural changes retain feed order before independently transferable bodies.
 					rank = info.kind === 'folder' || (previous && previous.path !== path) ? 0 : isMarkdown(path) ? 1 : 2;

@@ -129,3 +129,14 @@ test('a new local Markdown edit interrupts attachment work at the next file boun
 	assert.deepEqual(transferred, [['receive', 'first.bin'], ['send', 'new.md'], ['receive', 'second.bin']]);
 	assert.equal(priorities.size, 0); assert.equal(f.times.get('new.md'), mtime + 100);
 });
+
+test('bounded classification reuses verified manifests without a second metadata decryption', async () => {
+	const f = fixture(true);
+	for (let i = 0; i < 24; i++) await f.add(`note-${i}.md`, `body ${i}`);
+	const decrypt = crypto.subtle.decrypt.bind(crypto.subtle); let decryptions = 0;
+	crypto.subtle.decrypt = async (...args) => { decryptions++; return decrypt(...args); };
+	try { await f.engine({ direction: 'receive', batchFiles: 32 }).run(); }
+	finally { crypto.subtle.decrypt = decrypt; }
+	assert.equal(f.files.size, 24); assert.ok(decryptions <= 48, `repeated metadata decryptions: ${decryptions}`);
+	for (let i = 0; i < 24; i++) { assert.deepEqual(f.files.get(`note-${i}.md`), bytes(`body ${i}`)); assert.equal(f.times.get(`note-${i}.md`), mtime); }
+});
