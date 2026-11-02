@@ -1,5 +1,11 @@
 # Source change record
 
+## 1.1.4 staging candidate — CHG-20261102-114-FULL-STAGING
+
+Requirement: the user requested the full release process through staging, then explicitly expanded 1.1.4 to all unpublished Client/Server changes. Freeze the complete current Client and latest Server/tools inputs, retain independently deployed pay/manage/user behavior and run the full Windows/WSL and staging gates. Do not promote production or publish a public Release in this task. Bump Client package/lock/manifest/compatibility metadata together to 1.1.4; include CHG-20261102-NOTES-FIRST below. Older headings marked Unreleased/Planned are historical descriptions: the small-file optimization branch is already an ancestor of main and is included, not re-imported. No protocol/schema or device-local credential/state migration is added.
+
+Acceptance is pending the immutable candidate's full workflow. Physical Windows/macOS/Linux/Android/iPhone/iPad acceptance, mobile background/lock/reboot and native UI behavior remain unverified; source/build and Windows/WSL results cannot substitute for those checks. The private staging report will record actual results and failures.
+
 ## Planned for 1.1.4 — CHG-20261102-NOTES-FIRST
 
 Requirement: the user approved synchronizing Markdown notes before attachments on every full and incremental cycle and requested inclusion in the next version after 1.1.3. Apply case-insensitive `.md` priority to ordinary/batch uploads, incremental inventory paths and authenticated download heads. Flush the note upload batch before attachment work; keep read-ahead within its phase. In bidirectional cycles, publish eligible local notes before the remote attachment phase. Existing-file remote note edits and queued local Markdown edits retain priority at safe file/batch boundaries.
