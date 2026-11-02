@@ -26,6 +26,12 @@ Regional outputs are in artifacts/cn and artifacts/global. The default build is 
 
 The synthetic three-device position integration test also needs a local Server checkout. Set `SMART_SYNC_SERVER_DIR` to that checkout and run `node --test test/note-positions-integration.test.mjs`. Without that explicit path, this integration test is skipped; it does not access a hosted service or a real vault.
 
+## Planned synchronization order (1.1.4)
+
+Full and incremental synchronization prioritize Markdown notes (`.md`, case insensitive) before attachments for uploads and downloads. Necessary directory, rename and deletion dependencies keep their safe ordering. Notes can become available before embedded images/PDFs finish downloading. Existing attachment download policies still apply. New queued Markdown edits can take priority at file/batch boundaries; an active transfer is allowed to finish safely.
+
+Receiving first inspects encrypted metadata in bounded windows, so this improves body-transfer priority rather than guaranteeing shorter total synchronization time. Pending files survive interrupted reordered progress in the existing retry queue. Mobile systems can suspend the application; remaining work continues when the host resumes and synchronization runs again. All-platform physical-device acceptance remains pending; see [the platform review](docs/validation/cross-platform-feature-matrix.md).
+
 ## Accounts, network and privacy
 
 Synchronization needs an approved account and the matching regional service. Content and paths are encrypted on the client; the service handles account/workspace identifiers, enrollment email, notebook/device labels, timestamps, ciphertext sizes, reported local vault byte totals and measurement times, and opaque identifiers. Keep the encryption passphrase safe; external login does not replace it. China plan prices and purchase notices appear at checkout; renewal is manual and does not enable automatic charges. Avoid running multiple sync providers on the same vault without resolving their interaction.
