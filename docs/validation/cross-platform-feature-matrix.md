@@ -1,5 +1,9 @@
 # Cross-platform feature and scenario review
 
+## CHG-20261104-GLOBAL-COMMUNITY-SUBMIT
+
+Global remote diagnostic upload is disabled uniformly on Windows, macOS, Linux desktop, Android, iPhone/iOS and iPad/iPadOS; local logs and explicit local export remain. Synthetic checks verify legacy outbox rejection, direct drain rejection and retained Android local diagnostics. Fresh physical acceptance is unverified on all six platforms. Timer cleanup uses the shared window API. No new layout/touch/native controls are introduced; lifecycle and offline retries cannot upload diagnostics. Account/vault isolation, mixed-version synchronization, encrypted bodies, source mtime and upgrade/rollback formats are unchanged. Existing preview snapshots are reproducible; no installed candidate or service is replaced by this preparation.
+
 ## CHG-20261104-GITHUB-COMMUNITY-PREP
 
 Source delivery and Community preparation do not install a candidate on Windows, macOS, Linux desktop, Android, iPhone/iOS or iPad/iPadOS; fresh physical acceptance is unverified for all six. Pending-creation cleanup uses the shared host secret API and preserves origin/vault isolation when stored state is malformed. Synthetic tests cover cleanup/retry; native secure storage, touch/narrow layouts, browser return, lock/background/restart, offline recovery and mixed-version scenarios remain separate release checks. No source mtime, note body or encryption-format changes. No service deployment, binary publication or automatic upgrade; rollback retains the prior installed artifacts.

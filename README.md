@@ -36,6 +36,8 @@ Receiving first inspects encrypted metadata in bounded windows, so this improves
 
 Synchronization needs an approved account and the matching regional service. Content and paths are encrypted on the client; the service handles account/workspace identifiers, enrollment email, notebook/device labels, timestamps, ciphertext sizes, reported local vault byte totals and measurement times, and opaque identifiers. Keep the encryption passphrase safe; external login does not replace it. China plan prices and purchase notices appear at checkout; renewal is manual and does not enable automatic charges. Avoid running multiple sync providers on the same vault without resolving their interaction.
 
+Global diagnostics stay on the device and can be exported manually; the Global client does not upload diagnostic telemetry. Device presence and local vault-size reports support the user's device-management and peer-discovery features. Server request logs and account metadata are described in the regional privacy policy. Enabling Windows launch at login explicitly creates a shortcut in the current user's Startup folder outside the vault; disabling that setting removes its owned shortcut.
+
 [China installation and distribution](https://github.com/adventurer2008/obsidian-smart-sync-release-cn) · [China privacy](https://github.com/adventurer2008/obsidian-smart-sync-release-cn/blob/main/PRIVACY.md) · [Global distribution preparation](https://github.com/adventurer2008/obsidian-smart-sync-release-global) · [Global privacy](https://smartsync.cc/privacy/). Global release preparation is distinct from publishing an installable release.
 
 ## License and provenance

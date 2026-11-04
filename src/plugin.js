@@ -738,7 +738,7 @@ export default class IndependentSync extends Plugin {
 			new TextEncoder().encode(`${this.data.settings.origin}|${this.data.settings.workspace}`),
 		);
 		this.data.tasks = this.journal.snapshot();
-		this.data.taskOutbox = new TaskJournal(this.data.taskOutbox, 2000)
+		this.data.taskOutbox = new TaskJournal(edition.edition === 'global' ? [] : this.data.taskOutbox, 2000)
 			.snapshot()
 			.filter((row) => row.status !== 'running');
 		if (this.app.vault.on)
@@ -3221,6 +3221,7 @@ export default class IndependentSync extends Plugin {
 		return this.taskSave;
 	}
 	queueDiagnostic(row, api) {
+		if (edition.edition === 'global') return;
 		if (!row || ['running', 'resolved'].includes(row.status)) return;
 		const entries = this.data.taskOutbox ?? [];
 		if (!entries.some((entry) => entry.id === row.id)) entries.push({ ...row });
@@ -3228,6 +3229,7 @@ export default class IndependentSync extends Plugin {
 		if (api) this.scheduleDiagnostics(api);
 	}
 	scheduleDiagnostics(api) {
+		if (edition.edition === 'global') return;
 		if (this.stopped || this.stopping || api.signal?.aborted || this.diagnosticTimer || this.diagnosticRun) return;
 		const delay = Math.max(1000, (this.diagnosticRetryAt ?? 0) - Date.now());
 		this.diagnosticTimer = window.setTimeout(() => {
@@ -3236,6 +3238,7 @@ export default class IndependentSync extends Plugin {
 		}, delay);
 	}
 	flushDiagnostics(api, { automatic = false } = {}) {
+		if (edition.edition === 'global') { this.diagnosticPending = 0; return Promise.resolve(); }
 		if (this.diagnosticRun) return this.diagnosticRun;
 		if (this.stopped || this.stopping || api.signal?.aborted || (automatic && Date.now() < (this.diagnosticRetryAt ?? 0))) return Promise.resolve();
 		window.clearTimeout(this.diagnosticTimer);
@@ -3247,6 +3250,7 @@ export default class IndependentSync extends Plugin {
 		return this.diagnosticRun;
 	}
 	async drainDiagnostics(api) {
+		if (edition.edition === 'global') return;
 		let cancellation, scope, changed = false;
 		try {
 			this.ensureCurrent(api);
@@ -3657,7 +3661,7 @@ export default class IndependentSync extends Plugin {
 			area.createEl('p',{text:t(reauth?'auth.reauth.intro':'auth.intro'),cls:'smart-sync-auth-intro'});
 			const methodsArea=area.createDiv({cls:'smart-sync-auth-methods'});
 			const feedback=area.createEl('p',{text:t('auth.loading'),cls:'smart-sync-auth-status'});feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');
-			const check=async()=>{if(closed||checking||completed||!flow)return;checking=true;const checked=flow;try{const api=await this.finishGlobalSignIn(checked,()=>!closed&&flow===checked);if(closed)return;if(!api){feedback.setText(t(checked.inline?'auth.emailIntro':reauth?'auth.reauth.waiting':'auth.waiting'));return;}completed=true;clearInterval(timer);if(reauth){dialog.close();await this.deleteGlobalAccount();return;}feedback.setText(t('auth.signedIn',{email:this.accountEmail}));await this.selectAccountWorkspace(api,dialog);dialog.close();}catch(error){if(!closed)feedback.setText(failureMessage(error));clearInterval(timer);}finally{checking=false;}};
+			const check=async()=>{if(closed||checking||completed||!flow)return;checking=true;const checked=flow;try{const api=await this.finishGlobalSignIn(checked,()=>!closed&&flow===checked);if(closed)return;if(!api){feedback.setText(t(checked.inline?'auth.emailIntro':reauth?'auth.reauth.waiting':'auth.waiting'));return;}completed=true;window.clearInterval(timer);if(reauth){dialog.close();await this.deleteGlobalAccount();return;}feedback.setText(t('auth.signedIn',{email:this.accountEmail}));await this.selectAccountWorkspace(api,dialog);dialog.close();}catch(error){if(!closed)feedback.setText(failureMessage(error));window.clearInterval(timer);}finally{checking=false;}};
 			const doc=area.ownerDocument,view=doc?.defaultView;
 			const resume=()=>{if(!doc?.hidden&&flow&&this.secret('oauth'))void check();};
 			view?.addEventListener('focus',resume);doc?.addEventListener('visibilitychange',resume);
@@ -3676,21 +3680,21 @@ export default class IndependentSync extends Plugin {
 						const sendSetting=new Setting(emailArea);
 						const codeArea=emailArea.createDiv();codeArea.hidden=true;
 						const message=error=>error?.status===429?t('auth.rateLimited'):error?.status===401?t('auth.codeRejected'):failureMessage(error);
-						const send=async()=>{if(emailBusy||checking||starting||completed)return;if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){feedback.setText(t('auth.invalidEmail'));return;}emailBusy=true;starting=true;const recipient=email;feedback.setText(t('auth.sending'));try{clearInterval(timer);flow=await this.beginGlobalSignIn('email',()=>!closed,reauth,true);const pending=flow;await this.globalEmailRequest(pending,'send',recipient,()=>!closed&&flow===pending);if(closed)return;sentEmail=recipient;codeArea.hidden=false;feedback.setText(t('auth.codeSent',{email:recipient}));}catch(error){if(!closed)feedback.setText(message(error));}finally{emailBusy=false;starting=false;}};
+						const send=async()=>{if(emailBusy||checking||starting||completed)return;if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){feedback.setText(t('auth.invalidEmail'));return;}emailBusy=true;starting=true;const recipient=email;feedback.setText(t('auth.sending'));try{window.clearInterval(timer);flow=await this.beginGlobalSignIn('email',()=>!closed,reauth,true);const pending=flow;await this.globalEmailRequest(pending,'send',recipient,()=>!closed&&flow===pending);if(closed)return;sentEmail=recipient;codeArea.hidden=false;feedback.setText(t('auth.codeSent',{email:recipient}));}catch(error){if(!closed)feedback.setText(message(error));}finally{emailBusy=false;starting=false;}};
 						bindAction(sendSetting,t('auth.sendCode'),send);
 						new Setting(codeArea).setName(t('auth.code')).addText(input=>{input.inputEl.inputMode='numeric';input.inputEl.autocomplete='one-time-code';input.inputEl.maxLength=8;input.inputEl.setAttribute?.('aria-label',t('auth.code'));input.onChange(value=>{code=value.trim();});});
 						bindAction(new Setting(codeArea),t('auth.verifyCode'),async()=>{if(emailBusy||checking||starting||completed)return;if(email!==sentEmail){feedback.setText(t('auth.emailChanged'));return;}if(!/^\d{8}$/.test(code)){feedback.setText(t('auth.invalidCode'));return;}emailBusy=true;checking=true;const pending=flow;try{await this.globalEmailRequest(pending,'verify',code,()=>!closed&&flow===pending);code='';checking=false;await check();}catch(error){if(!closed)feedback.setText(message(error));}finally{emailBusy=false;checking=false;}});
 						continue;
 					}
 					const setting=new Setting(methodsArea);setting.settingEl.classList.add('smart-sync-auth-method');
-					bindAction(setting,t('auth.'+method),async()=>{if(checking||starting)return;starting=true;try{clearInterval(timer);flow=await this.beginGlobalSignIn(method,()=>!closed,reauth);checkArea.hidden=false;feedback.setText(t(reauth?'auth.reauth.waiting':'auth.waiting'));timer=window.setInterval(()=>{void check();},2500);this.registerInterval(timer);}finally{starting=false;}});
+					bindAction(setting,t('auth.'+method),async()=>{if(checking||starting)return;starting=true;try{window.clearInterval(timer);flow=await this.beginGlobalSignIn(method,()=>!closed,reauth);checkArea.hidden=false;feedback.setText(t(reauth?'auth.reauth.waiting':'auth.waiting'));timer=window.setInterval(()=>{void check();},2500);this.registerInterval(timer);}finally{starting=false;}});
 					const button=setting.controlEl?.querySelector('button');
 					if(button){const icon=button.createSpan({cls:'smart-sync-auth-icon smart-sync-auth-'+method});icon.setAttribute('aria-hidden','true');if(method==='email')ObsidianSdk.setIcon?.(icon,'mail');}
 				}
 			}).catch(error=>{if(!closed)feedback.setText(failureMessage(error));});
 			try{const saved=JSON.parse(this.secret('oauth'));if(Boolean(saved.reauth)===reauth&&saved.localId===this.data.localId&&saved.origin===this.data.settings.origin&&saved.expires>Date.now()){flow=saved;checkArea.hidden=saved.inline===true;feedback.setText(t(saved.inline?'auth.emailIntro':reauth?'auth.reauth.waiting':'auth.waiting'));timer=window.setInterval(()=>{void check();},2500);this.registerInterval(timer);void check();}}catch{ /* No pending authorization. */ }
 		});
-		dialog.onClose=()=>{closed=true;clearInterval(timer);stopWatching();dialog.contentEl.empty();};dialog.open();
+		dialog.onClose=()=>{closed=true;window.clearInterval(timer);stopWatching();dialog.contentEl.empty();};dialog.open();
 	}
 	async selectAccountWorkspace(api,dialog,workspaces) {
 		workspaces??=(await api.workspaces()).workspaces;
