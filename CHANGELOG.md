@@ -753,3 +753,6 @@ Requirement: user now requests execution for testing, superseding the earlier MO
 ## Global mobile Alpha published — CHG-20261104-GLOBAL-MOBILE-ALPHA
 
 Requirement: retry download-site publication so the user can update through Hub on iOS. Published the fixed 1.1.5-alpha.2 package; updated both the combined Hub feed and Alpha feed while preserving older versions. Actual maintained Hub loader/download logic discovers alpha.2, verifies the three public program files and rejects a corrupted file. Public ZIP hash matches the frozen local package. No application restart or installed-vault change. Native iOS installation and storage-upgrade acceptance await user testing. See docs/validation/global-mobile-alpha-2026-11-04.md.
+## User device acceptance recorded — CHG-20261104-GLOBAL-USER-DEVICE-ACCEPTANCE
+
+Requirement: record the user's successful iOS, Android and Windows login/deletion tests. Preserve them as user-reported physical-device acceptance, with screenshot observations and the exact unreported device/build/deletion-subtype boundaries in docs/validation/global-user-device-acceptance-2026-11-04.md. Update only the corresponding reported scope; other platforms, storage-upgrade/layout and unreported lifecycle/payment/integrity scenarios retain their existing status. No private screenshots/account identifiers, code change or new account operation.
