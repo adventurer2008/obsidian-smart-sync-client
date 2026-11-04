@@ -750,3 +750,6 @@ Requirement: the user explicitly moves CHG-20261104-MOBILE-BILLING-LINK to the A
 ## Global mobile Alpha execution — CHG-20261104-GLOBAL-MOBILE-ALPHA
 
 Requirement: user now requests execution for testing, superseding the earlier MOBILE-BILLING-DEFER schedule. Deliver the mobile storage upgrade fix in Global 1.1.5-alpha.2, retaining 1.1.5-alpha.1 and older artifacts. No China release, service deployment or installed vault changes. See docs/validation/global-mobile-alpha-2026-11-04.md; physical iOS acceptance remains pending.
+## Global mobile Alpha published — CHG-20261104-GLOBAL-MOBILE-ALPHA
+
+Requirement: retry download-site publication so the user can update through Hub on iOS. Published the fixed 1.1.5-alpha.2 package; updated both the combined Hub feed and Alpha feed while preserving older versions. Actual maintained Hub loader/download logic discovers alpha.2, verifies the three public program files and rejects a corrupted file. Public ZIP hash matches the frozen local package. No application restart or installed-vault change. Native iOS installation and storage-upgrade acceptance await user testing. See docs/validation/global-mobile-alpha-2026-11-04.md.
