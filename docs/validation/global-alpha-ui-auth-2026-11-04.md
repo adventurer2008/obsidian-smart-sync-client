@@ -1,0 +1,13 @@
+# Global Alpha settings and browser sign-in recovery
+
+Change: CHG-20261104-GLOBAL-ALPHA-UI-AUTH. User requested these fixes in an Alpha version for personal testing. Candidate: 1.1.5-alpha.1, smart-sync-global, based on the maintained 1.1.4 source plus CHG-20261104-SETTINGS-DANGER-CLEANUP and CHG-20261104-AUTH-RESUME-RETRY.
+
+Scope: replace repeated Danger zone nodes, refresh reused settings group labels, and recover automatic browser sign-in checking after temporary request failures and foreground/network return. Preserve exact authorization checks, final deletion confirmation, existing functions, identities, keys, account/vault isolation, encrypted notes, sync progress and original source mtime. China services and stable files are outside this delivery.
+
+The fixed build snapshot overrides only version metadata to 1.1.5-alpha.1. The installation ZIP contains main.js, manifest.json and styles.css at its root. Updating replaces those program files only; preserve data.json, secret storage and all other plugin/vault files. Stop synchronization and close the host before manual replacement. Prior 1.1.4 Alpha files remain available for code rollback; rollback does not reverse cloud operations.
+
+Validation: Windows Node 26.12.1 source suite has 344 passes, one optional local-Server integration skip. Regional builds/isolation pass; local lint has zero errors and seven existing fetch/config-path warnings. Candidate artifact validation is recorded in the delivery receipt. Remote CI for the new snapshot, native six-platform layout/lifecycle checks and current hosted-protocol regression are not claimed by these source results; earlier 1.1.4 hosted-protocol evidence is baseline evidence only. No Server deployment or official Community submission is part of this Alpha.
+
+Windows, macOS, Linux desktop, Android, iPhone/iOS and iPad/iPadOS are conditionally supported through shared host UI, HTTPS and foreground checks. Every platform's repaired candidate remains physically unverified. iPad's prior login-return failure and successful manual check are user reports, not acceptance of the repair. See the cross-platform feature matrix for separate platform/scenario boundaries.
+
+User checks: on an isolated test vault, sign in through Google and return without pressing Check sign-in; repeat after a short network interruption and background/lock. Confirm one workspace picker, correct account, and no duplicate Danger zone after repeated settings refreshes and sign-out/sign-in. Check narrow-screen/touch layout and preserve source mtime in representative mixed-device synchronization. Do not assume unlimited background execution on mobile.

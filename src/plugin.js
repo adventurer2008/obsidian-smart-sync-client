@@ -3655,6 +3655,8 @@ export default class IndependentSync extends Plugin {
 	}
 	globalEnrollment(reauth=false) {
 		let closed=false,checking=false,starting=false,completed=false,timer,flow;
+		let retryAt=0,retryDelay=2500,terminalFailure=false;
+		const stopPolling=()=>{window.clearInterval(timer);timer=undefined;};
 		let stopWatching=()=>{};
 		const dialog=new ChoiceWindow(this.app,t(reauth?'auth.reauth.title':'auth.title'),area=>{
 			area.classList.add('smart-sync-auth');
@@ -3662,12 +3664,36 @@ export default class IndependentSync extends Plugin {
 			area.createEl('p',{text:t(reauth?'auth.reauth.intro':'auth.intro'),cls:'smart-sync-auth-intro'});
 			const methodsArea=area.createDiv({cls:'smart-sync-auth-methods'});
 			const feedback=area.createEl('p',{text:t('auth.loading'),cls:'smart-sync-auth-status'});feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');
-			const check=async()=>{if(closed||checking||completed||!flow)return;checking=true;const checked=flow;try{const api=await this.finishGlobalSignIn(checked,()=>!closed&&flow===checked);if(closed)return;if(!api){feedback.setText(t(checked.inline?'auth.emailIntro':reauth?'auth.reauth.waiting':'auth.waiting'));return;}completed=true;window.clearInterval(timer);if(reauth){dialog.close();await this.deleteGlobalAccount();return;}feedback.setText(t('auth.signedIn',{email:this.accountEmail}));await this.selectAccountWorkspace(api,dialog);dialog.close();}catch(error){if(!closed)feedback.setText(failureMessage(error));window.clearInterval(timer);}finally{checking=false;}};
 			const doc=area.ownerDocument,view=doc?.defaultView;
-			const resume=()=>{if(!doc?.hidden&&flow&&this.secret('oauth'))void check();};
-			view?.addEventListener('focus',resume);doc?.addEventListener('visibilitychange',resume);
-			stopWatching=()=>{view?.removeEventListener('focus',resume);doc?.removeEventListener('visibilitychange',resume);};
-			const checkArea=area.createDiv({cls:'smart-sync-auth-check'});checkArea.hidden=true;action(checkArea,t(reauth?'auth.reauth.check':'auth.check'),check);
+			const check=async(manual=false)=>{
+				if(closed||checking||starting||completed||!flow||(!manual&&(doc?.hidden||terminalFailure||Date.now()<retryAt)))return;
+				if(this.stopped||flow.localId!==this.data.localId||flow.origin!==this.data.settings.origin||flow.expires<=Date.now()){
+					terminalFailure=true;stopPolling();feedback.setText(failureMessage(Error('Sign-in expired or context changed')));return;
+				}
+				checking=true;const checked=flow;
+				try{
+					const api=await this.finishGlobalSignIn(checked,()=>!closed&&flow===checked);
+					if(closed)return;
+					retryAt=0;retryDelay=2500;
+					if(!api){feedback.setText(t(checked.inline?'auth.emailIntro':reauth?'auth.reauth.waiting':'auth.waiting'));return;}
+					completed=true;stopPolling();
+					if(reauth){dialog.close();await this.deleteGlobalAccount();return;}
+					feedback.setText(t('auth.signedIn',{email:this.accountEmail}));await this.selectAccountWorkspace(api,dialog);dialog.close();
+				}catch(error){
+					if(!closed)feedback.setText(failureMessage(error));
+					// Background/network interruptions must not permanently disable browser sign-in checks.
+					if([400,401,403,404,410].includes(error?.status)){terminalFailure=true;stopPolling();}
+					else {retryAt=Date.now()+retryDelay;retryDelay=Math.min(retryDelay*2,30000);}
+				}finally{checking=false;}
+			};
+			const startPolling=()=>{
+				if(closed||completed||terminalFailure||!flow||timer!==undefined)return;
+				timer=window.setInterval(()=>{void check();},2500);this.registerInterval(timer);
+			};
+			const resume=()=>{if(!doc?.hidden){retryAt=0;startPolling();void check();}};
+			view?.addEventListener('focus',resume);view?.addEventListener('pageshow',resume);view?.addEventListener('online',resume);doc?.addEventListener('visibilitychange',resume);
+			stopWatching=()=>{view?.removeEventListener('focus',resume);view?.removeEventListener('pageshow',resume);view?.removeEventListener('online',resume);doc?.removeEventListener('visibilitychange',resume);};
+			const checkArea=area.createDiv({cls:'smart-sync-auth-check'});checkArea.hidden=true;action(checkArea,t(reauth?'auth.reauth.check':'auth.check'),()=>check(true));
 			area.createEl('p',{text:t(reauth?'auth.reauth.help':'auth.help'),cls:'smart-sync-auth-help'});
 			void this.billingApi('').request('GET','auth/config').then(config=>{
 				if(closed)return;const methods=[...(config.providers??[]),...(config.emailEnabled?['email']:[])].filter(value=>['google','github','email'].includes(value));
@@ -3688,14 +3714,14 @@ export default class IndependentSync extends Plugin {
 						continue;
 					}
 					const setting=new Setting(methodsArea);setting.settingEl.classList.add('smart-sync-auth-method');
-					bindAction(setting,t('auth.'+method),async()=>{if(checking||starting)return;starting=true;try{window.clearInterval(timer);flow=await this.beginGlobalSignIn(method,()=>!closed,reauth);checkArea.hidden=false;feedback.setText(t(reauth?'auth.reauth.waiting':'auth.waiting'));timer=window.setInterval(()=>{void check();},2500);this.registerInterval(timer);}finally{starting=false;}});
+					bindAction(setting,t('auth.'+method),async()=>{if(checking||starting)return;starting=true;try{stopPolling();flow=await this.beginGlobalSignIn(method,()=>!closed,reauth);terminalFailure=false;retryAt=0;retryDelay=2500;checkArea.hidden=false;feedback.setText(t(reauth?'auth.reauth.waiting':'auth.waiting'));startPolling();}finally{starting=false;}void check();});
 					const button=setting.controlEl?.querySelector('button');
 					if(button){const icon=button.createSpan({cls:'smart-sync-auth-icon smart-sync-auth-'+method});icon.setAttribute('aria-hidden','true');if(method==='email')ObsidianSdk.setIcon?.(icon,'mail');}
 				}
 			}).catch(error=>{if(!closed)feedback.setText(failureMessage(error));});
-			try{const saved=JSON.parse(this.secret('oauth'));if(Boolean(saved.reauth)===reauth&&saved.localId===this.data.localId&&saved.origin===this.data.settings.origin&&saved.expires>Date.now()){flow=saved;checkArea.hidden=saved.inline===true;feedback.setText(t(saved.inline?'auth.emailIntro':reauth?'auth.reauth.waiting':'auth.waiting'));timer=window.setInterval(()=>{void check();},2500);this.registerInterval(timer);void check();}}catch{ /* No pending authorization. */ }
+			try{const saved=JSON.parse(this.secret('oauth'));if(Boolean(saved.reauth)===reauth&&saved.localId===this.data.localId&&saved.origin===this.data.settings.origin&&saved.expires>Date.now()){flow=saved;checkArea.hidden=saved.inline===true;feedback.setText(t(saved.inline?'auth.emailIntro':reauth?'auth.reauth.waiting':'auth.waiting'));startPolling();void check();}}catch{ /* No pending authorization. */ }
 		});
-		dialog.onClose=()=>{closed=true;window.clearInterval(timer);stopWatching();dialog.contentEl.empty();};dialog.open();
+		dialog.onClose=()=>{closed=true;stopPolling();stopWatching();dialog.contentEl.empty();};dialog.open();
 	}
 	async selectAccountWorkspace(api,dialog,workspaces) {
 		workspaces??=(await api.workspaces()).workspaces;
@@ -3907,10 +3933,30 @@ export default class IndependentSync extends Plugin {
 		if(guest&&edition.edition==='global')return this.enrollment();
 		const live = () => !this.stopped && localId === this.data.localId && origin === new URL(this.data.settings.origin).origin && guest === (!this.secret('account') && !this.secret('access'));
 		const purchaseBase = regionalServices(edition, origin).purchase;
+		const billingIdentity = this.secret('account') || this.secret('access');
+		const openEntry = href => {
+			if (!Platform.isMobile) { window.open(href, '_blank', 'noopener,noreferrer'); return; }
+			// A native link supplies a fresh user gesture after the network requests.
+			const expires = Date.now() + 90000;
+			let closed = false, used = false;
+			const dialog = new ChoiceWindow(this.app, t('billing.myPlan'), area => {
+				area.createEl('p', {text:t('billing.browserHelp')});
+				const link = area.createEl('a', {text:t('billing.openBrowser'), cls:'smart-sync-plan-action'});
+				link.href = href; link.target = '_blank'; link.rel = 'noopener noreferrer';
+				link.addEventListener('click', event => {
+					if (closed || used || !live() || billingIdentity !== (this.secret('account') || this.secret('access')) || Date.now() >= expires) {
+						event.preventDefault(); new Notice(t('billing.reopen')); dialog.close(); return;
+					}
+					used = true;
+				});
+			});
+			dialog.onClose = () => { closed = true; dialog.contentEl.empty(); };
+			dialog.open();
+		};
 		if (guest && !this.purchaseSession()) {
 			const capability = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32)))).replaceAll('+','-').replaceAll('/','_').replace(/=+$/, '');
 			this.app.secretStorage.setSecret(`${this.manifest.id}-${localId}-purchase`, JSON.stringify({origin,capability}));
-			if (live()) window.open(purchaseBase + '/plans#register=' + capability, '_blank', 'noopener,noreferrer');
+			if (live()) openEntry(purchaseBase + '/plans#register=' + capability);
 			return;
 		}
 		const purchase = guest ? this.purchaseSession() : undefined;
@@ -3919,7 +3965,7 @@ export default class IndependentSync extends Plugin {
 		let entry;
 		try { entry = await api.request('POST', guest ? 'billing/guest/entry' : 'billing/entry', typeof orderId === 'string' ? {orderId} : {}); }
 		catch (error) {
-			if (guest && error.status === 401 && live()) { window.open(purchaseBase + '/plans#register=' + purchase.capability, '_blank', 'noopener,noreferrer'); return; }
+			if (guest && error.status === 401 && live()) { openEntry(purchaseBase + '/plans#register=' + purchase.capability); return; }
 			throw error;
 		}
 		if (!live() || key !== this.secret('account') || (guest && purchase.capability !== this.purchaseSession()?.capability)) return;
@@ -3929,7 +3975,7 @@ export default class IndependentSync extends Plugin {
 		const allowedPath = typeof orderId === 'string' && /^[a-f0-9]{32}$/.test(orderId) ? checkout + orderId : expected.pathname;
 		if (url.username || url.password || url.origin !== expected.origin || url.pathname !== allowedPath || url.search || !/^#ticket=[A-Za-z0-9_-]{43}$/.test(url.hash)) throw Error('Invalid purchase entry');
 		if (orderId === true) url.pathname = expected.pathname.replace(/plans$/, 'orders');
-		window.open(url.href, '_blank', 'noopener,noreferrer');
+		openEntry(url.href);
 	}
 	async accountApi() {
 		const key = this.secret('account') || this.secret('access');
@@ -5086,6 +5132,9 @@ export class IndependentSettings extends PluginSettingTab {
 							copy.createSpan({ cls: 'smart-sync-section-description', text: description });
 							section.appendChild(list);
 						}
+						// The host may reuse a group for a different section after sign-in/out.
+						section.querySelector('.smart-sync-section-title').setText(title);
+						section.querySelector('.smart-sync-section-description').setText(description);
 						section.open = this.expanded.has(title);
 						const changed = () => {
 							if (section.open) this.expanded.add(title);
@@ -5371,11 +5420,16 @@ export class IndependentSettings extends PluginSettingTab {
 			...(billing ? [present(billing)] : []),
 			...(accountConnected ? [fold(t('account.closeGroup'), t('account.closeGroupHelp'), [row(t('account.closeDanger'), setting => {
 				setting.settingEl.classList.add('smart-sync-danger-row');
+				for (const previous of setting.settingEl.querySelectorAll('.smart-sync-account-danger')) previous.remove();
 				const details = setting.settingEl.createEl('details', {cls:'smart-sync-account-danger'});
 				details.createEl('summary', {text:t('account.closeDanger')});
 				details.createEl('p', {text:t('account.closeCloudFirst')});
 				action(details, t('account.closeTitle'), () => plugin.deleteAccount());
 				details.querySelector('button')?.classList.add('mod-warning');
+				return () => {
+					details.remove();
+					if (!setting.settingEl.querySelector('.smart-sync-account-danger')) setting.settingEl.classList.remove('smart-sync-danger-row');
+				};
 			})])] : []),
 			fold(t('layout.preferences'), t('layout.preferencesHelp'), [
 				...basic.filter(

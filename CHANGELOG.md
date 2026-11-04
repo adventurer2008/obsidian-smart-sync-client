@@ -1,5 +1,17 @@
 # Source change record
 
+## Global Alpha test delivery — CHG-20261104-GLOBAL-ALPHA-UI-AUTH
+
+Requirement: deliver the settings cleanup and automatic browser sign-in recovery fixes through the Global Alpha channel for user testing. Build 1.1.5-alpha.1 from a fixed Client snapshot with version-only metadata overrides, preserving mainline/China 1.1.4 and the prior Global 1.1.4 files. Include only the three plugin program files in the installation ZIP. Alpha acceptance and rollback boundaries: docs/validation/global-alpha-ui-auth-2026-11-04.md. Physical-device verification is delegated to the user by their explicit request; it is not marked passed.
+
+## Recover browser sign-in checks — CHG-20261104-AUTH-RESUME-RETRY
+
+Requirement: address the reported iPad Google sign-in returning to a stale login dialog while manual Check sign-in succeeds. Keep automatic checks alive after transient request failures with bounded 2.5–30 second backoff; check immediately on foreground/page return or network recovery and after starting browser sign-in. Do not issue periodic checks while hidden. Preserve single-flight completion, terminal rejection/expiry handling, local-vault/service isolation, manual checking and email verification. Release timers/listeners on dialog close. The exact failure on the installed iPad candidate has not been traced; the reproducible stop-on-first-error path is fixed. This applies to shared Global browser sign-in on all six platforms, without changing China login, synchronization or source mtime. No installed artifact or service is replaced; physical-device acceptance remains pending.
+
+## Settings refresh cleanup — CHG-20261104-SETTINGS-DANGER-CLEANUP
+
+Requirement: fix the reported duplicate Danger zone entries and stale section placement. Replace previous custom account-danger nodes on render, return cleanup that removes their nodes and row styling, and refresh reused section headings/descriptions. A late cleanup cannot remove the current entry. Preserve account deletion verification and confirmation, both editions and legacy settings. Regression coverage exercises repeated row renders, late disposal and account/preferences group reuse. Node 26 validation and six-platform acceptance boundaries are recorded in docs/validation/cross-platform-feature-matrix.md. No installation, Release or service deployment.
+
 ## Global Community submission review — CHG-20261104-GLOBAL-COMMUNITY-SUBMIT
 
 Requirement: prepare and submit the Global plugin to Obsidian Community. Use window-scoped login poll timer cleanup and the Global distribution for Global version metadata. Disable Global remote diagnostic queuing and upload, including legacy outboxes and direct drain calls, because Developer Policies prohibit client telemetry. Local task logs, local Android diagnostics and manual report export remain available; China behavior is unchanged. Verification and submission boundaries: docs/validation/global-community-submission-2026-11-04.md.

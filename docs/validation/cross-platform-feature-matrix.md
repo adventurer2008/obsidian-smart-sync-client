@@ -1,5 +1,39 @@
 # Cross-platform feature and scenario review
 
+## CHG-20261104-AUTH-RESUME-RETRY
+
+Requirement: iPad Google sign-in leaves the login dialog waiting after returning, but manual Check sign-in succeeds (user report, installed version unspecified). This confirms manual completion works on the reported device, not the exact automatic-check failure. Source inspection identifies permanent polling cancellation after a transient error; synthetic regression reproduces and fixes that path. Global browser sign-in now retains bounded retry, reacts to focus/visibility/pageshow/online events and starts a check immediately. Hidden periodic checks pause; visible recovery resets backoff. Repeated return events share one in-flight check and one workspace selection. Expired flows, changed local identity/service and explicit authorization rejection stop automatic checking. Inline email verification and China login are preserved.
+
+| Platform | Implementation/support | Physical acceptance |
+| --- | --- | --- |
+| Windows | Conditional: shared DOM events and foreground polling | Fix unverified in native host; synthetic checks only |
+| macOS | Conditional: shared DOM events and foreground polling | Unverified; no device test |
+| Linux desktop | Conditional: shared DOM events and foreground polling | Unverified; no desktop host test |
+| Android | Conditional: checks resume when host execution returns | Unverified; no device test; do not infer failure from iPad |
+| iPhone/iOS | Conditional: checks resume when host execution returns | Unverified; no device test; do not infer failure from iPad |
+| iPad/iPadOS | Conditional: checks resume when host execution returns | Original issue/manual workaround user-reported; repaired candidate unverified |
+
+No new layout/native desktop API; existing narrow-screen/touch controls remain and require native checks. Synthetic cases cover transient outage without return events, return after hidden state, network recovery, duplicate foreground events, expiry, changed vault identity, terminal rejection and disposal. Physical lock/background/foreground, process termination/restart and mixed-device flows remain unverified. No promise of polling while the OS suspends the host. Existing saved pending authorization can still be recovered by reopening sign-in within its expiry. Account/vault/service verification remains required before storing credentials; no encryption key, body, progress or source-mtime changes. Upgrade/rollback uses existing artifacts and OAuth storage format, with no migration or installation in this change.
+
+Windows Node 26.12.1 validation: 344 tests passed, 1 optional local-Server integration test skipped; both edition builds and isolation checks passed. Community lint: 0 errors, 7 warnings in unchanged fetch/config-path code. These results are synthetic/build evidence, not native mobile acceptance or official Community approval.
+
+## CHG-20261104-SETTINGS-DANGER-CLEANUP
+
+Requirement: remove duplicate Danger zone entries during settings refresh and keep reused section headings current. Shared host DOM cleanup supports both regional editions and legacy/declarative settings; no native platform API is added. Regression checks cover repeated render without prior cleanup, late disposal, removal of danger-row styling before reuse, one remaining deletion action and changing account/preferences group labels. Existing deletion identity proof and final confirmation remain required.
+
+| Platform | Implementation/support | Physical acceptance |
+| --- | --- | --- |
+| Windows | Conditional: shared Obsidian settings DOM | Unverified for this candidate; screenshot reports the original defect |
+| macOS | Conditional: shared Obsidian settings DOM | Unverified; no physical host available in this check |
+| Linux desktop | Conditional: shared Obsidian settings DOM | Unverified; no physical host check |
+| Android | Conditional: shared Obsidian settings DOM | Unverified; narrow-screen/touch and resume pending |
+| iPhone/iOS | Conditional: shared Obsidian settings DOM | Unverified; narrow-screen/touch and resume pending |
+| iPad/iPadOS | Conditional: shared Obsidian settings DOM | Unverified; touch/split-view and resume pending |
+
+Existing wrapping and 44px touch controls remain. Foreground/settings refresh is covered synthetically; background/lock/restart requires native acceptance. No new network request or persisted state is introduced, so offline recovery, mixed-version synchronization and upgrade/rollback formats are unaffected. Account/vault isolation, encryption keys, note bodies, sync progress and source mtime are unchanged. Rollback uses the previous plugin artifacts; no installed plugin is replaced in this change. Synthetic Windows checks do not constitute acceptance on any physical platform.
+
+Validation on Windows with Node 26.12.1: full suite 339 passed, 1 skipped (the optional local-Server integration fixture); both regional builds and edition-isolation checks passed. Community lint completed with 0 errors and 7 warnings in unchanged fetch/config-path code; it is not official review. No installation or publication performed.
+
 ## CHG-20261104-GLOBAL-COMMUNITY-SUBMIT
 
 Global remote diagnostic upload is disabled uniformly on Windows, macOS, Linux desktop, Android, iPhone/iOS and iPad/iPadOS; local logs and explicit local export remain. Synthetic checks verify legacy outbox rejection, direct drain rejection and retained Android local diagnostics. Fresh physical acceptance is unverified on all six platforms. Timer cleanup uses the shared window API. No new layout/touch/native controls are introduced; lifecycle and offline retries cannot upload diagnostics. Account/vault isolation, mixed-version synchronization, encrypted bodies, source mtime and upgrade/rollback formats are unchanged. Existing preview snapshots are reproducible; no installed candidate or service is replaced by this preparation.

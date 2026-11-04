@@ -1,13 +1,14 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
 import {registerHooks} from 'node:module';
+import {JSDOM} from 'jsdom';
 globalThis.window={open(){},setTimeout,clearTimeout,setInterval,clearInterval};
 globalThis.__SMART_SYNC_EDITION__={edition:'global',id:'smart-sync-global',name:'Smart Sync',locale:'en',development:false,serviceOrigin:'https://sync.smartsync.cc'};
 registerHooks({resolve(specifier,context,next){return specifier==='obsidian'?{url:new URL('./obsidian-double.mjs',import.meta.url).href,shortCircuit:true}:next(specifier,context);}});
 const {messages,englishDraft,missingEnglishKeys,t,localizedFailure}=await import('../src/i18n.js');
 const {billingCard,capacityWarning}=await import('../src/billing.js');
 const {default:Plugin}=await import('../src/plugin.js');
-const {modals}=await import('./obsidian-double.mjs');
+const {modals,Modal}=await import('./obsidian-double.mjs');
 
 test('Global encryption menus and password dialog use English without changing command identifiers',async()=>{
  const {registerNoteEncryption}=await import('../src/note-encryption.js');
@@ -196,4 +197,68 @@ test('reopening a pending browser sign-in checks automatically and enters vault 
  assert.equal(checked,1);assert.equal(selected,1);
  await check.click();assert.equal(checked,1);assert.equal(selected,1);
  dialog.close();
+});
+
+function resumeFixture(context, finish) {
+ const dom=new JSDOM('',{pretendToBeVisual:true}),timers=new Map();let sequence=0,selected=0,hidden=false;
+ const flow={id:'f'.repeat(43),verifier:'v'.repeat(43),localId:'resume-mobile',origin:'https://sync.smartsync.cc',expires:Date.now()+60000};
+ Object.defineProperty(dom.window.document,'hidden',{get:()=>hidden});
+ const open=Modal.prototype.open;
+ context.mock.method(Modal.prototype,'open',function(){this.contentEl.ownerDocument=dom.window.document;open.call(this);});
+ context.mock.method(window,'setInterval',callback=>{timers.set(++sequence,callback);return sequence;});
+ context.mock.method(window,'clearInterval',id=>timers.delete(id));
+ const plugin={app:{},data:{localId:flow.localId,settings:{origin:flow.origin}},secret:()=>JSON.stringify(flow),registerInterval(){},
+  billingApi:()=>({request:async()=>({providers:[],emailEnabled:false})}),finishGlobalSignIn:finish,selectAccountWorkspace:async()=>{selected++;}};
+ Plugin.prototype.globalEnrollment.call(plugin);const dialog=modals.at(-1);
+ context.after(()=>{dialog.close();dom.window.close();});
+ return {flow,plugin,dialog,timers,selected:()=>selected,hidden:value=>{hidden=value;},
+  event:name=>(name==='visibilitychange'?dom.window.document:dom.window).dispatchEvent(new dom.window.Event(name)),
+  tick:async()=>{for(const callback of [...timers.values()])callback();await new Promise(resolve=>setImmediate(resolve));}};
+}
+
+test('a temporary sign-in check failure retries automatically without a return event or manual click',async context=>{
+ let now=Date.now(),attempts=0;
+ context.mock.method(Date,'now',()=>now);
+ const f=resumeFixture(context,async()=>{attempts++;if(attempts===1)throw TypeError('Network unavailable');return {};});
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(attempts,1);assert.equal(f.timers.size,1);assert.equal(f.selected(),0);
+ await f.tick();assert.equal(attempts,1); // Backoff prevents a request storm.
+ now+=2600;await f.tick();assert.equal(attempts,2);assert.equal(f.selected(),1);assert.equal(f.timers.size,0);
+});
+
+test('foreground and network return recover sign-in, deduplicate checks and release listeners on close',async context=>{
+ let attempts=0,finish;
+ const f=resumeFixture(context,async()=>{attempts++;if(attempts===1)throw TypeError('Network unavailable');return new Promise(resolve=>{finish=resolve;});});
+ await new Promise(resolve=>setImmediate(resolve));
+ f.hidden(true);await f.tick();f.event('focus');assert.equal(attempts,1);
+ f.hidden(false);f.event('visibilitychange');f.event('focus');f.event('pageshow');f.event('online');
+ assert.equal(attempts,2);assert.equal(f.selected(),0);
+ finish({});await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(f.selected(),1);assert.equal(f.timers.size,0);
+ f.event('visibilitychange');f.event('focus');f.event('pageshow');f.event('online');await f.tick();
+ assert.equal(attempts,2);assert.equal(f.selected(),1);
+});
+
+test('expired or changed local sign-in contexts stop polling before another claim',async context=>{
+ let now=Date.now(),attempts=0;
+ context.mock.method(Date,'now',()=>now);
+ const f=resumeFixture(context,async()=>{attempts++;return undefined;});
+ await new Promise(resolve=>setImmediate(resolve));assert.equal(attempts,1);
+ now+=61000;await f.tick();assert.equal(attempts,1);assert.equal(f.timers.size,0);
+ f.event('online');await f.tick();assert.equal(attempts,1);
+});
+
+test('switching vault identity during browser sign-in rejects foreground recovery',async context=>{
+ let attempts=0;
+ const f=resumeFixture(context,async()=>{attempts++;return undefined;});
+ await new Promise(resolve=>setImmediate(resolve));
+ f.plugin.data.localId='other-vault';f.event('focus');await f.tick();
+ assert.equal(attempts,1);assert.equal(f.timers.size,0);assert.equal(f.selected(),0);
+});
+
+test('a terminal authorization rejection stops automatic sign-in checks',async context=>{
+ let attempts=0;
+ const f=resumeFixture(context,async()=>{attempts++;throw Object.assign(Error('Rejected'),{status:401});});
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(f.timers.size,0);f.event('online');f.event('focus');await f.tick();assert.equal(attempts,1);
 });
