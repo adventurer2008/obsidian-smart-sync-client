@@ -6,6 +6,19 @@ globalThis.window = globalThis;
 globalThis.__SMART_SYNC_EDITION__ = { edition: 'global', id: 'smart-sync-global', locale: 'en' };
 const { default: Sync } = await import('../src/plugin.js');
 
+test('Global version metadata uses its own distribution and rejects another plugin identity', async () => {
+	const { publishedClientVersion } = await import('../src/plugin.js');
+	for (const id of ['smart-sync-global', 'wujie-sync']) {
+		const version = await publishedClientVersion(async (url, options) => {
+			assert.equal(url, 'https://raw.githubusercontent.com/adventurer2008/obsidian-smart-sync-release-global/main/manifest.json');
+			assert.equal(options.credentials, 'omit');
+			assert.equal(options.redirect, 'error');
+			return new Response(JSON.stringify({ id, version: '1.1.4' }));
+		});
+		assert.equal(version, id === 'smart-sync-global' ? '1.1.4' : undefined);
+	}
+});
+
 test('Global never queues or uploads diagnostic telemetry, including a legacy queued report', async () => {
 	const row = { id: 'synthetic', status: 'failed' };
 	const subject = { data: { taskOutbox: [row], tasks: [row] }, diagnosticPending: 1,

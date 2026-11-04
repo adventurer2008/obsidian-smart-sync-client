@@ -83,7 +83,8 @@ export function isNewerClientVersion(latest, current) {
 export async function publishedClientVersion(fetcher = fetch, signal) {
 	const scope = cancellationScope([signal], 5000);
 	try {
-		const response = await fetcher('https://raw.githubusercontent.com/adventurer2008/obsidian-smart-release/main/manifest.json', {
+		const repository = edition.edition === 'global' ? 'obsidian-smart-sync-release-global' : 'obsidian-smart-release';
+		const response = await fetcher(`https://raw.githubusercontent.com/adventurer2008/${repository}/main/manifest.json`, {
 			signal: scope.signal, credentials: 'omit', redirect: 'error', cache: 'no-store',
 		});
 		if (!response.ok || Number(response.headers.get('content-length') ?? 0) > 16384) {

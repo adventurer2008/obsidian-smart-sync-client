@@ -2,7 +2,7 @@
 
 ## Global Community submission review — CHG-20261104-GLOBAL-COMMUNITY-SUBMIT
 
-Requirement: prepare and submit the Global plugin to Obsidian Community. Use window-scoped login poll timer cleanup. Disable Global remote diagnostic queuing and upload, including legacy outboxes and direct drain calls, because Developer Policies prohibit client telemetry. Local task logs, local Android diagnostics and manual report export remain available; China behavior is unchanged. Verification and submission boundaries: docs/validation/global-community-submission-2026-11-04.md.
+Requirement: prepare and submit the Global plugin to Obsidian Community. Use window-scoped login poll timer cleanup and the Global distribution for Global version metadata. Disable Global remote diagnostic queuing and upload, including legacy outboxes and direct drain calls, because Developer Policies prohibit client telemetry. Local task logs, local Android diagnostics and manual report export remain available; China behavior is unchanged. Verification and submission boundaries: docs/validation/global-community-submission-2026-11-04.md.
 
 ## GitHub delivery and Community preparation — CHG-20261104-GITHUB-COMMUNITY-PREP
 
