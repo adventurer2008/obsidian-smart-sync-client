@@ -42,3 +42,5 @@ Source repair and local verification only. No plugin installation, new Alpha pub
 - Both CN/Global builds and 26-module dependency isolation checks passed. Community lint: zero errors, seven existing fetch/config-path warnings. Official Community review and native platform acceptance are not implied.
 
 Final full-suite runs supersede the retained first-run fixture failure logs. Source and artifact fingerprints and logs are retained privately under the task's operator evidence directory, without copying credentials or real data into Git. No Server source change was necessary; no empty companion commit is created.
+
+Subsequent user-authorized delivery: Global 1.1.5-alpha.3 was published for physical retesting on 2026-11-05, with exact snapshot and real Hub discovery/download verification. This supersedes the earlier source-only delivery status for publication, while physical acceptance remains pending. See global-alpha3-2026-11-05.md for changes, test steps and retained rollback artifacts.
