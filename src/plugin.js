@@ -110,6 +110,9 @@ export async function publishedClientVersion(fetcher = fetch, signal) {
 	} finally { scope.dispose(); }
 }
 
+async function loginAccountBinding(key) {
+	return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(key))),byte=>byte.toString(16).padStart(2,'0')).join('');
+}
 class ChoiceWindow extends Modal {
 	constructor(app, title, render) {
 		super(app);
@@ -3519,17 +3522,19 @@ export default class IndependentSync extends Plugin {
 				if (!valid()) throw Error('Account changed');
 				dialog.close();
 				const fields=[...(!global?[{key:'loginKey',label:t('account.closeLoginKey'),description:t('account.closeLoginKeyHelp'),password:true}]:[]),{key:'confirm',label:t('account.closeConfirm'),description:t('account.closeWarning')}];
+				let confirmationOpen=true;
 				const confirmation = formWindow(this.app, t('account.closePermanent'), fields, async ({confirm,loginKey}) => {
 					if (confirm !== t('account.closePhrase')) throw global ? Error('Type DELETE exactly to confirm') : Object.assign(Error('Account confirmation required'),{code:'ACCOUNT_ERASE_CONFIRMATION'});
-					if (!valid()) throw Error('Account changed. Open Delete account again.');
+					if (!confirmationOpen || !valid()) throw Error('Account changed. Open Delete account again.');
 					await this.exclusive(async () => {
-						if (!valid()) throw Error('Account changed');
+						if (!confirmationOpen || !valid()) throw Error('Account changed');
 						try { await api.request('POST', 'account/close', {confirm:'DELETE',...(!global?{loginKey}: {})}); }
 						catch (error) { if (error.status===403) error.code=global?'ACCOUNT_CLOSE_REAUTH':'ACCOUNT_CLOSE_PROOF'; if(error.status===409)error.code='ACCOUNT_CLOSE_CLOUD_FIRST'; throw error; }
 					});
-					if (valid()) await this.signOut();
-					this.notify(t('account.closeDone'));
+					if (valid()) { await this.signOut(); this.notify(t('account.closeDone')); }
 				}, t('account.closePermanent'));
+				const closeConfirmation=confirmation.onClose.bind(confirmation);
+				confirmation.onClose=()=>{confirmationOpen=false;closeConfirmation();};
 				confirmation.contentEl.querySelector('button')?.classList.add('mod-warning');
 			});
 		});
@@ -3617,15 +3622,18 @@ export default class IndependentSync extends Plugin {
 		if (edition.edition !== 'global' || !['google','github','email'].includes(method)) throw Error('Invalid Global sign-in context');
 		const services = regionalServices(edition, this.data.settings.origin);
 		const localId=this.data.localId,origin=this.data.settings.origin,api=this.billingApi(reauth?this.secret('account'):'');
+		const accountKey=this.secret?.('account')||this.secret?.('access')||'';
 		if(!active()||this.stopped)throw Error('Sign-in context changed');
-		try{const saved=JSON.parse(this.secret?.('oauth')??'');if(Boolean(saved.inline)===inline&&Boolean(saved.reauth)===reauth&&saved.localId===localId&&saved.origin===origin&&saved.method===method&&saved.expires>Date.now()&&saved.expires<Date.now()+11*60000&&/^[A-Za-z0-9_-]{43}$/.test(saved.id)&&/^[A-Za-z0-9_-]{43}$/.test(saved.verifier)){if(!inline)window.open(services.login+'#flow='+saved.id+'&method='+method,'_blank','noopener,noreferrer');return saved;}}catch{ /* No reusable sign-in. */ }
+		const accountBinding=reauth?await loginAccountBinding(accountKey):undefined;
+		if(!active()||this.stopped||localId!==this.data.localId||origin!==this.data.settings.origin||accountKey!==(this.secret?.('account')||this.secret?.('access')||''))throw Error('Sign-in context changed');
+		try{const saved=JSON.parse(this.secret?.('oauth')??'');if(Boolean(saved.inline)===inline&&Boolean(saved.reauth)===reauth&&(!reauth||saved.accountBinding===accountBinding)&&saved.localId===localId&&saved.origin===origin&&saved.method===method&&saved.expires>Date.now()&&saved.expires<Date.now()+11*60000&&/^[A-Za-z0-9_-]{43}$/.test(saved.id)&&/^[A-Za-z0-9_-]{43}$/.test(saved.verifier)){if(!inline)window.open(services.login+'#flow='+saved.id+'&method='+method,'_blank','noopener,noreferrer');return saved;}}catch{ /* No reusable sign-in. */ }
 		const verifier=btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32)))).replaceAll('+','-').replaceAll('/','_').replace(/=+$/,'');
 		const challenge=btoa(String.fromCharCode(...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(verifier))))).replaceAll('+','-').replaceAll('/','_').replace(/=+$/,'');
 		const flow=await api.request('POST',reauth?'auth/reauth':'auth/start',{challenge,label:this.deviceDisplayName()});
-		if(!active()||this.stopped||localId!==this.data.localId||origin!==this.data.settings.origin)throw Error('Sign-in context changed');
+		if(!active()||this.stopped||localId!==this.data.localId||origin!==this.data.settings.origin||accountKey!==(this.secret?.('account')||this.secret?.('access')||''))throw Error('Sign-in context changed');
 		const expected=services.login+'#flow='+flow.id;
 		if(!/^[A-Za-z0-9_-]{43}$/.test(flow.id??'')||flow.url!==expected||!Number.isSafeInteger(flow.expires)||flow.expires<=Date.now()||flow.expires>Date.now()+11*60000)throw Error('Invalid Global sign-in link');
-		const saved={id:flow.id,verifier,expires:flow.expires,localId,origin,method,reauth,inline};
+		const saved={id:flow.id,verifier,expires:flow.expires,localId,origin,method,reauth,inline,...(reauth?{accountBinding}:{})};
 		this.app.secretStorage.setSecret(`${this.manifest.id}-${localId}-oauth`,JSON.stringify(saved));
 		if(!inline)window.open(expected+'&method='+method,'_blank','noopener,noreferrer');return saved;
 	}
@@ -3639,22 +3647,35 @@ export default class IndependentSync extends Plugin {
 	}
 	async finishGlobalSignIn(flow,active=()=>true) {
 		const services=regionalServices(edition,this.data.settings.origin);
-		const live=()=>active()&&!this.stopped&&edition.edition==='global'&&flow.localId===this.data.localId&&flow.origin===this.data.settings.origin&&flow.origin===services.sync&&flow.expires>Date.now();
+		const accountKey=()=>this.secret?.('account')||this.secret?.('access')||'';
+		let expectedAccount=accountKey();
+		const clearFlow=()=>{
+			let current;
+			try{current=JSON.parse(this.secret?.('oauth')||'null');}catch{return;}
+			if(current&&(current.id!==flow.id||current.verifier!==flow.verifier))return;
+			this.app.secretStorage.setSecret(`${this.manifest.id}-${flow.localId}-oauth`,'');
+		};
+		const live=()=>active()&&!this.stopped&&edition.edition==='global'&&flow.localId===this.data.localId&&flow.origin===this.data.settings.origin&&flow.origin===services.sync&&flow.expires>Date.now()&&expectedAccount===accountKey();
 		if(!live())throw Error('Sign-in expired or context changed');
+		if(flow.reauth&&(!expectedAccount||flow.accountBinding!==await loginAccountBinding(expectedAccount)||!live()))throw Error('Sign-in context changed');
 		const api=this.billingApi(''),result=await api.request('POST','auth/claim',{id:flow.id,verifier:flow.verifier});
 		if(!live())throw Error('Sign-in context changed');if(result.pending)return undefined;
-		if(flow.reauth){if(result.reauthenticated!==true)throw Error('Identity verification was not completed');this.app.secretStorage.setSecret(`${this.manifest.id}-${flow.localId}-oauth`,'');return true;}
+		if(flow.reauth){if(result.reauthenticated!==true)throw Error('Identity verification was not completed');clearFlow();return true;}
 		if(!/^[A-Za-z0-9_-]{43}$/.test(result.key??'')||!/^[a-f0-9-]{36}$/.test(result.id??'')||typeof result.owner!=='string'||!result.owner||typeof result.email!=='string'||!result.email.includes('@'))throw Error('Invalid Global account authorization');
 		const account=this.workspaceApi(flow.origin,result.key),principal=await account.request('GET','account');
 		if(!live()||principal.scope||!principal.accountDevice||principal.deviceId!==result.id||principal.owner!==result.owner||principal.email!==result.email)throw Error('Account authorization could not be verified');
 		if(this.data.settings.workspace)throw notebookAlreadyConnected();
 		this.app.secretStorage.setSecret(`${this.manifest.id}-${flow.localId}-account`,result.key);this.accountAuthorized=true;this.accountEmail=result.email;
+		expectedAccount=accountKey();
 		this.tab?.update();
-		try{await api.request('POST','auth/ack',{id:flow.id,verifier:flow.verifier});this.app.secretStorage.setSecret(`${this.manifest.id}-${flow.localId}-oauth`,'');}catch{ /* Credential is stored; a lost ACK never starts another device grant. */ }
+		try{await api.request('POST','auth/ack',{id:flow.id,verifier:flow.verifier});if(live())clearFlow();}catch{ /* Credential is stored; a lost ACK never starts another device grant. */ }
+		if(!live())throw Error('Sign-in context changed');
 		return account;
 	}
 	globalEnrollment(reauth=false) {
 		let closed=false,checking=false,starting=false,completed=false,timer,flow;
+		const accountKey=()=>this.secret?.('account')||this.secret?.('access')||'';
+		let expectedAccount=accountKey(),authorized;
 		let retryAt=0,retryDelay=2500,terminalFailure=false;
 		const stopPolling=()=>{window.clearInterval(timer);timer=undefined;};
 		let stopWatching=()=>{};
@@ -3667,18 +3688,19 @@ export default class IndependentSync extends Plugin {
 			const doc=area.ownerDocument,view=doc?.defaultView;
 			const check=async(manual=false)=>{
 				if(closed||checking||starting||completed||!flow||(!manual&&(doc?.hidden||terminalFailure||Date.now()<retryAt)))return;
-				if(this.stopped||flow.localId!==this.data.localId||flow.origin!==this.data.settings.origin||flow.expires<=Date.now()){
+				if(this.stopped||flow.localId!==this.data.localId||flow.origin!==this.data.settings.origin||(!authorized&&flow.expires<=Date.now())||expectedAccount!==accountKey()){
 					terminalFailure=true;stopPolling();feedback.setText(failureMessage(Error('Sign-in expired or context changed')));return;
 				}
 				checking=true;const checked=flow;
 				try{
-					const api=await this.finishGlobalSignIn(checked,()=>!closed&&flow===checked);
+					const api=authorized??await this.finishGlobalSignIn(checked,()=>!closed&&flow===checked);
 					if(closed)return;
 					retryAt=0;retryDelay=2500;
 					if(!api){feedback.setText(t(checked.inline?'auth.emailIntro':reauth?'auth.reauth.waiting':'auth.waiting'));return;}
-					completed=true;stopPolling();
-					if(reauth){dialog.close();await this.deleteGlobalAccount();return;}
-					feedback.setText(t('auth.signedIn',{email:this.accountEmail}));await this.selectAccountWorkspace(api,dialog);dialog.close();
+					if(reauth){completed=true;stopPolling();dialog.close();try{await this.deleteGlobalAccount();}catch(error){this.notify(failureMessage(error));}return;}
+					authorized=api;expectedAccount=api.accessKey??accountKey();
+					if(expectedAccount!==accountKey())throw Error('Sign-in context changed');
+					feedback.setText(t('auth.signedIn',{email:this.accountEmail}));await this.selectAccountWorkspace(api,dialog,undefined,()=>!closed&&flow===checked&&expectedAccount===accountKey());completed=true;stopPolling();dialog.close();
 				}catch(error){
 					if(!closed)feedback.setText(failureMessage(error));
 					// Background/network interruptions must not permanently disable browser sign-in checks.
@@ -3707,14 +3729,14 @@ export default class IndependentSync extends Plugin {
 						const sendSetting=new Setting(emailArea);
 						const codeArea=emailArea.createDiv();codeArea.hidden=true;
 						const message=error=>error?.status===429?t('auth.rateLimited'):error?.status===401?t('auth.codeRejected'):failureMessage(error);
-						const send=async()=>{if(emailBusy||checking||starting||completed)return;if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){feedback.setText(t('auth.invalidEmail'));return;}emailBusy=true;starting=true;const recipient=email;feedback.setText(t('auth.sending'));try{window.clearInterval(timer);flow=await this.beginGlobalSignIn('email',()=>!closed,reauth,true);const pending=flow;await this.globalEmailRequest(pending,'send',recipient,()=>!closed&&flow===pending);if(closed)return;sentEmail=recipient;codeArea.hidden=false;feedback.setText(t('auth.codeSent',{email:recipient}));}catch(error){if(!closed)feedback.setText(message(error));}finally{emailBusy=false;starting=false;}};
+						const send=async()=>{if(emailBusy||checking||starting||completed||authorized)return;if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){feedback.setText(t('auth.invalidEmail'));return;}emailBusy=true;starting=true;const recipient=email;feedback.setText(t('auth.sending'));try{stopPolling();flow=await this.beginGlobalSignIn('email',()=>!closed,reauth,true);terminalFailure=false;retryAt=0;retryDelay=2500;const pending=flow;await this.globalEmailRequest(pending,'send',recipient,()=>!closed&&flow===pending);if(closed)return;sentEmail=recipient;codeArea.hidden=false;feedback.setText(t('auth.codeSent',{email:recipient}));}catch(error){if(!closed)feedback.setText(message(error));}finally{emailBusy=false;starting=false;}};
 						bindAction(sendSetting,t('auth.sendCode'),send);
 						new Setting(codeArea).setName(t('auth.code')).addText(input=>{input.inputEl.inputMode='numeric';input.inputEl.autocomplete='one-time-code';input.inputEl.maxLength=8;input.inputEl.setAttribute?.('aria-label',t('auth.code'));input.onChange(value=>{code=value.trim();});});
-						bindAction(new Setting(codeArea),t('auth.verifyCode'),async()=>{if(emailBusy||checking||starting||completed)return;if(email!==sentEmail){feedback.setText(t('auth.emailChanged'));return;}if(!/^\d{8}$/.test(code)){feedback.setText(t('auth.invalidCode'));return;}emailBusy=true;checking=true;const pending=flow;try{await this.globalEmailRequest(pending,'verify',code,()=>!closed&&flow===pending);code='';checking=false;await check();}catch(error){if(!closed)feedback.setText(message(error));}finally{emailBusy=false;checking=false;}});
+						bindAction(new Setting(codeArea),t('auth.verifyCode'),async()=>{if(emailBusy||checking||starting||completed||authorized)return;if(email!==sentEmail){feedback.setText(t('auth.emailChanged'));return;}if(!/^\d{8}$/.test(code)){feedback.setText(t('auth.invalidCode'));return;}emailBusy=true;checking=true;const pending=flow;try{await this.globalEmailRequest(pending,'verify',code,()=>!closed&&flow===pending);code='';checking=false;checkArea.hidden=false;startPolling();await check();}catch(error){if(!closed){feedback.setText(message(error));if(![400,401,403,404,409,410,429].includes(error?.status)){checkArea.hidden=false;startPolling();}}}finally{emailBusy=false;checking=false;}});
 						continue;
 					}
 					const setting=new Setting(methodsArea);setting.settingEl.classList.add('smart-sync-auth-method');
-					bindAction(setting,t('auth.'+method),async()=>{if(checking||starting)return;starting=true;try{stopPolling();flow=await this.beginGlobalSignIn(method,()=>!closed,reauth);terminalFailure=false;retryAt=0;retryDelay=2500;checkArea.hidden=false;feedback.setText(t(reauth?'auth.reauth.waiting':'auth.waiting'));startPolling();}finally{starting=false;}void check();});
+					bindAction(setting,t('auth.'+method),async()=>{if(checking||starting||authorized)return;starting=true;try{stopPolling();flow=await this.beginGlobalSignIn(method,()=>!closed,reauth);terminalFailure=false;retryAt=0;retryDelay=2500;checkArea.hidden=false;feedback.setText(t(reauth?'auth.reauth.waiting':'auth.waiting'));startPolling();}finally{starting=false;}void check();});
 					const button=setting.controlEl?.querySelector('button');
 					if(button){const icon=button.createSpan({cls:'smart-sync-auth-icon smart-sync-auth-'+method});icon.setAttribute('aria-hidden','true');if(method==='email')ObsidianSdk.setIcon?.(icon,'mail');}
 				}
@@ -3723,8 +3745,12 @@ export default class IndependentSync extends Plugin {
 		});
 		dialog.onClose=()=>{closed=true;stopPolling();stopWatching();dialog.contentEl.empty();};dialog.open();
 	}
-	async selectAccountWorkspace(api,dialog,workspaces) {
+	async selectAccountWorkspace(api,dialog,workspaces,active=()=>true) {
+		const localId=this.data.localId,origin=this.data.settings.origin,key=this.secret?.('account')||this.secret?.('access')||'';
+		const live=()=>active()&&!this.stopped&&localId===this.data.localId&&origin===this.data.settings.origin&&key===(this.secret?.('account')||this.secret?.('access')||'');
+		if(!live())return;
 		workspaces??=(await api.workspaces()).workspaces;
+		if(!live())return;
 		const picker=new ChoiceWindow(this.app,t('msg_1b5cc18c43'),container=>{
 			for(const workspace of workspaces)action(container,this.workspaceDisplayName(workspace),async()=>{await this.withWorkspaceEncryption(api,workspace,async passphrase=>{await this.connectWorkspace(api,workspace,passphrase);picker.close();dialog.close();});});
 			action(container,t('msg_4647ca53a9'),async()=>{
