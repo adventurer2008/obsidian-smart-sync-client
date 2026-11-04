@@ -8,7 +8,19 @@ registerHooks({resolve(specifier,context,next){return specifier==='obsidian'?{ur
 const {messages,englishDraft,missingEnglishKeys,t,localizedFailure}=await import('../src/i18n.js');
 const {billingCard,capacityWarning}=await import('../src/billing.js');
 const {default:Plugin}=await import('../src/plugin.js');
-const {modals,Modal}=await import('./obsidian-double.mjs');
+const {modals,Modal,Platform}=await import('./obsidian-double.mjs');
+
+test('Global mobile storage upgrade presents an English native link with the verified account ticket',async()=>{
+ const previousOpen=window.open;Platform.isMobile=true;window.open=()=>assert.fail('no asynchronous popup on mobile');
+ const plugin={app:{},data:{localId:'mobile-global',settings:{origin:'https://sync.smartsync.cc'}},secret:()=> 'synthetic-account',
+  accountApi:async()=>({}),billingApi:()=>({request:async()=>({url:'https://pay.smartsync.cc/pay/plans#ticket='+'a'.repeat(43)})})};
+ try{
+  await Plugin.prototype.openBilling.call(plugin);
+  const dialog=modals.at(-1),link=dialog.contentEl.children.find(child=>child.tag==='a');
+  assert.equal(dialog.title,'My plan');assert.equal(link.text,'Open plans in browser');
+  assert.equal(link.href,'https://pay.smartsync.cc/pay/plans#ticket='+'a'.repeat(43));dialog.close();
+ }finally{Platform.isMobile=false;window.open=previousOpen;}
+});
 
 test('Global encryption menus and password dialog use English without changing command identifiers',async()=>{
  const {registerNoteEncryption}=await import('../src/note-encryption.js');
