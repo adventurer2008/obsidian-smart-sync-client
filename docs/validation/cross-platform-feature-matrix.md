@@ -1,5 +1,9 @@
 # Cross-platform feature and scenario review
 
+## CHG-20261104-GLOBAL-ALPHA-UI-AUTH
+
+User-authorized Global Alpha 1.1.5-alpha.1 delivers the settings cleanup and browser sign-in recovery changes below. Windows, macOS, desktop Linux, Android, iPhone/iOS and iPad/iPadOS retain conditional host support and individually unverified repaired-candidate physical acceptance. The user will test iPad sign-in return and repeated settings refresh. Exact snapshot: 344 synthetic passes, one optional Server integration skip; both edition builds/isolation passed. Anonymous public artifact hashes verified, old 1.1.4 retained, no installed vault or service restarted. Hosted protocol and remote CI were not rerun for this Alpha, and no real-device or Wujie Hub installation is marked passed. Installation/rollback and full delivery evidence: global-alpha-ui-auth-2026-11-04.md.
+
 ## CHG-20261104-AUTH-RESUME-RETRY
 
 Requirement: iPad Google sign-in leaves the login dialog waiting after returning, but manual Check sign-in succeeds (user report, installed version unspecified). This confirms manual completion works on the reported device, not the exact automatic-check failure. Source inspection identifies permanent polling cancellation after a transient error; synthetic regression reproduces and fixes that path. Global browser sign-in now retains bounded retry, reacts to focus/visibility/pageshow/online events and starts a check immediately. Hidden periodic checks pause; visible recovery resets backoff. Repeated return events share one in-flight check and one workspace selection. Expired flows, changed local identity/service and explicit authorization rejection stop automatic checking. Inline email verification and China login are preserved.
@@ -287,3 +291,19 @@ Global secure-storage identifiers now fit Obsidian's 64-character limit with a r
 Global Account → Danger zone → Delete account is conditional on an authenticated account and a supported Global server; CN gains no new deletion or social-login UI. Windows, macOS, desktop Linux, Android, iPhone/iOS and iPad/iPadOS are conditionally supported using the system browser, online identity verification and server-side deletion; physical acceptance is unverified on all six categories. Windows/WSL synthetic tests do not establish native acceptance.
 
 The server rechecks zero vaults and completed cleanup, recent identity proof and exact confirmation. Reauthentication uses existing Google/GitHub/email PKCE routes without another device grant, handles device-cap exhaustion, and preserves the current encrypted-vault connection. Pending callbacks and dialogs are bound to their local account context. Offline, expired, canceled or changed contexts fail safely; no deletion success is inferred from a lost response. Background/lock/restart retain expiring device-local flow storage, but physical lifecycle/recovery tests remain pending. Danger-zone controls wrap and have 44px minimum touch height; native narrow-screen, touch, keyboard and accessibility tests remain unverified. Local note bodies and source mtimes are not changed by this feature. Older Global candidates cannot bypass the new cloud-cleanup prerequisite; they must upgrade to use deletion. The previous isolated plugin bundle is retained; a backend rollback after real deletion must retain the identity-closure guard and billing cleanup, never restore deleted identities from an old database.
+## CHG-20261104-MOBILE-BILLING-LINK — storage upgrade browser handoff
+
+Requirement: latest-plugin iOS user reports Get more storage silently does nothing. Existing code awaits account and billing-entry requests before window.open; WebKit transient activation can expire before asynchronous completion (https://webkit.org/blog/13862/the-user-activation-api/). This is a plausible cause, not a device-confirmed diagnosis. Mobile now shows a native user-tapped browser link after existing exact-origin/path/ticket validation. Desktop retains its existing opening behavior. No account identifiers are stored in these records.
+
+| Platform | Support / acceptance |
+| --- | --- |
+| Windows | Existing desktop opening retained; synthetic checks only, native host unverified this change |
+| macOS | Existing desktop opening retained; physical host unverified |
+| Linux desktop | Existing desktop opening retained; physical host unverified |
+| Android | Guarded mobile native-link flow; physical host unverified |
+| iPhone/iOS | Guarded mobile native-link flow; reported defect, fix awaiting physical retest |
+| iPad/iPadOS | Guarded mobile native-link flow; physical host unverified |
+
+Narrow-screen/touch: one labeled native link in the existing modal; actual touch/layout unverified. Background/lock/restart: link is single-use and locally expires after 90 seconds (service tickets last 120 seconds); close and reopen to obtain a fresh entry. Network errors continue through existing feedback; there is no automatic payment retry or offline checkout. Repeated tapping, dialog close, account/origin switch and expiry reject stale links. Mixed-client versions and rollback do not change service contracts or stored data; older clients retain the reported risk. Identity/vault isolation, encryption, sync body/progress/source mtime and desktop native capabilities are unchanged. No host installation, service deployment or plugin Release performed. Next Alpha inclusion requested for the current change set; all six physical platform families remain unverified.
+
+Executed on Windows Node 26: full suite 347 tests, 346 passed / 1 explicitly skipped integration test (external Server path not configured), zero failures; both regional builds and isolation checks passed. Community lint completed with zero errors and seven existing warnings (fetch/config-path); physical acceptance remains pending.
