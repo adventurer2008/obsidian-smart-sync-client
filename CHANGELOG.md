@@ -1,5 +1,71 @@
 # Source change record
 
+## GitHub delivery and Community preparation — CHG-20261104-GITHUB-COMMUNITY-PREP
+
+Requirement: commit the accumulated maintained code, push it to its designated GitHub repositories and prepare the Global Community candidate. Preserve the public Client/private Server boundary; do not publish a plugin Release or submit a listing in this step. Consolidate pending-creation cleanup to remove empty exception handlers without losing origin/vault isolation, and permit the technical format name Markdown in the Chinese-message policy test. Refresh stale Global privacy/hosting/mail metadata from the existing service evidence and clarify source-versus-release status. Verification and remaining gates: docs/validation/github-community-preparation-2026-11-04.md.
+
+## Regional account and endpoint parity — CHG-20261104-REGIONAL-PARITY
+
+Requirement: unify China/Global cloud-first deletion with their own identity proof, separate regional payment/plan presentation and centralize exact service endpoints. China re-enters the original login key without OAuth/email verification. Unsupported services request an upgrade. Global staging auth/payment now use staging domains, and the plan card recognizes 20 GB/future configured capacities. No installation, production deployment or Release. Tests and platform boundaries: docs/validation/regional-parity-2026-11-04.md.
+
+## Deferred Android acceptance — CHG-20261103-GLOBAL-MOBILE-DEFERRED
+
+User explicitly defers Android/PC mixed-device testing until production, with personal participation. Record pending physical acceptance and retain Windows PC report. Prepared only an external credential-free ZIP and isolated synthetic notes; no runtime change, release or production promotion.
+
+## Global acceptance inventory — CHG-20261103-GLOBAL-ACCEPTANCE-AUDIT
+
+Record user-reported overseas PC ordinary-flow acceptance excluding payment, without inferring per-case, other-platform or fault-recovery success. Review remaining implementation, physical tests and operational recovery gaps; read-only host checks confirm five active services and the last successful scheduled backup. No runtime, service, billing or China change. See docs/validation/global-acceptance-audit-2026-11-03.md.
+
+## Encryption interface localization — CHG-20261103-ENCRYPTION-ENGLISH
+
+Requirement: translate the two Global encryption menus. Route encryption commands, password dialogs, lock/unlock actions, draft recovery, settings and errors through the edition translator. Preserve Chinese wording, stable command IDs and ciphertext format. No sync, password storage or source-mtime behavior changes. Focused Global coverage exercises actual menu callbacks, dialog validation and crypto error guidance; existing Chinese DOM and cryptographic regression checks remain required. Native and physical-platform acceptance is recorded separately in the platform matrix.
+
+Windows and WSL Node 26 each pass 49 focused tests. Both edition builds and isolation checks pass. Candidate installed only in Global-Test-Vault with prior artifacts backed up; main.js SHA-256 3fc8c22c071878107551d021abdf0ed6793cfbefd40d81f698c1560f865d3d22. Native reload and presentation remain unverified.
+
+## Inline Global email sign-in — CHG-20261103-GLOBAL-INLINE-EMAIL
+
+Requirement: show email directly below Google/GitHub and verify the emailed code within the same plugin dialog. Native email uses the existing PKCE flow and separate send/verify endpoints, without browser navigation or storing the code. Inline validation, throttling and code failure guidance appear in the dialog. Identity verification for deletion uses the same flow without a new device grant. China login and sync are unchanged.
+
+## Automatic Global account refresh — CHG-20261103-GLOBAL-AUTH-REFRESH
+
+Requirement: successful Global browser sign-in must immediately refresh the current settings view. Verified credentials and email now trigger a settings update. Reopening a pending flow resumes checks automatically; browser focus/visibility also checks, and success enters vault selection only once. China login is unchanged. Synthetic checks cover refresh ordering, pending-flow recovery and duplicate checks. Native-host acceptance remains unverified.
+
+Windows/WSL Node26 each pass 15 focused auth/connection tests. Both regional builds and Global closure check pass. Installed only in Global-Test-Vault with previous files backed up; main.js SHA-256 2302b59554d4c4e310b8ba15be3c72a24cc4e1a61502c04eea76d36386795bf5. Host reload and native browser-return acceptance remain pending.
+
+## Durable Global vault creation — CHG-20261103-GLOBAL-PUBLIC-PREVALIDATION
+
+Requirement: prepare overseas prevalidation for complete registration-to-deletion testing. Persist the pending Global creation identifier, account envelope and vault password in Obsidian secret storage before submitting. A lost reply or plugin reload reuses that exact request; successful connection, explicit cloud-vault deletion or local sign-out clears it. A different account, service or vault name cannot reuse it. Concurrent creation and malformed pending data fail with readable recovery guidance. China retains its previous creation behavior. No note body, encryption format or source-mtime changes.
+
+Windows and WSL Node 26.12.1 each pass 20 focused connection/auth/error tests. Both editions build and pass dependency-isolation checks. Installed only in Global-Test-Vault; native reload is blocked by Windows access denial. Other physical platforms and mobile lifecycle acceptance remain unverified; see the platform matrix. No public release or China installation.
+
+## Account deletion verification wording — CHG-20261103-DELETE-VERIFY-UI
+
+Requirement: explain why account deletion requires another sign-in. The Global prerequisite and verification dialog now explicitly describe same-account identity verification, no registration or vault connection, returning to deletion confirmation and no deletion before final confirmation. Use verification-specific titles, waiting/help text and manual-check labels instead of ordinary registration wording. Add a regression exercising the dialog and verification result returning to deletion, never vault selection. No authentication bypass or CN changes. Windows/WSL targeted checks pass; actual Windows observation and a read-only service check confirmed the account disappeared after the user's completed deletion. No final deletion was submitted by the agent.
+
+## Readable failures and creation retries — CHG-20261103-READABLE-ERRORS
+
+Requirement: explain errors throughout the plugin with clear next actions. Parse bounded API errors using only known quota codes/exact deployed messages, preserve cancellation, and distinguish vault/device caps from revision conflicts. Add localized service, filesystem, account/context, confirmation, encryption, history and validation guidance. Login feedback no longer displays raw errors; forms retain readable feedback. Retry within an open creation form reuses a received success after local connection or management-refresh failure. Lost responses/reopened dialogs still require checking existing vaults.
+
+Windows and WSL full Client suites completed with exit 0; the final 18 focused checks pass on each. Both editions build and pass isolation. Only the isolated Global candidate is installed. No China deployment, cloud deletion, charge, note-content or source-mtime changes. Physical acceptance gaps remain documented.
+
+## Global first connection secure storage — CHG-20261103-GLOBAL-SECRET-ID
+
+Requirement: fix the reported failure after Google sign-in and account-encryption setup. A Global plugin ID plus a real UUID and the encryption suffix produced a 65-character secret identifier, exceeding Obsidian's 64-character limit. Global encryption now consistently uses the shorter `enc` suffix for reading, writing and clearing; account/device credentials and China identifiers retain their existing names. A full synthetic first-connection regression reproduces the original failure and verifies persistence, reload, local-vault isolation and deletion cleanup under the host identifier limit. Existing server-created vaults remain intact and can be selected after reopening sign-in; do not create another vault to retry. No server, note-content or source-mtime changes. Six-platform physical acceptance remains pending.
+
+## Global sign-in presentation — CHG-20261103-GLOBAL-AUTH-UI
+
+Requirement: improve the plugin sign-in dialog and its browser handoff using established plugin account-connect patterns, including Google/GitHub logos. Global sign-in now uses a compact theme-aware stack, provider marks bundled in CSS, an email divider and a manual completion check shown after a flow exists. Browser authorization, PKCE, secure storage and vault isolation remain intact. Preserve automatic polling and manual checking; no CN installation, public release, synchronization or source-mtime changes. Windows/WSL each pass 13 targeted Client checks; the installed bundle reaches the real Global config/start endpoints. Browser previews are not native Obsidian or physical mobile acceptance. Server deployment and screenshots are documented privately.
+
+## Global settings heading — CHG-20261103-GLOBAL-HEADING
+
+Requirement: remove the repeated Smart Sync subtitle from Global settings while retaining the Smart Sync heading, plugin sidebar entry and version information. Clear the subtitle only for the Global edition; China keeps its existing description. This is a presentation-only change with no stored-state or synchronization changes. Physical-device layout acceptance remains pending on all six platforms; see the cross-platform feature matrix.
+
+Validation: Windows Node 26.12.1 passed all 17 existing Global parity and legacy settings checks, both regional builds and both edition-isolation checks. Diff whitespace checks passed. Generated candidates were not installed or published; native Obsidian and mobile layout checks remain unverified.
+
+## Global sign-in transport correction — CHG-20261103-GLOBAL-AUTH-ROUTES
+
+Requirement: complete the approved Global Google/GitHub/email login in the isolated test vault. The existing payment transport rejected the new auth routes before any network request, so sign-in methods could not load. Allow exactly config/start/claim/ack on the Global payment authority, retaining rejection of account/operator/unknown routes and CN auth requests. Add regression coverage using the actual billing transport rather than replacing it with a fake API. Windows and WSL Node 26.12.1 each pass 13 targeted tests. Rebuilt and installed only the isolated Global candidate; installed main.js SHA256 a7a20f846aa71f2c45922c423f3a14af607fc9f2b96d28d58c0d9cb8bb5ee0cf. Build inputs differ from the previous candidate only in src/plugin.js. Native reload and real plugin login remain pending; no CN deployment, release, sync protocol, content, encryption or source-mtime changes.
+
 ## 1.1.4 staging accepted — CHG-20261102-114-STAGING-DELIVERY
 
 The complete approved candidate built from Client `ff05792` passed 19 local gates and all 11 fixed Windows/WSL jobs, including full UI matrices of 832 scenarios/5120 inspections per platform. Windows integration passed 396/396; WSL passed 395 with one platform skip; content integrity passed 44/44. Actual staging acceptance passed 12 disk body/source-mtime checks and five cold-receiver checks. Six additional live-service ordering/recovery groups verify attachment-first remote history, Markdown-first receiving, cancellation/resume, full/incremental ordinary/batch paths and the retained 1.1.3 engine resuming 1.1.4 pending work without lost bytes or mtimes. Synthetic workspaces were cleaned. Windows-only and optional test skips remain explicit; the optional three-device pair was also executed separately on both hosts.
@@ -637,3 +703,23 @@ CHG-20261029-LEGACY-ORDER-CLOSE: explicitly closed unpaid orders display their t
 ### 1.1.3 delivery boundary
 
 Canonical payment APIs and the independently served user webpage are delivered with existing sync/auth/device behavior retained. Retired business URLs return 404 without redirection. Pinned automated and public download checks passed; physical-device and real-merchant acceptance remain separate. See the cross-platform feature matrix for supported paths and limits.
+# Unreleased — CHG-20261102-GLOBAL-PARITY
+
+Requirement: Global must retain the China edition's existing features and workflows, with complete English UI and independent Global interfaces. Complete language resources and regional payment entry using the sole shared Client mainline; do not change China identity, authentication, current production, encryption or source modification times. Global packaging is a test candidate, not a public Release or six-platform acceptance. Verification and remaining gaps will be recorded with this change.
+
+## CHG-20261102-GLOBAL-PRICING
+
+Requirement: user adds Global Free50MB/3vaults/3device authorizations and configurable paid caps, monthly list prices unchanged/annual20%off. Recognize global-free in the existing billing card and show its50MB title; CN free100MB presentation remains. Targeted Global tests3/3 and both regional builds passed. Server enforces limits; no formal Client Release. Multi-language following Obsidian is separately planned, not implemented (GLOBAL-LANGUAGE-PLAN).
+
+
+## Global new-account sign-in candidate — CHG-20261102-GLOBAL-SOCIAL-AUTH
+
+Requirement: user approved Google, GitHub and email-code registration and explicitly excludes old-user migration/compatibility because Global has not launched. Global enrollment opens the system browser, keeps the PKCE verifier in device-local secret storage, resumes the same unexpired flow and requires verified account/device identity before saving credentials. Cancellation, expiry, region/local-device changes and already-connected vaults prevent stale writes. Provider buttons reflect server configuration; email-code fallback and manual checking remain available when enabled. Existing encrypted-vault selection/password creation is preserved. CN enrollment is retained; no CN running service change, public release or real billing.
+
+Pinned Node 26.12.1 full Windows suite passed 310/310. WSL passed 309 with one platform-specific skip. CN/Global builds and both 26-module closure checks passed. These are synthetic/runtime checks; no real Google/GitHub account, SMTP inbox, browser layout or physical Obsidian acceptance has passed. The server candidate needs OAuth client configuration and deployment before this Client is installed. The current isolated test vault has not been overwritten with this candidate.
+
+## Global account deletion in the plugin — CHG-20261103-GLOBAL-ACCOUNT-LIFECYCLE
+
+Requirement: implement the approved Global sign-in and account-deletion design without an independent account website. Global settings expose Account → Danger zone → Delete account. Users must delete every cloud vault and wait for cleanup, then confirm DELETE. Paid time and payment status do not block deletion; the server stops future renewal asynchronously without an automatic refund. Local notes remain. A recent Google/GitHub/email verification can refresh the current device's identity without consuming another device slot or replacing its credentials. CN keeps its existing settings and login behavior.
+
+Verification: Windows Client suite 313 passed, one paired-server integration test skipped because SMART_SYNC_SERVER_DIR was unset. Windows and WSL targeted tests passed 25/25; CN/Global builds and both closure checks passed. Installed only in the named isolated Global test vault with its previous bundle retained. Native reload and physical acceptance on Windows, macOS, desktop Linux, Android, iPhone/iOS and iPad/iPadOS remain unverified. No public release or domestic deployment.

@@ -1,8 +1,66 @@
 # Cross-platform feature and scenario review
 
+## CHG-20261104-GITHUB-COMMUNITY-PREP
+
+Source delivery and Community preparation do not install a candidate on Windows, macOS, Linux desktop, Android, iPhone/iOS or iPad/iPadOS; fresh physical acceptance is unverified for all six. Pending-creation cleanup uses the shared host secret API and preserves origin/vault isolation when stored state is malformed. Synthetic tests cover cleanup/retry; native secure storage, touch/narrow layouts, browser return, lock/background/restart, offline recovery and mixed-version scenarios remain separate release checks. No source mtime, note body or encryption-format changes. No service deployment, binary publication or automatic upgrade; rollback retains the prior installed artifacts.
+
+## CHG-20261104-REGIONAL-PARITY
+
+Both China and Global use cloud-first account deletion with their own existing identity proof. Windows/macOS/Linux desktop/Android/iPhone/iPad are conditionally supported through shared Obsidian controls and online APIs; fresh physical acceptance is unverified for each. China has no new browser/email dependency; Global retains its system-browser/email path. Exact regional/staging authorities, account changes and old-service rejection are covered by synthetic tests. Wrapping/44px controls remain; native narrow-screen/touch, lock/background/restart, offline recovery and mixed-device acceptance remain pending. No local note body, key migration, progress or source mtime changes. Details: regional-parity-2026-11-04.md. No production deployment or release.
+
+## CHG-20261103-GLOBAL-MOBILE-DEFERRED
+
+User explicitly defers Android/PC mixed-device acceptance until production, with personal participation. Android installation, sign-in and synchronization remain NOT PERFORMED. No production promotion or real billing authorized. Credential-free plugin ZIP and three isolated synthetic PC notes prepared; formal vault untouched. Windows ordinary acceptance remains user-reported; macOS, desktop Linux, Android, iPhone and iPad physical acceptance remains unverified. Follow-up must cover body/source mtime, attachments, encryption, conflicts, offline/restart/background/lock and account/vault isolation.
+
+## CHG-20261103-GLOBAL-ACCEPTANCE-AUDIT
+
+2026-11-03: the user reports the overseas PC end-to-end flow passed, excluding payment, in the existing Windows Global-Test-Vault context. This supersedes older pending Windows ordinary-flow observations for the user's tested candidate. The report has no per-case or bundle-hash inventory; do not infer abnormal-network, quotas, lifecycle, mixed-version or every encryption operation passed individually. macOS, Linux desktop, Android, iPhone/iOS and iPad/iPadOS still lack separate physical acceptance. Stripe user acceptance is outstanding; earlier agent sandbox evidence remains separate. See global-acceptance-audit-2026-11-03.md.
+
+## CHG-20261103-ENCRYPTION-ENGLISH
+
+Shared encryption controls use edition-localized labels and errors on Windows, macOS, desktop Linux, Android, iPhone/iOS and iPad/iPadOS. All six remain unverified for native presentation of this candidate; Windows and WSL synthetic checks are not physical-device acceptance. Existing touch sheets and wrapping controls are retained; narrow-screen, touch, accessibility and long English labels require native checks. This text-only change does not alter lock/background/restart behavior, offline recovery, mixed-version ciphertext compatibility, account/vault isolation, synchronization or source mtime. The prior isolated plugin bundle is retained for rollback. No China installation or public release.
+
+## CHG-20261103-GLOBAL-INLINE-EMAIL
+
+Windows, macOS, desktop Linux, Android, iPhone/iOS and iPad/iPadOS are conditionally supported through shared host UI and HTTPS requests. Email fields use email/numeric input hints and one-time-code autocomplete; controls wrap and have 44px minimum touch height. No desktop-only API. Physical six-platform, touch and lifecycle acceptance is pending; Windows/WSL synthetic checks do not replace it. Codes stay in dialog memory, not saved settings; interrupted/restarted flows can request another code under existing server throttles. Offline and changed/expired contexts fail safely. Old clients keep browser email login; rollback retains those routes and requires the previous bundle. No note body, encryption key, source mtime or CN behavior changes.
+
+## CHG-20261103-GLOBAL-AUTH-REFRESH
+
+Global account refresh is conditionally supported on Windows, macOS, desktop Linux, Android, iPhone/iOS and iPad/iPadOS using the existing system-browser and host settings APIs. Synthetic tests check verified-account refresh, recovered flows and duplicate result checks; physical hosts, narrow-screen/touch, background/lock and network recovery remain unverified. Expired or changed account/vault contexts remain rejected. No synchronization, note body, source mtime or China login changes. Older plugins retain the stale-view issue; the previous isolated bundle is retained for rollback.
+
+## CHG-20261103-GLOBAL-PUBLIC-PREVALIDATION
+
+Global pending creation survives lost replies and restart using a short, vault-local Obsidian secret-storage identifier. It is bound to service/account/name; exact server replay returns the existing vault even at the Free cap. Passwords are never written to plugin data.json. Explicit sign-out ends the pending local operation; sign in and inspect existing cloud vaults before starting again. Deleted identifiers never recreate a vault. Older clients lack durable replay and must be upgraded for this behavior.
+
+| Platform | Status | Acceptance boundary |
+| --- | --- | --- |
+| Windows | Conditional; synthetic checks passed | Node 26 tests/build; actual host reload denied access, user reload required |
+| macOS | Conditional; unverified | Physical secure storage, browser return and restart not exercised |
+| Linux desktop | Conditional; unverified | WSL validates code only |
+| Android | Conditional; unverified | Touch/narrow screen, secret storage, background/lock/restart pending |
+| iPhone/iOS | Conditional; unverified | Physical secure storage, lifecycle and browser return pending |
+| iPad/iPadOS | Conditional; unverified | Physical touch/split view, storage and lifecycle pending |
+
+No desktop-only entry was added. Offline/restart recovery, account/service isolation and quota replay have synthetic coverage; physical mixed-version, lock/background and narrow-screen acceptance remains pending. Existing synchronization, content and original source-mtime behavior is unchanged. Previous isolated bundle retained for rollback; rollback removes durable replay support.
+
 Requirement: CHG-20261029-CROSS-PLATFORM-REQUIREMENT, user instruction2026-10-29. This is a mandatory review for each feature, not a claim that every device has passed acceptance. Update the affected rows when behavior or verification changes. A build or simulated platform flag is not physical device acceptance; WSL is not desktop Linux UI acceptance.
 
 ## Per-change record
+
+### CHG-20261103-GLOBAL-HEADING — Global settings subtitle
+
+Requirement: show the Global Smart Sync heading once by removing its duplicate subtitle. Retain the version, sidebar identity and China description. Shared settings definitions cover both legacy and declarative rendering; no new controls or native APIs are introduced.
+
+| Platform | Implementation/support | Physical acceptance |
+| --- | --- | --- |
+| Windows | Supported by shared settings renderer | Unverified: no native Obsidian layout check in this change |
+| macOS | Supported by shared settings renderer | Unverified: no macOS host check |
+| Desktop Linux | Supported by shared settings renderer | Unverified: no Linux host check |
+| Android | Supported by shared settings renderer | Unverified: physical narrow-screen/touch layout |
+| iPhone/iOS | Supported by shared settings renderer | Unverified: physical narrow-screen/touch layout |
+| iPad/iPadOS | Supported by shared settings renderer | Unverified: physical tablet/split-view layout |
+
+Scenario review: removing static text reduces header content on narrow screens and changes no touch targets. Native capability, foreground/background/lock/restart and offline recovery scenarios are not applicable to this static subtitle. Identity/vault isolation, mixed versions, encryption, progress, bodies and source mtimes are unaffected. No persisted-state change; upgrade and code-only rollback require no migration. Automated validation is recorded in CHANGELOG.md and does not establish physical-device acceptance.
 
 ### CHG-20261102-NOTES-FIRST — planned 1.1.4
 
@@ -126,3 +184,68 @@ Purchasing, renewal and plan reads use the canonical payment service directly. R
 | iPad/iPadOS | Shared HTTPS and narrow/split-view layout | Unverified on physical iPad |
 
 Fixed Windows/WSL UI matrices passed 832 cases and 5120 inspections each. Synthetic scope/isolation, mixed versions and source-mtime checks are not physical-device acceptance. No new OS startup/tray capability is introduced. Code rollback retains local state but older servers may lack the new payment identity endpoint; never silently re-enable retired URLs as a fallback. Shared host/database and maintenance coordination remain; independent programs do not imply complete failure isolation.
+
+## Global workflow parity — CHG-20261102-GLOBAL-PARITY
+
+Requirement: retain the maintained CN Client features and interaction flow in the English Global build, using independent Global service and payment origins. Complete catalog resources, localized failures, progress/application text and the same plan-card/payment entry workflow. Do not change CN production or publish a new plugin Release. Global managed-web sign-in is English; post-login manage/user pages remain Chinese by the user's explicit exception.
+
+| Target | Status | Evidence and remaining acceptance |
+| --- | --- | --- |
+| Windows | Conditional; physical Obsidian unverified | Pinned-runtime synthetic suites and builds; no installation or formal vault migration |
+| macOS | Unverified | No physical host; platform guards retained |
+| Linux desktop | Unverified | WSL tests are runtime/protocol evidence, not physical desktop acceptance |
+| Android | Unverified | Existing native transport/authority isolation retained; real checkout handoff, suspension/lock and reconnect pending |
+| iPhone/iOS | Unverified | Compiler compatibility target retained; physical browser/app return and background acceptance pending |
+| iPad/iPadOS | Unverified | Physical touch/split-view and lifecycle acceptance pending |
+
+Assess mixed-version account/vault isolation, offline recovery, safe upgrade/rollback and source modification times using the existing regression suite. English completeness and build success do not prove all-device production readiness. Existing vault contents, secret namespaces, retained progress and original mtime rules remain unchanged.
+
+## CHG-20261102-GLOBAL-PRICING
+
+Requirement: user adds Global Free50MB/3vaults/3device authorizations and configurable paid caps, monthly list prices unchanged/annual20%off. Recognize global-free in the existing billing card and show its50MB title; CN free100MB presentation remains. Targeted Global tests3/3 and both regional builds passed. Server enforces limits; no formal Client Release. Multi-language following Obsidian is separately planned, not implemented (GLOBAL-LANGUAGE-PLAN).
+
+
+## Global new-account sign-in candidate — CHG-20261102-GLOBAL-SOCIAL-AUTH
+
+Requirement: user approved Google, GitHub and email-code registration and explicitly excludes old-user migration/compatibility because Global has not launched. Global enrollment opens the system browser, keeps the PKCE verifier in device-local secret storage, resumes the same unexpired flow and requires verified account/device identity before saving credentials. Cancellation, expiry, region/local-device changes and already-connected vaults prevent stale writes. Provider buttons reflect server configuration; email-code fallback and manual checking remain available when enabled. Existing encrypted-vault selection/password creation is preserved. CN enrollment is retained; no CN running service change, public release or real billing.
+
+Pinned Node 26.12.1 full Windows suite passed 310/310. WSL passed 309 with one platform-specific skip. CN/Global builds and both 26-module closure checks passed. These are synthetic/runtime checks; no real Google/GitHub account, SMTP inbox, browser layout or physical Obsidian acceptance has passed. The server candidate needs OAuth client configuration and deployment before this Client is installed. The current isolated test vault has not been overwritten with this candidate.
+
+| Platform | Status | Remaining acceptance |
+| --- | --- | --- |
+| Windows | Conditional implementation; physical host unverified | External-browser return, secret storage, cancellation/restart and real provider login |
+| macOS | Unverified | Physical host, system browser and secret storage |
+| Linux desktop | Unverified | WSL checks do not validate desktop Obsidian |
+| Android | Unverified | Touch, background/lock/restart, browser return and offline recovery |
+| iPhone/iOS | Unverified | Real browser/app return, secure storage and lifecycle |
+| iPad/iPadOS | Unverified | Touch/split view, browser return and lifecycle |
+
+Device authorizations are server-enforced and revocable; a browser billing session consumes no device slot. Mixed candidate/server versions hide unconfigured providers and fail safely without a legacy-login fallback. Source-mtime, ciphertext, account/vault isolation and existing sync progress remain governed by maintained tests. No schema/content conversion or formal-vault migration. Expired flows require restarting sign-in; background execution is not guaranteed. Multilingual following of Obsidian remains planning-only.
+## CHG-20261103-GLOBAL-AUTH-ROUTES
+
+Global Google/GitHub/email sign-in: corrected the shared payment transport's route guard to permit only the four approved Global auth endpoints. Windows and WSL synthetic transport tests pass 13/13 each; WSL is not Linux desktop acceptance. Windows Obsidian candidate is installed only in the isolated test vault, with native reload/browser return still pending. macOS, Linux desktop, Android, iPhone/iOS and iPad/iPadOS remain unverified on physical devices. Narrow-screen/touch, background/lock/restart and offline/resume remain unverified; existing PKCE expiry and account/vault context guards are retained. CN transport rejection is tested. No synchronization or source-mtime path changes; mixed old Global candidates retain the known missing-login limitation until upgraded. Prior candidate is retained for rollback, though rolling back restores the defect.
+## CHG-20261103-GLOBAL-AUTH-UI
+
+Global login presentation uses theme variables, 46px provider buttons, text labels independent of decorative brand icons, a polite status region and narrow-container wrapping. Google and GitHub marks are bundled; GitHub masking includes the WebKit prefix for older supported Safari/WebView engines. Windows browser simulation at 320px and light/dark web rendering are checked; this does not verify native Obsidian rendering. Windows native reload, macOS, Linux desktop, Android, iPhone/iOS and iPad/iPadOS remain unverified for this presentation. Background/lock/restart, offline recovery and mixed versions retain existing authorization guards but have no new physical acceptance. The existing account/vault binding and original content/mtime paths are unchanged. The preceding candidate is retained for rollback. Actual brand assets do not require third-party image network access.
+
+## CHG-20261103-GLOBAL-SECRET-ID
+
+Follow-up: Windows native Obsidian connected an existing cloud vault; no sync round was initiated. The earlier pending native retry is now verified for connection only.
+
+## CHG-20261103-READABLE-ERRORS
+
+### CHG-20261103-DELETE-VERIFY-UI
+
+Global deletion verification now has explicit purpose-specific English copy. Windows native observation confirms the old wording was misleading; following the user's completed flow the UI is signed out and the service confirms closure. This is not a fresh registration-to-deletion run entirely operated by the agent. New-copy native reload remains pending. Windows and WSL each pass the 19 focused error/auth/connection tests; the verification-dialog regression returns to deletion without vault selection or credential replacement. macOS, desktop Linux, Android, iPhone/iOS and iPad/iPadOS are conditionally supported through the existing browser flow but physically unverified. Narrow-screen/touch and lock/background/restart remain unverified; wrapping paragraphs and existing expiring/context-bound flows remain. No note, key, protocol, mtime or CN changes. Prior isolated candidate is retained for rollback.
+
+Windows has native connection evidence and synthetic error/retry coverage; exact new error presentation after reload remains pending. macOS and desktop Linux are conditionally supported via shared APIs but physically unverified; WSL is synthetic evidence only. Android, iPhone/iOS and iPad/iPadOS are conditionally supported via shared APIs; native layout, touch/narrow-screen, lock/background and restart acceptance are unverified. No desktop-only control was added. Persistent form errors use paragraph wrapping and a polite status region. Network cancellation and account/vault isolation are tested synthetically. Creation retry caches a received success only within the open form; lost responses and older candidates retain the documented limitation. Prior candidate is retained for rollback. Existing full synthetic regression covers body and original source mtime. No China installation or cloud deletion is performed.
+
+### Original secret-ID validation record
+
+Global secure-storage identifiers now fit Obsidian's 64-character limit with a real UUID; China keeps its existing identifiers. Windows synthetic first-connection, restart, per-vault isolation and credential cleanup are checked, including reproduction of the previous failure. Windows native retry remains pending; macOS, desktop Linux, Android, iPhone/iOS and iPad/iPadOS remain unverified on physical devices. The shared secure-storage API is used on all six platforms; no desktop-only API or UI was added. Narrow-screen/touch layout is unchanged. Background/lock and offline recovery were not newly exercised; failed sign-in must reuse an existing cloud vault rather than creating more. Mixed old Global builds retain the defect; rollback requires the retained prior bundle and does not constitute successful connection acceptance. No cloud data, local note content, sync progress or source mtime is migrated.
+
+## CHG-20261103-GLOBAL-ACCOUNT-LIFECYCLE
+
+Global Account → Danger zone → Delete account is conditional on an authenticated account and a supported Global server; CN gains no new deletion or social-login UI. Windows, macOS, desktop Linux, Android, iPhone/iOS and iPad/iPadOS are conditionally supported using the system browser, online identity verification and server-side deletion; physical acceptance is unverified on all six categories. Windows/WSL synthetic tests do not establish native acceptance.
+
+The server rechecks zero vaults and completed cleanup, recent identity proof and exact confirmation. Reauthentication uses existing Google/GitHub/email PKCE routes without another device grant, handles device-cap exhaustion, and preserves the current encrypted-vault connection. Pending callbacks and dialogs are bound to their local account context. Offline, expired, canceled or changed contexts fail safely; no deletion success is inferred from a lost response. Background/lock/restart retain expiring device-local flow storage, but physical lifecycle/recovery tests remain pending. Danger-zone controls wrap and have 44px minimum touch height; native narrow-screen, touch, keyboard and accessibility tests remain unverified. Local note bodies and source mtimes are not changed by this feature. Older Global candidates cannot bypass the new cloud-cleanup prerequisite; they must upgrade to use deletion. The previous isolated plugin bundle is retained; a backend rollback after real deletion must retain the identity-closure guard and billing cleanup, never restore deleted identities from an old database.

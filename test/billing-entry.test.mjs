@@ -51,7 +51,7 @@ test('guest entry opens plans directly and keeps its scoped handoff while the br
 test('purchase entry uses account auth, pins HTTPS origin and never opens a late response for another account', async () => {
     const opened = []; window.open = (...args) => opened.push(args);
     let key = 'synthetic-key', next;
-    const api = { origin: 'https://sync.example.invalid', request: async (method, path, body) => {
+    const api = { origin: 'https://sync.wujiesync.cc', request: async (method, path, body) => {
         assert.equal(method, 'POST'); assert.equal(path, 'billing/entry'); assert.deepEqual(body, {});
         return next();
     } };
@@ -105,5 +105,6 @@ test('billing API goes directly to pay and isolates staging API from production'
   const api=Plugin.prototype.billingApi.call(plugin,'synthetic-account');await api.request('GET','billing/entitlement');
   assert.deepEqual(seen.at(-1),{url:'https://pay.wujiesync.cc'+path,auth:'Bearer synthetic-account'});
   await assert.rejects(api.request('GET','account'),/Invalid payment API/);
+  await assert.rejects(api.request('GET','auth/config'),/Invalid payment API/);
  }
 });

@@ -1,4 +1,4 @@
-import { edition, assertEditionOrigin, logViewType } from './edition.js';
+import { edition, assertEditionOrigin, regionalServices, logViewType } from './edition.js';
 import * as ObsidianSdk from 'obsidian';
 import { androidFallback, supportsAndroidNativeVersion } from './android-transport.js';
 import { mountBillingCard, capacityWarning } from './billing.js';
@@ -155,15 +155,15 @@ export function bindManualSyncAction(setting, plugin) {
   if (!live()) return;
   if (stopping || plugin.stopping) { status.setText(t('task.stateStopping')); return; }
   const activity = plugin.cycleActivity;
-  const stage = activity ? t(`sync.stage.${activity.stage}`) : '准备同步';
+  const stage = activity ? t(`sync.stage.${activity.stage}`) : t('progress.prepare');
   const counts = [];
   if (activity?.scan && Number.isSafeInteger(activity.scan.checked) && Number.isSafeInteger(activity.scan.total))
    counts.push(t('sync.scanCount', activity.scan));
   if (activity?.received > 0) counts.push(t('sync.receiveCount', { count: activity.received }));
   const detail = counts.length ? ` ${counts.join('；')}。` : '';
   status.setText((Date.now() - (activity?.progressAt ?? startedAt)) >= 15000
-   ? `仍在等待：${stage}。${detail}可在“同步记录”中查看详情或停止本轮。`
-   : `正在${stage}，请稍候…${detail}`);
+   ? t('progress.waiting',{stage,detail})
+   : t('progress.running',{stage,detail}));
  };
  bindAction(setting, t('msg_36e7a43a1c'), async () => {
   if (!live()) return;
@@ -171,9 +171,9 @@ export function bindManualSyncAction(setting, plugin) {
   timer = window.setInterval(update, 1000);
   try {
    await plugin.requestSynchronization();
-   if (live()) status.setText(plugin.overviewStatusText ?? '本次操作已结束，请查看同步记录或按弹窗提示继续。');
+   if (live()) status.setText(plugin.overviewStatusText ?? t('progress.finished'));
   } catch (error) {
-   if (live()) status.setText(`同步未完成：${failureMessage(error)}`);
+   if (live()) status.setText(t('progress.failed',{error:failureMessage(error)}));
    throw error;
   } finally { window.clearInterval(timer); timer = undefined; }
  });
@@ -203,6 +203,10 @@ export function bindManualSyncAction(setting, plugin) {
 }
 function action(container, label, callback) {
 	bindAction(new Setting(container), label, callback);
+}
+function secretStorageId(plugin, name) {
+	const suffix = plugin.manifest.id === 'smart-sync-global' && name === 'encryption' ? 'enc' : name;
+	return `${plugin.manifest.id}-${plugin.data.localId}-${suffix}`;
 }
 function operationBusy(code = 'SYNC_BUSY') {
 	return Object.assign(new Error('Operation must wait for active work'), { code });
@@ -250,8 +254,11 @@ function formWindow(app, title, fields, submit, submitLabel = t('msg_31fbef1625'
 					});
 				});
 		}
+		const feedback = container.createEl('p', { attr: { role: 'status', 'aria-live': 'polite' } });
 		action(container, submitLabel, async () => {
-			await submit(values);
+			feedback.setText('');
+			try { await submit(values); }
+			catch (error) { feedback.setText(failureMessage(error)); throw error; }
 			window.close();
 		});
 	});
@@ -260,19 +267,19 @@ function formWindow(app, title, fields, submit, submitLabel = t('msg_31fbef1625'
 }
 function applicationDetails(area, changed) {
  const values = { requestedAmount: '', requestedUnit: 'M', purpose: '' };
- area.createEl('p', { text: '请填写账号开通信息。' });
- new Setting(area).setName('预计使用空间')
+ area.createEl('p', { text: t('application.details') });
+ new Setting(area).setName(t('application.space'))
   .addText(input => {
    input.inputEl.type = 'number'; input.inputEl.min = '1'; input.inputEl.max = '1048576'; input.inputEl.step = '1';
-   input.inputEl.placeholder = '输入数值'; input.onChange(value => { values.requestedAmount = value; changed(); });
+   input.inputEl.placeholder = t('application.amount'); input.onChange(value => { values.requestedAmount = value; changed(); });
   })
   .addDropdown(input => input.addOptions({ M: 'MB', G: 'GB' }).setValue('M').onChange(value => { values.requestedUnit = value; changed(); }));
- new Setting(area).setName('使用用途').setDesc('请简要说明用途，最多500字。')
+ new Setting(area).setName(t('application.purpose')).setDesc(t('application.purposeHelp'))
   .addTextArea(input => { input.inputEl.maxLength = 500; input.onChange(value => { values.purpose = value; changed(); }); });
  return () => {
   const amount = Number(values.requestedAmount), purpose = values.purpose.trim();
   if (!Number.isSafeInteger(amount) || amount < 1 || amount > 1048576 || !['M','G'].includes(values.requestedUnit) || !purpose || purpose.length > 500)
-   throw new Error('请填写有效的预计空间（正整数、MB或GB）及使用用途（1至500字）。');
+   throw new Error(t('application.invalid'));
   return { requestedAmount: amount, requestedUnit: values.requestedUnit, purpose };
  };
 }
@@ -878,7 +885,7 @@ export default class IndependentSync extends Plugin {
 		});
 		for (const [id, name, method] of [
 			['toggle-note-pin', t('pin.toggle'), 'toggleActiveNotePin'],
-			['request-access', edition.edition === 'cn' ? t('billing.openPlans') : t('msg_35d9a6514c'), 'requestAccess'],
+			['request-access', ['cn','global'].includes(edition.edition) ? t('billing.openPlans') : t('msg_35d9a6514c'), 'requestAccess'],
 			['registered-login', t('msg_b567a0c85b'), 'enrollment'],
 			['pair-new-device', t('msg_8b943b0cfd'), 'pairThisDevice'],
 			['approve-device', t('msg_0fb566edf8'), 'approveDevice'],
@@ -982,7 +989,7 @@ export default class IndependentSync extends Plugin {
 	}
 	secret(name) {
 		return (
-			this.app.secretStorage.getSecret(`${this.manifest.id}-${this.data.localId}-${name}`) ?? ''
+			this.app.secretStorage.getSecret(secretStorageId(this, name)) ?? ''
 		);
 	}
 	setSecret(name, value) {
@@ -994,7 +1001,7 @@ export default class IndependentSync extends Plugin {
 		}
 		this.workspaceKeys = undefined;
 		this.verifiedRoute = undefined;
-		this.app.secretStorage.setSecret(`${this.manifest.id}-${this.data.localId}-${name}`, value);
+		this.app.secretStorage.setSecret(secretStorageId(this, name), value);
 	}
 	async setting(name, value, configurationReady = false) {
 		if (this.stopped) throw new Error('Plugin is unloaded');
@@ -2673,20 +2680,20 @@ export default class IndependentSync extends Plugin {
 		return dialog;
 	}
 	async synchronizeManually() {
-		if (edition.edition === 'cn' && !this.stopped && !this.stopping && !this.connecting && !this.running && !this.data.settings.workspace && !this.secret('account') && !this.secret('access')) {
+		if (['cn','global'].includes(edition.edition) && !this.stopped && !this.stopping && !this.connecting && !this.running && !this.data.settings.workspace && !this.secret('account') && !this.secret('access')) {
 			if (this.syncSetupWindow) return this.syncSetupWindow;
 			const binding = () => JSON.stringify([this.data.localId, this.data.settings.origin, this.data.settings.workspace, this.secret('account'), this.secret('access')]);
 			const expected = binding();
 			const live = () => !this.stopped && !this.stopping && !this.connecting && !this.running && binding() === expected;
-			const dialog = new ChoiceWindow(this.app, '请先开通套餐', area => {
-				area.createEl('p', { text: '请先点击“购买”选择套餐并开通，再登录账号开始同步。已有账号可直接登录。' });
+			const dialog = new ChoiceWindow(this.app, t('billing.setupTitle'), area => {
+				area.createEl('p', { text: t('billing.setupHelp') });
 				const proceed = async callback => {
 					if (this.syncSetupWindow !== dialog || !live()) { dialog.close(); return; }
 					dialog.close();
 					await callback();
 				};
-				action(area, '购买', () => proceed(() => this.openBilling()));
-				action(area, '已有账号登录', () => proceed(() => this.enrollment()));
+				action(area, t('billing.buy'), () => proceed(() => this.openBilling()));
+				action(area, t('billing.existing'), () => proceed(() => this.enrollment()));
 			});
 			dialog.onClose = () => {
 				dialog.contentEl.empty();
@@ -3007,8 +3014,9 @@ export default class IndependentSync extends Plugin {
 		this.data.connections = {};
 		this.data.renames = {};
 		this.app.secretStorage.setSecret(`${this.manifest.id}-${this.data.localId}-access`, '');
-		this.app.secretStorage.setSecret(`${this.manifest.id}-${this.data.localId}-encryption`, '');
+		this.app.secretStorage.setSecret(secretStorageId(this, 'encryption'), '');
 		this.app.secretStorage.setSecret(`${this.manifest.id}-${this.data.localId}-crypto`, '');
+		if(edition.edition==='global')this.setSecret('create', '');
 		const accountKey = this.secret('account');
 		if (accountKey) {
 			try {const accountApi = this.workspaceApi(this.data.settings.origin, accountKey);const principal = await accountApi.request('GET','account');if (principal.accountDevice) await accountApi.request('POST','session/revoke',{});} catch { /* Local sign-out still forgets authorization. */ }
@@ -3473,45 +3481,62 @@ export default class IndependentSync extends Plugin {
 		return dialog;
 	}
 	async eraseAccount() {
-		formWindow(
-			this.app,
-			t('msg_cda8bc73dc'),
-			[
-				{ key: 'email', label: t('msg_316ef5f989') },
-				{
-					key: 'key',
-					label: t('msg_104f734a38'),
-					description: t('account.eraseWarning'),
-					password: true,
-				},
-				{
-					key: 'confirm',
-					label: t('msg_b3588ca8a2'),
-				},
-			],
-			async (input) => {
-				if (input.confirm !== t('account.erasePhrase'))
-					throw Object.assign(new Error('Account confirmation required'), {
-						code: 'ACCOUNT_ERASE_CONFIRMATION',
+		return this.deleteAccount();
+	}
+	async deleteGlobalAccount() {
+		return IndependentSync.prototype.deleteAccount.call(this);
+	}
+	async deleteAccount() {
+		if (!['cn','global'].includes(edition.edition)) throw Error('Account deletion is unavailable');
+		const global = edition.edition === 'global';
+		const localId = this.data.localId, origin = this.data.settings.origin;
+		const api = await this.accountApi(), key = this.secret('account');
+		const valid = () => !this.stopped && localId === this.data.localId && origin === this.data.settings.origin && key === this.secret('account');
+		let status;
+		try { status = await api.request('GET', 'account/close'); }
+		catch (error) { if ([404,405].includes(error.status)) throw Object.assign(Error('Update the service before deleting your account'),{code:'ACCOUNT_CLOSE_UPGRADE'}); throw error; }
+		if (!valid()) throw Error('Account changed. Open Delete account again.');
+		const dialog = new ChoiceWindow(this.app, t('account.closeTitle'), area => {
+			if (status.vaults || status.pending) {
+				area.createEl('p', {text:t('account.closeCloudFirst')});
+				area.createEl('p', {text:t('account.closeCloudStatus',{vaults:status.vaults,pending:status.pending})});
+				action(area, t('account.closeManageVaults'), async () => { if (!valid()) throw Error('Account changed'); dialog.close(); await this.manageNotebooks(); });
+				return;
+			}
+			if (global && status.requiresReauthentication) {
+				area.createEl('p', {text:t('account.closeVerifyHelp')});
+				action(area, t('account.closeVerify'), () => { if (!valid()) throw Error('Account changed'); dialog.close(); this.globalEnrollment(true); });
+				return;
+			}
+			area.createEl('p', {text:t('account.closeWarning')});
+			area.createEl('p', {text:t(global?'account.closeGlobalBilling':'account.closeCnBilling')});
+			action(area, t('account.closeContinue'), () => {
+				if (!valid()) throw Error('Account changed');
+				dialog.close();
+				const fields=[...(!global?[{key:'loginKey',label:t('account.closeLoginKey'),description:t('account.closeLoginKeyHelp'),password:true}]:[]),{key:'confirm',label:t('account.closeConfirm'),description:t('account.closeWarning')}];
+				const confirmation = formWindow(this.app, t('account.closePermanent'), fields, async ({confirm,loginKey}) => {
+					if (confirm !== t('account.closePhrase')) throw global ? Error('Type DELETE exactly to confirm') : Object.assign(Error('Account confirmation required'),{code:'ACCOUNT_ERASE_CONFIRMATION'});
+					if (!valid()) throw Error('Account changed. Open Delete account again.');
+					await this.exclusive(async () => {
+						if (!valid()) throw Error('Account changed');
+						try { await api.request('POST', 'account/close', {confirm:'DELETE',...(!global?{loginKey}: {})}); }
+						catch (error) { if (error.status===403) error.code=global?'ACCOUNT_CLOSE_REAUTH':'ACCOUNT_CLOSE_PROOF'; if(error.status===409)error.code='ACCOUNT_CLOSE_CLOUD_FIRST'; throw error; }
 					});
-				const api = this.workspaceApi(this.data.settings.origin, input.key);
-				await this.exclusive(() =>
-					api.request('POST', 'account/erase', {
-						email: input.email,
-						confirm: 'ERASE ACCOUNT',
-					}),
-				);
-				await this.signOut();
-				this.notify(t('msg_85ffefa0e5'));
-			},
-		);
+					if (valid()) await this.signOut();
+					this.notify(t('account.closeDone'));
+				}, t('account.closePermanent'));
+				confirmation.contentEl.querySelector('button')?.classList.add('mod-warning');
+			});
+		});
+		dialog.open();
+		return dialog;
 	}
 
 	async requestAccess() {
-  if (edition.edition === 'cn') return this.openBilling();
+  if (['cn','global'].includes(edition.edition)) return this.openBilling();
   let email = '';
   const dialog = new ChoiceWindow(this.app, t('msg_98d23d7e0e'), area => {
-   new Setting(area).setName('邮箱').addText(input => { input.inputEl.type = 'email'; input.onChange(value => { email = value; }); });
+   new Setting(area).setName(t('account.email')).addText(input => { input.inputEl.type = 'email'; input.onChange(value => { email = value; }); });
    const details = applicationDetails(area, () => {});
    action(area, t('msg_31fbef1625'), async () => {
     const api = this.workspaceApi(this.data.settings.origin, '');
@@ -3565,7 +3590,7 @@ export default class IndependentSync extends Plugin {
 				accessKey,
 			);
 			this.app.secretStorage.setSecret(
-				`${this.manifest.id}-${this.data.localId}-encryption`,
+				secretStorageId(this, 'encryption'),
 				config.encryptionPassword,
 			);
 			this.lanPeers?.close();
@@ -3582,14 +3607,113 @@ export default class IndependentSync extends Plugin {
 		this.setStatus(t('sync.ready'));
 		this.tab?.update();
 	}
+	async beginGlobalSignIn(method,active=()=>true,reauth=false,inline=false) {
+		if(inline&&method!=='email')throw Error('Invalid Global sign-in context');
+		if (edition.edition !== 'global' || !['google','github','email'].includes(method)) throw Error('Invalid Global sign-in context');
+		const services = regionalServices(edition, this.data.settings.origin);
+		const localId=this.data.localId,origin=this.data.settings.origin,api=this.billingApi(reauth?this.secret('account'):'');
+		if(!active()||this.stopped)throw Error('Sign-in context changed');
+		try{const saved=JSON.parse(this.secret?.('oauth')??'');if(Boolean(saved.inline)===inline&&Boolean(saved.reauth)===reauth&&saved.localId===localId&&saved.origin===origin&&saved.method===method&&saved.expires>Date.now()&&saved.expires<Date.now()+11*60000&&/^[A-Za-z0-9_-]{43}$/.test(saved.id)&&/^[A-Za-z0-9_-]{43}$/.test(saved.verifier)){if(!inline)window.open(services.login+'#flow='+saved.id+'&method='+method,'_blank','noopener,noreferrer');return saved;}}catch{ /* No reusable sign-in. */ }
+		const verifier=btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32)))).replaceAll('+','-').replaceAll('/','_').replace(/=+$/,'');
+		const challenge=btoa(String.fromCharCode(...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(verifier))))).replaceAll('+','-').replaceAll('/','_').replace(/=+$/,'');
+		const flow=await api.request('POST',reauth?'auth/reauth':'auth/start',{challenge,label:this.deviceDisplayName()});
+		if(!active()||this.stopped||localId!==this.data.localId||origin!==this.data.settings.origin)throw Error('Sign-in context changed');
+		const expected=services.login+'#flow='+flow.id;
+		if(!/^[A-Za-z0-9_-]{43}$/.test(flow.id??'')||flow.url!==expected||!Number.isSafeInteger(flow.expires)||flow.expires<=Date.now()||flow.expires>Date.now()+11*60000)throw Error('Invalid Global sign-in link');
+		const saved={id:flow.id,verifier,expires:flow.expires,localId,origin,method,reauth,inline};
+		this.app.secretStorage.setSecret(`${this.manifest.id}-${localId}-oauth`,JSON.stringify(saved));
+		if(!inline)window.open(expected+'&method='+method,'_blank','noopener,noreferrer');return saved;
+	}
+	async globalEmailRequest(flow,operation,value,active=()=>true) {
+		const services=regionalServices(edition,this.data.settings.origin);
+		const live=()=>active()&&!this.stopped&&edition.edition==='global'&&flow.inline===true&&flow.method==='email'&&flow.localId===this.data.localId&&flow.origin===this.data.settings.origin&&flow.origin===services.sync&&flow.expires>Date.now();
+		if(!live()||!['send','verify'].includes(operation))throw Error('Sign-in expired or context changed');
+		const result=await this.billingApi('').request('POST','auth/email/'+operation,{id:flow.id,verifier:flow.verifier,...(operation==='send'?{email:value}:{code:value})});
+		if(!live())throw Error('Sign-in context changed');
+		return result;
+	}
+	async finishGlobalSignIn(flow,active=()=>true) {
+		const services=regionalServices(edition,this.data.settings.origin);
+		const live=()=>active()&&!this.stopped&&edition.edition==='global'&&flow.localId===this.data.localId&&flow.origin===this.data.settings.origin&&flow.origin===services.sync&&flow.expires>Date.now();
+		if(!live())throw Error('Sign-in expired or context changed');
+		const api=this.billingApi(''),result=await api.request('POST','auth/claim',{id:flow.id,verifier:flow.verifier});
+		if(!live())throw Error('Sign-in context changed');if(result.pending)return undefined;
+		if(flow.reauth){if(result.reauthenticated!==true)throw Error('Identity verification was not completed');this.app.secretStorage.setSecret(`${this.manifest.id}-${flow.localId}-oauth`,'');return true;}
+		if(!/^[A-Za-z0-9_-]{43}$/.test(result.key??'')||!/^[a-f0-9-]{36}$/.test(result.id??'')||typeof result.owner!=='string'||!result.owner||typeof result.email!=='string'||!result.email.includes('@'))throw Error('Invalid Global account authorization');
+		const account=this.workspaceApi(flow.origin,result.key),principal=await account.request('GET','account');
+		if(!live()||principal.scope||!principal.accountDevice||principal.deviceId!==result.id||principal.owner!==result.owner||principal.email!==result.email)throw Error('Account authorization could not be verified');
+		if(this.data.settings.workspace)throw notebookAlreadyConnected();
+		this.app.secretStorage.setSecret(`${this.manifest.id}-${flow.localId}-account`,result.key);this.accountAuthorized=true;this.accountEmail=result.email;
+		this.tab?.update();
+		try{await api.request('POST','auth/ack',{id:flow.id,verifier:flow.verifier});this.app.secretStorage.setSecret(`${this.manifest.id}-${flow.localId}-oauth`,'');}catch{ /* Credential is stored; a lost ACK never starts another device grant. */ }
+		return account;
+	}
+	globalEnrollment(reauth=false) {
+		let closed=false,checking=false,starting=false,completed=false,timer,flow;
+		let stopWatching=()=>{};
+		const dialog=new ChoiceWindow(this.app,t(reauth?'auth.reauth.title':'auth.title'),area=>{
+			area.classList.add('smart-sync-auth');
+			const mark=area.createDiv({cls:'smart-sync-auth-mark',text:'∞'});mark.setAttribute('aria-hidden','true');
+			area.createEl('p',{text:t(reauth?'auth.reauth.intro':'auth.intro'),cls:'smart-sync-auth-intro'});
+			const methodsArea=area.createDiv({cls:'smart-sync-auth-methods'});
+			const feedback=area.createEl('p',{text:t('auth.loading'),cls:'smart-sync-auth-status'});feedback.setAttribute('role','status');feedback.setAttribute('aria-live','polite');
+			const check=async()=>{if(closed||checking||completed||!flow)return;checking=true;const checked=flow;try{const api=await this.finishGlobalSignIn(checked,()=>!closed&&flow===checked);if(closed)return;if(!api){feedback.setText(t(checked.inline?'auth.emailIntro':reauth?'auth.reauth.waiting':'auth.waiting'));return;}completed=true;clearInterval(timer);if(reauth){dialog.close();await this.deleteGlobalAccount();return;}feedback.setText(t('auth.signedIn',{email:this.accountEmail}));await this.selectAccountWorkspace(api,dialog);dialog.close();}catch(error){if(!closed)feedback.setText(failureMessage(error));clearInterval(timer);}finally{checking=false;}};
+			const doc=area.ownerDocument,view=doc?.defaultView;
+			const resume=()=>{if(!doc?.hidden&&flow&&this.secret('oauth'))void check();};
+			view?.addEventListener('focus',resume);doc?.addEventListener('visibilitychange',resume);
+			stopWatching=()=>{view?.removeEventListener('focus',resume);doc?.removeEventListener('visibilitychange',resume);};
+			const checkArea=area.createDiv({cls:'smart-sync-auth-check'});checkArea.hidden=true;action(checkArea,t(reauth?'auth.reauth.check':'auth.check'),check);
+			area.createEl('p',{text:t(reauth?'auth.reauth.help':'auth.help'),cls:'smart-sync-auth-help'});
+			void this.billingApi('').request('GET','auth/config').then(config=>{
+				if(closed)return;const methods=[...(config.providers??[]),...(config.emailEnabled?['email']:[])].filter(value=>['google','github','email'].includes(value));
+				if(!flow)feedback.setText(methods.length?'':t('auth.unavailable'));
+				for(const method of methods){
+					if(method==='email'&&methods.some(value=>value!=='email'))methodsArea.createDiv({text:t('auth.or'),cls:'smart-sync-auth-divider'});
+					if(method==='email'){
+						let email='',code='',sentEmail='',emailBusy=false;
+						const emailArea=methodsArea.createDiv({cls:'smart-sync-auth-email'});
+						new Setting(emailArea).setName(t('auth.emailAddress')).addText(input=>{input.inputEl.type='email';input.inputEl.autocomplete='email';input.inputEl.setAttribute?.('aria-label',t('auth.emailAddress'));input.onChange(value=>{email=value.trim();});});
+						const sendSetting=new Setting(emailArea);
+						const codeArea=emailArea.createDiv();codeArea.hidden=true;
+						const message=error=>error?.status===429?t('auth.rateLimited'):error?.status===401?t('auth.codeRejected'):failureMessage(error);
+						const send=async()=>{if(emailBusy||checking||starting||completed)return;if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){feedback.setText(t('auth.invalidEmail'));return;}emailBusy=true;starting=true;const recipient=email;feedback.setText(t('auth.sending'));try{clearInterval(timer);flow=await this.beginGlobalSignIn('email',()=>!closed,reauth,true);const pending=flow;await this.globalEmailRequest(pending,'send',recipient,()=>!closed&&flow===pending);if(closed)return;sentEmail=recipient;codeArea.hidden=false;feedback.setText(t('auth.codeSent',{email:recipient}));}catch(error){if(!closed)feedback.setText(message(error));}finally{emailBusy=false;starting=false;}};
+						bindAction(sendSetting,t('auth.sendCode'),send);
+						new Setting(codeArea).setName(t('auth.code')).addText(input=>{input.inputEl.inputMode='numeric';input.inputEl.autocomplete='one-time-code';input.inputEl.maxLength=8;input.inputEl.setAttribute?.('aria-label',t('auth.code'));input.onChange(value=>{code=value.trim();});});
+						bindAction(new Setting(codeArea),t('auth.verifyCode'),async()=>{if(emailBusy||checking||starting||completed)return;if(email!==sentEmail){feedback.setText(t('auth.emailChanged'));return;}if(!/^\d{8}$/.test(code)){feedback.setText(t('auth.invalidCode'));return;}emailBusy=true;checking=true;const pending=flow;try{await this.globalEmailRequest(pending,'verify',code,()=>!closed&&flow===pending);code='';checking=false;await check();}catch(error){if(!closed)feedback.setText(message(error));}finally{emailBusy=false;checking=false;}});
+						continue;
+					}
+					const setting=new Setting(methodsArea);setting.settingEl.classList.add('smart-sync-auth-method');
+					bindAction(setting,t('auth.'+method),async()=>{if(checking||starting)return;starting=true;try{clearInterval(timer);flow=await this.beginGlobalSignIn(method,()=>!closed,reauth);checkArea.hidden=false;feedback.setText(t(reauth?'auth.reauth.waiting':'auth.waiting'));timer=window.setInterval(()=>{void check();},2500);this.registerInterval(timer);}finally{starting=false;}});
+					const button=setting.controlEl?.querySelector('button');
+					if(button){const icon=button.createSpan({cls:'smart-sync-auth-icon smart-sync-auth-'+method});icon.setAttribute('aria-hidden','true');if(method==='email')ObsidianSdk.setIcon?.(icon,'mail');}
+				}
+			}).catch(error=>{if(!closed)feedback.setText(failureMessage(error));});
+			try{const saved=JSON.parse(this.secret('oauth'));if(Boolean(saved.reauth)===reauth&&saved.localId===this.data.localId&&saved.origin===this.data.settings.origin&&saved.expires>Date.now()){flow=saved;checkArea.hidden=saved.inline===true;feedback.setText(t(saved.inline?'auth.emailIntro':reauth?'auth.reauth.waiting':'auth.waiting'));timer=window.setInterval(()=>{void check();},2500);this.registerInterval(timer);void check();}}catch{ /* No pending authorization. */ }
+		});
+		dialog.onClose=()=>{closed=true;clearInterval(timer);stopWatching();dialog.contentEl.empty();};dialog.open();
+	}
+	async selectAccountWorkspace(api,dialog,workspaces) {
+		workspaces??=(await api.workspaces()).workspaces;
+		const picker=new ChoiceWindow(this.app,t('msg_1b5cc18c43'),container=>{
+			for(const workspace of workspaces)action(container,this.workspaceDisplayName(workspace),async()=>{await this.withWorkspaceEncryption(api,workspace,async passphrase=>{await this.connectWorkspace(api,workspace,passphrase);picker.close();dialog.close();});});
+			action(container,t('msg_4647ca53a9'),async()=>{
+				if(this.data.settings.workspace)throw notebookAlreadyConnected();
+				let created;
+				formWindow(this.app,t('msg_372e614bfe'),[{key:'label',label:t('msg_4e9bfa704d')}],async({label})=>{
+					await this.withAccountEncryption(api,async context=>{if(this.data.settings.workspace)throw notebookAlreadyConnected();this.checkAccountEncryption(api,context);const{workspace,password}=created??=await this.createAccountWorkspace(api,label,context);await this.connectWorkspace(api,workspace,password);picker.close();dialog.close();});
+				});
+			});
+		});picker.open();
+	}
 	async enrollment(initialMode = 'registered') {
-		let mode = edition.edition !== 'cn' && initialMode === 'new' ? 'new' : 'registered',
+		if(edition.edition==='global'){if(this.secret('account'))return this.selectAccountWorkspace(await this.accountApi(),{close(){}});return this.globalEnrollment();}
+		let mode = !['cn','global'].includes(edition.edition) && initialMode === 'new' ? 'new' : 'registered',
 			version = 0;
 		const dialog = new ChoiceWindow(this.app, t('msg_911a5a5fee'), (area) => {
 			const render = () => {
 				version++;
 				area.empty();
-				if (edition.edition !== 'cn') {
+				if (!['cn','global'].includes(edition.edition)) {
 				action(area, t('msg_6d3f7c7e30'), async () => {
 					mode = 'registered';
 					render();
@@ -3647,26 +3771,7 @@ export default class IndependentSync extends Plugin {
 							const loggedIn = await api.request('GET', 'account');
 							if (version !== requestVersion) return;
 							if (!loggedIn.scope) {this.app.secretStorage.setSecret(`${this.manifest.id}-${this.data.localId}-account`, api.accessKey);this.accountAuthorized=true;}
-							const picker = new ChoiceWindow(this.app, t('msg_1b5cc18c43'), (container) => {
-								for (const workspace of workspaces) action(container,this.workspaceDisplayName(workspace),async()=>{
-									await this.withWorkspaceEncryption(api,workspace,async passphrase=>{
-										await this.connectWorkspace(api,workspace,passphrase);
-										picker.close();dialog.close();
-									});
-								});
-								action(container,t('msg_4647ca53a9'),async()=>{
-									if(this.data.settings.workspace)throw notebookAlreadyConnected();
-									formWindow(this.app,t('msg_372e614bfe'),[{key:'label',label:t('msg_4e9bfa704d')}],async({label})=>{
-										await this.withAccountEncryption(api,async context=>{
-											if(this.data.settings.workspace)throw notebookAlreadyConnected();
-											const {workspace,password}=await this.createAccountWorkspace(api,label,context);
-											await this.connectWorkspace(api,workspace,password);
-											picker.close();dialog.close();
-										});
-									});
-								});
-							});
-							picker.open();
+							await this.selectAccountWorkspace(api,dialog,workspaces);
 						} catch (error) {
 							if (version === requestVersion)
 								feedback.setText(
@@ -3716,6 +3821,7 @@ export default class IndependentSync extends Plugin {
 			accessKey: device.key,
 			encryptionPassword: passphrase,
 		}, { replace });
+		this.clearPendingCreation(workspace.id, api.origin);
 		} finally {
 			this.connecting = false;
 		}
@@ -3727,7 +3833,7 @@ export default class IndependentSync extends Plugin {
 		} catch { return undefined; }
 	}
 	async warnCapacity() {
-		if (edition.edition !== 'cn' || this.stopped || (!this.secret('account') && !this.secret('access'))) return;
+		if (!['cn','global'].includes(edition.edition) || this.stopped || (!this.secret('account') && !this.secret('access'))) return;
 		const binding = () => JSON.stringify([this.data.localId, this.data.settings.origin, this.data.settings.workspace, this.secret('account') || this.secret('access')]);
 		const expected = binding(), live = () => !this.stopped && binding() === expected;
 		let summary;
@@ -3755,10 +3861,9 @@ export default class IndependentSync extends Plugin {
 	billingApi(key) {
 		const serviceOrigin = new URL(this.data.settings.origin).origin;
 		assertEditionOrigin(serviceOrigin);
-		const staging = serviceOrigin === edition.stagingOrigin;
-		const local = edition.development && !staging && new URL(serviceOrigin).protocol === 'http:';
+		const services = regionalServices(edition, serviceOrigin), staging = services.staging, local = services.local;
 		if (local) return this.workspaceApi(serviceOrigin, key);
-		const payOrigin = 'https://pay.wujiesync.cc';
+		const payOrigin = services.pay;
 		let transport = (url, options) => fetch(url, options);
 		if (!staging && Platform.isAndroidApp === true && supportsAndroidNativeVersion(this.manifest?.version)) {
 			const pinId = `authority:${payOrigin}`;
@@ -3767,8 +3872,9 @@ export default class IndependentSync extends Plugin {
 		}
 		return new WorkspaceApi(payOrigin, key, '', (url, options) => {
 			const target = new URL(url);
-			if (target.origin !== payOrigin || !target.pathname.startsWith('/ss2/billing/')) throw Error('Invalid payment API');
-			if (staging) target.pathname = '/pay-test' + target.pathname;
+			const globalAuth = edition.edition === 'global' && !target.search && !target.hash && ['/ss2/auth/config','/ss2/auth/start','/ss2/auth/reauth','/ss2/auth/claim','/ss2/auth/ack','/ss2/auth/email/send','/ss2/auth/email/verify'].includes(target.pathname);
+			if (target.origin !== payOrigin || (!target.pathname.startsWith('/ss2/billing/') && !globalAuth)) throw Error('Invalid payment API');
+			if (staging && edition.edition === 'cn') target.pathname = '/pay-test' + target.pathname;
 			return transport(target.href, options);
 		});
 	}
@@ -3790,13 +3896,12 @@ export default class IndependentSync extends Plugin {
 		}
 	}
 	async openBilling(orderId) {
-		if (edition.edition !== 'cn') return;
+		if (!['cn','global'].includes(edition.edition)) return;
 		const localId = this.data.localId, origin = new URL(this.data.settings.origin).origin;
 		const guest = !this.secret('account') && !this.secret('access');
+		if(guest&&edition.edition==='global')return this.enrollment();
 		const live = () => !this.stopped && localId === this.data.localId && origin === new URL(this.data.settings.origin).origin && guest === (!this.secret('account') && !this.secret('access'));
-		const service = new URL(origin);
-		const purchaseBase = origin === edition.stagingOrigin ? 'https://pay.wujiesync.cc/pay-test'
-			: edition.development && service.protocol === 'http:' && ['127.0.0.1','localhost'].includes(service.hostname) ? origin : 'https://pay.wujiesync.cc/pay';
+		const purchaseBase = regionalServices(edition, origin).purchase;
 		if (guest && !this.purchaseSession()) {
 			const capability = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32)))).replaceAll('+','-').replaceAll('/','_').replace(/=+$/, '');
 			this.app.secretStorage.setSecret(`${this.manifest.id}-${localId}-purchase`, JSON.stringify({origin,capability}));
@@ -3902,13 +4007,38 @@ export default class IndependentSync extends Plugin {
 	}
 	async createAccountWorkspace(api,label,context,password=Array.from(crypto.getRandomValues(new Uint8Array(32)),byte=>byte.toString(16).padStart(2,'0')).join('')) {
 		this.checkAccountEncryption(api,context);
-		const salt=freshSalt(),keys=await unlockWorkspace(password,salt);
-		const id=crypto.randomUUID(),wrapped=await wrapWorkspacePassword(context.keys,context.owner,id,password);
+		if(edition.edition!=='global'){
+			const salt=freshSalt(),keys=await unlockWorkspace(password,salt),id=crypto.randomUUID();
+			const wrapped=await wrapWorkspacePassword(context.keys,context.owner,id,password);
+			this.checkAccountEncryption(api,context);
+			return {workspace:await api.create(label,salt,await workspaceProof(keys),this.creationDeviceName(),{workspace:id,...wrapped}),password};
+		}
+		if(this.workspaceCreationBusy)throw Object.assign(Error('Creation is in progress'),{code:'CREATE_PENDING'});
+		this.workspaceCreationBusy=true;
+		try {
+		let pending;
+		try { pending=JSON.parse(this.secret('create')||'null'); } catch { throw Object.assign(Error('Invalid pending creation'),{code:'CREATE_PENDING'}); }
+		if(pending && (pending.origin!==api.origin || pending.owner!==context.owner || pending.label!==label || typeof pending.password!=='string' || !pending.password || typeof pending.salt!=='string' || typeof pending.proof!=='string' || typeof pending.device!=='string' || !/^[a-f0-9-]{36}$/.test(pending.wrapped?.workspace??'') || typeof pending.wrapped?.nonce!=='string' || typeof pending.wrapped?.ciphertext!=='string'))throw Object.assign(Error('Resolve pending creation first'),{code:'CREATE_PENDING'});
+		if(!pending){
+			const salt=freshSalt(),keys=await unlockWorkspace(password,salt);
+			const id=crypto.randomUUID(),wrapped=await wrapWorkspacePassword(context.keys,context.owner,id,password);
+			pending={origin:api.origin,owner:context.owner,label,password,salt,proof:await workspaceProof(keys),device:this.creationDeviceName(),wrapped:{workspace:id,...wrapped}};
+			this.checkAccountEncryption(api,context);
+			this.setSecret('create',JSON.stringify(pending));
+		}
 		this.checkAccountEncryption(api,context);
-		const workspace=await api.create(label,salt,await workspaceProof(keys),this.creationDeviceName(),{workspace:id,...wrapped});
-		return {workspace,password};
+		const workspace=await api.create(pending.label,pending.salt,pending.proof,pending.device,pending.wrapped);
+		return {workspace,password:pending.password};
+		} finally { this.workspaceCreationBusy=false; }
+	}
+	clearPendingCreation(workspace, origin) {
+		try {
+			const pending = JSON.parse(this.secret('create') || 'null');
+			if (pending?.origin === new URL(origin).origin && pending.wrapped?.workspace === workspace) this.setSecret('create', '');
+		} catch { return; }
 	}
 	async detachDeletedNotebook(workspace) {
+		if (edition.edition === 'global') this.clearPendingCreation(workspace, this.data.settings.origin);
 		if (!workspace || this.data.settings.workspace !== workspace) return;
 		this.lanPeers?.close(); this.lanPeers = undefined;
 		this.abortController.abort();
@@ -3917,7 +4047,7 @@ export default class IndependentSync extends Plugin {
 		this.data.settings.workspace = '';
 		this.pendingPlan = undefined;
 		this.app.secretStorage.setSecret(`${this.manifest.id}-${this.data.localId}-access`, '');
-		this.app.secretStorage.setSecret(`${this.manifest.id}-${this.data.localId}-encryption`, '');
+		this.app.secretStorage.setSecret(secretStorageId(this, 'encryption'), '');
 		await this.saveData(this.data);
 		this.overviewIdentity = undefined;
 		this.setStatus(t('notebooks.deletedStatus'));
@@ -3990,14 +4120,16 @@ export default class IndependentSync extends Plugin {
 				for (const job of [...(result.deletions ?? []).filter(job=>job.workspace!==lastDeletion?.workspace),...(lastDeletion?[lastDeletion]:[])]) dialog.contentEl.createEl('p',{text:t(job.state==='complete'?'notebooks.deleted':job.state==='retrying'?'notebooks.retrying':'notebooks.cleaning')});
 				// Account authorization is reused; creating does not sign in again.
 				bindAction(toolbar,t('msg_586de4b2a5'),async () => {
+					let created;
 					formWindow(this.app,t('msg_372e614bfe'),[
 						{key:'label',label:t('msg_4e9bfa704d')},
 					],async ({label}) => {
 						if (!valid()) return;
 						await this.withAccountEncryption(api,async context=>{
 							if (!valid())return;
-							await this.createAccountWorkspace(api,label,context);
-							if (valid()) await load();
+							this.checkAccountEncryption(api,context);
+							created??=await this.createAccountWorkspace(api,label,context);
+							if (valid()) { await load(); this.setSecret('create',''); }
 						});
 					});
 				});
@@ -4729,7 +4861,7 @@ export class IndependentSettings extends PluginSettingTab {
 		);
 		const basic = [
 			row(t('msg_b848f4c702'), (setting) =>
-				setting.setHeading().setName('无界同步').setDesc('Smart Sync'),
+				setting.setHeading().setName(t('brand.name')).setDesc(edition.edition === 'global' ? '' : 'Smart Sync'),
 			),
 			row(t('version.title'), (setting) => {
 				let disposed = false;
@@ -4979,7 +5111,7 @@ export class IndependentSettings extends PluginSettingTab {
 				if (!element) return cleanup;
 				this.containerEl.classList.add('smart-sync-settings-page');
 				(group?.listEl ?? element.parentElement).classList.add('smart-sync-common');
-				if ([t('version.title'), t('msg_b848f4c702'), '我的套餐'].includes(definition.name))
+				if ([t('version.title'), t('msg_b848f4c702'), t('billing.myPlan')].includes(definition.name))
 					(group?.listEl ?? element.parentElement).classList.add('smart-sync-layout-root');
 				if (definition.name === t('version.title')) element.classList.add('smart-sync-version');
 				if (definition.name === t('msg_b848f4c702')) element.classList.add('smart-sync-title');
@@ -5158,7 +5290,7 @@ export class IndependentSettings extends PluginSettingTab {
 				details?.remove();
 			};
 		});
-		const billing = edition.edition === 'cn' ? row('我的套餐', setting => {
+		const billing = ['cn','global'].includes(edition.edition) ? row(t('billing.myPlan'), setting => {
 			const credential = plugin.secret('account') || plugin.secret('access');
 			return mountBillingCard(setting, {
 				connected: accountConnected, load: () => plugin.billingSummary(), open: orderId => plugin.openBilling(orderId),
@@ -5232,9 +5364,14 @@ export class IndependentSettings extends PluginSettingTab {
 				overviewItem(lan),
 			] },
 			...(billing ? [present(billing)] : []),
-			fold(t('overview.moreAccount'), t('overview.moreAccountHelp'), [
-				open(t('msg_87e1f4cf91'), 'eraseAccount'),
-			]),
+			...(accountConnected ? [fold(t('account.closeGroup'), t('account.closeGroupHelp'), [row(t('account.closeDanger'), setting => {
+				setting.settingEl.classList.add('smart-sync-danger-row');
+				const details = setting.settingEl.createEl('details', {cls:'smart-sync-account-danger'});
+				details.createEl('summary', {text:t('account.closeDanger')});
+				details.createEl('p', {text:t('account.closeCloudFirst')});
+				action(details, t('account.closeTitle'), () => plugin.deleteAccount());
+				details.querySelector('button')?.classList.add('mod-warning');
+			})])] : []),
 			fold(t('layout.preferences'), t('layout.preferencesHelp'), [
 				...basic.filter(
 					(item) =>
