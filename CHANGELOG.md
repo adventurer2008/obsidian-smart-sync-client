@@ -1,5 +1,9 @@
 # Source change record
 
+## Global production user acceptance — CHG-20261105-GLOBAL-USER-PRODUCTION-ACCEPTANCE
+
+Record the user's2026-11-05 iOS/Android production login and payment-page passes. This updates the native acceptance ledger only for the reported scope; it does not certify every sign-in method, actual charge/entitlement/refund or separately identify iPhone/iPad hardware. No runtime changes or test rerun. See docs/validation/global-user-production-acceptance-2026-11-05.md.
+
 ## CHG-20261105-GLOBAL-ENGLISH-ACTION-WRAP
 
 Requirement: full overseas release validation must include English narrow/touch layouts. The Global matrix reproduced clipped account/device action labels at430px with enlarged text. Allow these actions to wrap within their control width and grow in height, keeping existing minimum touch targets. No synchronization, credentials, source mtime or service identity changes. Windows/WSL browser matrices and six-platform native acceptance are recorded separately; full rerun is pending.

@@ -1,5 +1,9 @@
 # Cross-platform feature and scenario review
 
+## CHG-20261105-GLOBAL-USER-PRODUCTION-ACCEPTANCE
+
+On2026-11-05 the user reports production login and payment-page testing passed on iOS and Android. Mark that reported native scope accepted, superseding prior blanket unverified statements only for it. Specific Google/GitHub/email methods, successful charge/entitlement/refund, sign-out/closure and exceptional lifecycle flows were not enumerated. Device/build versions and iPhone versus iPad were not specified; do not separately certify both Apple device families. Windows/macOS/Linux desktop and distinct iPad acceptance gain no new result from this report. Earlier explicitly reported passes retain their own scopes. Evidence and limits: global-user-production-acceptance-2026-11-05.md. Documentation only; no runtime/layout/content/key/progress/source-mtime change.
+
 ## CHG-20261105-GLOBAL-CRITICAL-FLOWS
 
 Requirement: Google/GitHub/email login, sign-out, account closure and payment form one mandatory Global workflow gate maintained privately with the Server. Public Client adds online/offline tests of the actual signOut method, including credential/session/billing cleanup and pending-auth identity isolation. Windows/WSL each pass 121 combined checks (67 Client); synthetic Node/Obsidian/provider/Stripe adapters do not certify native acceptance. Windows/macOS/Linux desktop and Android/iPhone/iPad retain conditional existing paths; current all-method/payment native full journeys are unverified on all six. Prior user-reported ordinary flows retain only their reported acceptance. Narrow/touch, split view, provider return/cancel, background/lock/restart, disconnected sign-out/relogin and mixed-version account/vault isolation require physical follow-up. No new API/layout, schema or content/key/progress/source-mtime change. Upgrade/rollback are test-only and never restore business data; private release tooling is not shipped in the public plugin.
