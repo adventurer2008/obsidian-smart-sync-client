@@ -1,5 +1,9 @@
 # Cross-platform feature and scenario review
 
+## CHG-20261105-GLOBAL-STAGING-SPLIT-FULL-RELEASE
+
+Global candidate 1.1.5 collects the maintained Alpha.4 fixes for full local/remote release validation. Windows, macOS, desktop Linux, Android, iPhone/iOS and iPad/iPadOS keep their individually recorded support guards and native acceptance gaps; infrastructure migration and Windows/WSL checks do not prove physical acceptance. Global staging moves to host02 with its own existing test identity/database/R2/Stripe configuration, while production stays on01 and China production is untouched. Global deployment scripts and targets are independent of domestic deployment entry points; safe test code may be shared. Reconnection, source mtime, mixed versions, encryption, account/vault isolation, narrow/touch layouts and background/lock/restart remain required checks according to impact. No production failover is activated; the five-minute recovery proposal is separately documented privately and remains unverified until drilled.
+
 ## CHG-20261104-GLOBAL-ALPHA-UI-AUTH
 
 User-authorized Global Alpha 1.1.5-alpha.1 delivers the settings cleanup and browser sign-in recovery changes below. Windows, macOS, desktop Linux, Android, iPhone/iOS and iPad/iPadOS retain conditional host support and individually unverified repaired-candidate physical acceptance. The user will test iPad sign-in return and repeated settings refresh. Exact snapshot: 344 synthetic passes, one optional Server integration skip; both edition builds/isolation passed. Anonymous public artifact hashes verified, old 1.1.4 retained, no installed vault or service restarted. Hosted protocol and remote CI were not rerun for this Alpha, and no real-device or Wujie Hub installation is marked passed. Installation/rollback and full delivery evidence: global-alpha-ui-auth-2026-11-04.md.

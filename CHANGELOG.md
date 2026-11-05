@@ -1,5 +1,9 @@
 # Source change record
 
+## Global full release candidate 1.1.5 — CHG-20261105-GLOBAL-STAGING-SPLIT-FULL-RELEASE
+
+Requirement: move Global staging to the second host, then validate and publish the latest maintained overseas version using the full domestic-standard checks with independently named Global deployment scripts. The candidate includes the maintained changes through Global Alpha.4: settings row/group cleanup, browser sign-in recovery, interrupted account-operation recovery, readable failures and direct mobile plan-browser opening with guarded fallback. Preserve all synchronization, encryption, isolation and source-mtime functions. Root version metadata becomes 1.1.5; this does not publish or deploy the China edition. Full-release verification, native-device gaps and actual delivery status must be recorded before claiming production/release completion.
+
 ## Global Alpha test delivery — CHG-20261104-GLOBAL-ALPHA-UI-AUTH
 
 Requirement: deliver the settings cleanup and automatic browser sign-in recovery fixes through the Global Alpha channel for user testing. Build 1.1.5-alpha.1 from a fixed Client snapshot with version-only metadata overrides, preserving mainline/China 1.1.4 and the prior Global 1.1.4 files. Include only the three plugin program files in the installation ZIP. Alpha acceptance and rollback boundaries: docs/validation/global-alpha-ui-auth-2026-11-04.md. Physical-device verification is delegated to the user by their explicit request; it is not marked passed.
