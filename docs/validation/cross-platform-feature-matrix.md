@@ -338,7 +338,7 @@ Global release validation reproduces clipped Sign out of this account / Manage d
 
 ## CHG-20261105-GLOBAL-ENGLISH-ACTION-WRAP — delivery evidence
 
-Global1.1.5 is published from the fixed runtime source4643be73e0a87b614c68db15ffc83c734177a159. Full paired local validation, Windows/WSL jobs and actual staging/production body/source-mtime and cold-receiver checks passed. The additional Global English matrix passed832 cases/5120 inspections with0 failures on each Windows/WSL platform, across Chromium/WebKit, modeled legacy/current host rendering, narrow/fold/rotate/desktop viewports and enlarged fonts. This confirms the reproduced430px/32px account/device label clipping is repaired in those modeled browser paths. The actual maintained Hub parser/download/manifest/hash/tamper path and anonymous stable downloads pass; no formal vault was installed or migrated by this delivery.
+Global 1.1.5 is published from the fixed runtime source 4643be73e0a87b614c68db15ffc83c734177a159. Full paired local validation, Windows/WSL jobs and actual staging/production body/source-mtime and cold-receiver checks passed. The additional Global English matrix passed 832 cases / 5,120 inspections with 0 failures on each Windows/WSL platform, across Chromium/WebKit, modeled legacy/current host rendering, narrow/fold/rotate/desktop viewports and enlarged fonts. This confirms the reproduced 430px / 32px account/device label clipping is repaired in those modeled browser paths. The actual maintained Hub parser/download/manifest/hash/tamper path and anonymous stable downloads pass; no formal vault was installed or migrated by this delivery.
 
 | Platform | Exact repaired-build acceptance |
 | --- | --- |
