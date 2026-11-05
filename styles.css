@@ -436,6 +436,8 @@
 .smart-sync-overview-card .smart-sync-lan-details > summary { justify-content:space-between; min-height:44px; gap:6px 12px; }
 .smart-sync-common.smart-sync-layout-root > .setting-item.smart-sync-billing { width:100%; margin:0 0 16px; padding:18px 20px; border:1px solid var(--background-modifier-border); border-radius:14px; background:var(--background-primary); }
 .is-mobile .smart-sync-overview-card .smart-sync-identity-row button { min-height:44px; }
+/* CHG-20261105-GLOBAL-ENGLISH-ACTION-WRAP: wrap enlarged labels even on hosts without container queries. */
+.smart-sync-common.smart-sync-overview-card > .setting-item.smart-sync-identity-row > .setting-item-control button { white-space:normal; overflow-wrap:anywhere; height:auto; min-width:0; max-width:100%; }
 @container wujie (min-width:640px) {
   .smart-sync-common.smart-sync-overview-card > .setting-item.smart-sync-manual-action > .setting-item-control > button.mod-cta { flex:0 1 180px; min-width:180px; }
 }
@@ -446,8 +448,6 @@
   .smart-sync-overview-card .smart-sync-identity-row:not(.smart-sync-devices-row) .setting-item-name { flex:0 0 auto; white-space:nowrap; }
   .smart-sync-overview-card .smart-sync-identity-row:not(.smart-sync-devices-row) .setting-item-description { flex:1 1 100%; order:1; margin:0; }
   .smart-sync-common.smart-sync-overview-card > .setting-item.smart-sync-identity-row:not(.smart-sync-devices-row) > .setting-item-control { flex:0 0 auto; margin-inline-start:auto; }
-  /* CHG-20261105-GLOBAL-ENGLISH-ACTION-WRAP: enlarged English account/device actions must remain readable. */
-  .smart-sync-common.smart-sync-overview-card > .setting-item.smart-sync-identity-row > .setting-item-control button { white-space:normal; overflow-wrap:anywhere; height:auto; min-width:0; max-width:100%; }
 }
 /* Keep whole device actions readable on very narrow foldable covers with enlarged text. */
 @container wujie (max-width:319px) {
