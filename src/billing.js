@@ -2,6 +2,26 @@ import { formatStorageSize, locale } from './i18n.js';
 
 const pending = new Set(['creating', 'pending', 'uncertain']);
 const mountedCards = new WeakMap();
+// noopener/native hosts may return null even after opening the browser.
+export function launchBillingBrowser(view,href,{live,fallback,delay=1500}) {
+	const doc=view.document;
+	let done=false,timer;
+	const current=()=>{try{return live();}catch{return false;}};
+	const cleanup=()=>{
+		done=true;view.clearTimeout(timer);
+		view.removeEventListener?.('blur',depart);view.removeEventListener?.('pagehide',depart);
+		doc?.removeEventListener?.('visibilitychange',visibility);
+	};
+	const depart=()=>cleanup();
+	const visibility=()=>{if(doc.hidden)cleanup();};
+	const recover=()=>{if(done)return;const valid=current()&&!doc?.hidden;cleanup();if(valid)fallback();};
+	if(!current()||doc?.hidden){cleanup();return cleanup;}
+	view.addEventListener?.('blur',depart);view.addEventListener?.('pagehide',depart);
+	doc?.addEventListener?.('visibilitychange',visibility);
+	try{view.open(href,'_blank','noopener,noreferrer');}catch{recover();return cleanup;}
+	if(!done)timer=view.setTimeout(recover,delay);
+	return cleanup;
+}
 const statuses = locale === 'en' ? {creating:'Creating order',pending:'Awaiting payment',expired:'Order closed',uncertain:'Verifying payment; do not pay again',paid:'Payment successful',rejected:'Payment order failed',refund_pending:'Refund pending',refunded:'Refunded'} : { creating: '正在生成订单', pending: '等待付款', expired: '订单已关闭', uncertain: '正在核实付款结果，请勿重复付款', paid: '付款成功', rejected: '支付订单创建失败', refund_pending: '退款处理中', refunded: '已退款' };
 export function capacityWarning(data) {
 	const used = data?.usage?.logicalBytes, capacity = data?.entitlement?.logical;

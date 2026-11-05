@@ -9,23 +9,23 @@ globalThis.__SMART_SYNC_EDITION__ = { edition: 'cn', development: true, stagingO
 const { default: Plugin } = await import('../src/plugin.js');
 const {Platform,modals}=await import('./obsidian-double.mjs');
 
-test('mobile billing uses a native user-tapped link after delayed requests and rejects stale identity, expiry and reuse',async()=>{
+test('a failed mobile browser launch offers a guarded native fallback and rejects stale identity, expiry and reuse',async()=>{
  const previousOpen=window.open,previousNow=Date.now;
  Platform.isMobile=true;let opened=0,key='synthetic-account',at=100000;
- window.open=()=>{opened++;};Date.now=()=>at;
+ window.open=()=>{opened++;throw Error('Synthetic browser block');};Date.now=()=>at;
  const plugin={app:{},data:{localId:'mobile',settings:{origin:'https://sync.wujiesync.cc'}},secret:()=>key,
   accountApi:async()=>{await new Promise(done=>setImmediate(done));return {};},
   billingApi:()=>({request:async()=>{await new Promise(done=>setImmediate(done));return {url:'https://pay.wujiesync.cc/pay/plans#ticket='+'a'.repeat(43)};}})};
  const tap=link=>{let prevented=false;for(const handler of link.handlers.click)handler({preventDefault(){prevented=true;}});return prevented;};
  const prepare=async()=>{await Plugin.prototype.openBilling.call(plugin);return modals.at(-1).contentEl.children.find(child=>child.tag==='a');};
  try{
-  let link=await prepare();assert.equal(opened,0);assert.match(link.href,/^https:\/\/pay\.wujiesync\.cc\/pay\/plans#ticket=/);
+  let link=await prepare();assert.equal(opened,1);assert.match(link.href,/^https:\/\/pay\.wujiesync\.cc\/pay\/plans#ticket=/);
   assert.equal(link.target,'_blank');assert.equal(link.rel,'noopener noreferrer');assert.equal(tap(link),false);assert.equal(tap(link),true);
   link=await prepare();key='different-account';assert.equal(tap(link),true);
   link=await prepare();at+=90000;assert.equal(tap(link),true);
   link=await prepare();modals.at(-1).close();assert.equal(tap(link),true);
   link=await prepare();plugin.data.settings.origin='https://other.example.invalid';assert.equal(tap(link),true);
-  assert.equal(opened,0);
+  assert.equal(opened,5);
  }finally{Platform.isMobile=false;window.open=previousOpen;Date.now=previousNow;}
 });
 

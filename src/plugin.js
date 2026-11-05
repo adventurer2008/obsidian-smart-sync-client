@@ -1,7 +1,7 @@
 import { edition, assertEditionOrigin, regionalServices, logViewType } from './edition.js';
 import * as ObsidianSdk from 'obsidian';
 import { androidFallback, supportsAndroidNativeVersion } from './android-transport.js';
-import { mountBillingCard, capacityWarning } from './billing.js';
+import { mountBillingCard, capacityWarning, launchBillingBrowser } from './billing.js';
 import { t, locale, formatStorageSize, localizedFailure as failureMessage } from './i18n.js';
 import { ConnectionCheckpoints } from './checkpoint.js';
 import { notePinState, queueNotePosition, moveNotePins, pinPathSet, synchronizeNotePins } from './pinning.js';
@@ -2988,6 +2988,7 @@ export default class IndependentSync extends Plugin {
 		});
 	}
 	async signOut() {
+		this.billingHandoffCancel?.();this.billingFallbackWindow?.close();this.preparedBillingEntry=undefined;
 		this.accountEmail = '';
 		this.overviewIdentity = undefined;
 		this.lanPeers?.close();
@@ -3952,33 +3953,48 @@ export default class IndependentSync extends Plugin {
 			throw error;
 		}
 	}
-	async openBilling(orderId) {
+	async openBilling(orderId,prepareOnly=false) {
 		if (!['cn','global'].includes(edition.edition)) return;
 		const localId = this.data.localId, origin = new URL(this.data.settings.origin).origin;
 		const guest = !this.secret('account') && !this.secret('access');
-		if(guest&&edition.edition==='global')return this.enrollment();
-		const live = () => !this.stopped && localId === this.data.localId && origin === new URL(this.data.settings.origin).origin && guest === (!this.secret('account') && !this.secret('access'));
-		const purchaseBase = regionalServices(edition, origin).purchase;
+		if(guest&&edition.edition==='global')return prepareOnly?undefined:this.enrollment();
 		const billingIdentity = this.secret('account') || this.secret('access');
-		const openEntry = href => {
+		const live = () => !this.stopped && localId === this.data.localId && origin === new URL(this.data.settings.origin).origin && billingIdentity === (this.secret('account') || this.secret('access'));
+		const purchaseBase = regionalServices(edition, origin).purchase;
+		const canPrepare=Platform.isMobile&&edition.edition==='global'&&!guest&&orderId===undefined;
+		if(prepareOnly&&!canPrepare)return;
+		const openEntry = (href,expires=Date.now()+90000) => {
 			if (!Platform.isMobile) { window.open(href, '_blank', 'noopener,noreferrer'); return; }
-			// A native link supplies a fresh user gesture after the network requests.
-			const expires = Date.now() + 90000;
-			let closed = false, used = false;
-			const dialog = new ChoiceWindow(this.app, t('billing.myPlan'), area => {
-				area.createEl('p', {text:t('billing.browserHelp')});
-				const link = area.createEl('a', {text:t('billing.openBrowser'), cls:'smart-sync-plan-action'});
-				link.href = href; link.target = '_blank'; link.rel = 'noopener noreferrer';
-				link.addEventListener('click', event => {
-					if (closed || used || !live() || billingIdentity !== (this.secret('account') || this.secret('access')) || Date.now() >= expires) {
-						event.preventDefault(); new Notice(t('billing.reopen')); dialog.close(); return;
-					}
-					used = true;
+			this.billingHandoffCancel?.();this.billingFallbackWindow?.close();
+			const showFallback=()=>{
+				let closed = false, used = false;
+				const dialog = new ChoiceWindow(this.app, t('billing.myPlan'), area => {
+					area.createEl('p', {text:t('billing.browserHelp')});
+					const link = area.createEl('a', {text:t('billing.openBrowser'), cls:'smart-sync-plan-action'});
+					link.href = href; link.target = '_blank'; link.rel = 'noopener noreferrer';
+					link.addEventListener('click', event => {
+						if (closed || used || !live() || Date.now() >= expires) {
+							event.preventDefault(); new Notice(t('billing.reopen')); dialog.close(); return;
+						}
+						used = true;
+					});
 				});
-			});
-			dialog.onClose = () => { closed = true; dialog.contentEl.empty(); };
-			dialog.open();
+				dialog.onClose = () => { closed = true; dialog.contentEl.empty(); if(this.billingFallbackWindow===dialog)this.billingFallbackWindow=undefined; };
+				this.billingFallbackWindow=dialog;dialog.open();
+			};
+			const cancel=launchBillingBrowser(window,href,{live:()=>live()&&Date.now()<expires,fallback:showFallback});
+			this.billingHandoffCancel=cancel;
+			if(!this.billingHandoffCleanupRegistered&&this.register){
+				this.register(()=>{this.billingHandoffCancel?.();this.billingFallbackWindow?.close();this.preparedBillingEntry=undefined;});
+				this.billingHandoffCleanupRegistered=true;
+			}
 		};
+		const prepared=this.preparedBillingEntry;
+		if(canPrepare&&prepared&&prepared.expires>Date.now()&&prepared.live()){
+			if(prepareOnly)return;
+			this.preparedBillingEntry=undefined;return openEntry(prepared.href,prepared.expires);
+		}
+		if(canPrepare)this.preparedBillingEntry=undefined;
 		if (guest && !this.purchaseSession()) {
 			const capability = btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(32)))).replaceAll('+','-').replaceAll('/','_').replace(/=+$/, '');
 			this.app.secretStorage.setSecret(`${this.manifest.id}-${localId}-purchase`, JSON.stringify({origin,capability}));
@@ -4001,6 +4017,7 @@ export default class IndependentSync extends Plugin {
 		const allowedPath = typeof orderId === 'string' && /^[a-f0-9]{32}$/.test(orderId) ? checkout + orderId : expected.pathname;
 		if (url.username || url.password || url.origin !== expected.origin || url.pathname !== allowedPath || url.search || !/^#ticket=[A-Za-z0-9_-]{43}$/.test(url.hash)) throw Error('Invalid purchase entry');
 		if (orderId === true) url.pathname = expected.pathname.replace(/plans$/, 'orders');
+		if(prepareOnly){this.preparedBillingEntry={href:url.href,expires:Date.now()+90000,live};return;}
 		openEntry(url.href);
 	}
 	async accountApi() {
@@ -5373,7 +5390,11 @@ export class IndependentSettings extends PluginSettingTab {
 		const billing = ['cn','global'].includes(edition.edition) ? row(t('billing.myPlan'), setting => {
 			const credential = plugin.secret('account') || plugin.secret('access');
 			return mountBillingCard(setting, {
-				connected: accountConnected, load: () => plugin.billingSummary(), open: orderId => plugin.openBilling(orderId),
+				connected: accountConnected, load: async () => {
+					const data=await plugin.billingSummary();
+					if(edition.edition==='global'&&Platform.isMobile&&credential)try{await plugin.openBilling(undefined,true);}catch{/* A real click reports preparation/network failures normally. */}
+					return data;
+				}, open: orderId => plugin.openBilling(orderId),
 				live: () => !plugin.stopped && identityScope() === scopeKey && credential === (plugin.secret('account') || plugin.secret('access')),
 				onError: error => plugin.notify(failureMessage(error)),
 			});

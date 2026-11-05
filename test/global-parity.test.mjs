@@ -11,8 +11,8 @@ const {billingCard,capacityWarning}=await import('../src/billing.js');
 const {default:Plugin}=await import('../src/plugin.js');
 const {modals,Modal,Platform}=await import('./obsidian-double.mjs');
 
-test('Global mobile storage upgrade presents an English native link with the verified account ticket',async()=>{
- const previousOpen=window.open;Platform.isMobile=true;window.open=()=>assert.fail('no asynchronous popup on mobile');
+test('Global mobile storage upgrade presents an English fallback when direct browser opening fails',async()=>{
+ const previousOpen=window.open;Platform.isMobile=true;window.open=()=>{throw Error('Synthetic browser block');};
  const plugin={app:{},data:{localId:'mobile-global',settings:{origin:'https://sync.smartsync.cc'}},secret:()=> 'synthetic-account',
   accountApi:async()=>({}),billingApi:()=>({request:async()=>({url:'https://pay.smartsync.cc/pay/plans#ticket='+'a'.repeat(43)})})};
  try{
@@ -21,6 +21,33 @@ test('Global mobile storage upgrade presents an English native link with the ver
   assert.equal(dialog.title,'My plan');assert.equal(link.text,'Open plans in browser');
   assert.equal(link.href,'https://pay.smartsync.cc/pay/plans#ticket='+'a'.repeat(43));dialog.close();
  }finally{Platform.isMobile=false;window.open=previousOpen;}
+});
+
+test('prepared mobile billing opens in the original click stack with no modal and never reuses stale or consumed tickets',async context=>{
+ const opened=[],timers=new Map();let account='synthetic-one',at=Date.now(),entries=0,sequence=0;
+ context.mock.method(Date,'now',()=>at);context.mock.method(window,'open',(...args)=>{opened.push(args);return null;});
+ context.mock.method(window,'setTimeout',callback=>{timers.set(++sequence,callback);return sequence;});context.mock.method(window,'clearTimeout',id=>timers.delete(id));
+ Platform.isMobile=true;context.after(()=>{Platform.isMobile=false;});
+ const plugin={app:{},data:{localId:'prepared-mobile',settings:{origin:'https://sync.smartsync.cc'}},secret:()=>account,accountApi:async()=>({}),
+  billingApi:()=>({request:async()=>{entries++;return{url:'https://pay.smartsync.cc/pay/plans#ticket='+String.fromCharCode(96+entries).repeat(43)};}})};
+ const modalsBefore=modals.length;
+ await Plugin.prototype.openBilling.call(plugin,undefined,true);await Plugin.prototype.openBilling.call(plugin,undefined,true);
+ assert.equal(entries,1);assert.equal(opened.length,0);assert.equal(modals.length,modalsBefore);
+ const first=Plugin.prototype.openBilling.call(plugin);assert.equal(opened.length,1,'must open before another await/network request');await first;assert.equal(entries,1);assert.match(opened[0][0],/#ticket=a+$/);
+ plugin.billingHandoffCancel();
+ await Plugin.prototype.openBilling.call(plugin,undefined,true);account='synthetic-two';await Plugin.prototype.openBilling.call(plugin);assert.equal(entries,3);assert.match(opened[1][0],/#ticket=c+$/);plugin.billingHandoffCancel();
+ await Plugin.prototype.openBilling.call(plugin,undefined,true);at+=90001;await Plugin.prototype.openBilling.call(plugin);assert.equal(entries,5);assert.match(opened[2][0],/#ticket=e+$/);plugin.billingHandoffCancel();
+ assert.equal(modals.length,modalsBefore);assert.equal(timers.size,0);
+});
+
+test('background preparation never opens enrollment, accepts a foreign URL or launches after unload',async context=>{
+ const opened=[];context.mock.method(window,'open',(...args)=>opened.push(args));Platform.isMobile=true;context.after(()=>{Platform.isMobile=false;});
+ let key='synthetic-account';
+ const plugin={app:{},data:{localId:'prepare-guards',settings:{origin:'https://sync.smartsync.cc'}},secret:()=>key,enrollment:()=>assert.fail('background work cannot show login'),accountApi:async()=>({}),billingApi:()=>({request:async()=>({url:'https://foreign.example.invalid/pay/plans#ticket='+'a'.repeat(43)})})};
+ await assert.rejects(Plugin.prototype.openBilling.call(plugin,undefined,true),/Invalid purchase entry/);assert.equal(opened.length,0);
+ key='';await Plugin.prototype.openBilling.call(plugin,undefined,true);assert.equal(opened.length,0);
+ key='synthetic-account';plugin.billingApi=()=>({request:async()=>{plugin.stopped=true;return {url:'https://pay.smartsync.cc/pay/plans#ticket='+'a'.repeat(43)};}});
+ await Plugin.prototype.openBilling.call(plugin,undefined,true);assert.equal(plugin.preparedBillingEntry,undefined);assert.equal(opened.length,0);
 });
 
 test('Global encryption menus and password dialog use English without changing command identifiers',async()=>{
