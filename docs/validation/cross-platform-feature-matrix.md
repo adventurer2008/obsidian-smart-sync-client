@@ -335,3 +335,18 @@ Mobile no longer always presents My plan before opening. Global prepares a valid
 
 Global release validation reproduces clipped Sign out of this account / Manage devices labels at the430px iPhone-large modeled viewport with32px interface text, both legacy/current host contracts. Account/device actions now wrap within their control width and grow vertically while preserving minimum touch targets. All six platform families retain conditional shared CSS support; Windows/WSL Chromium/WebKit matrices provide browser geometry evidence only. Physical Windows/macOS/Linux/Android/iPhone/iPad large-font/touch/rotation checks remain unverified. No native API, lifecycle, account/vault/encryption/body/progress/source-mtime or mixed-version protocol changes. The wrapping rule also applies outside container queries, so older hosts receive the same safe text wrapping; actual legacy hosts still require independent acceptance. Code-only program rollback restores prior layout; domestic production is untouched. Full corrected-candidate matrix results follow separately.
 
+
+## CHG-20261105-GLOBAL-ENGLISH-ACTION-WRAP — delivery evidence
+
+Global1.1.5 is published from the fixed runtime source4643be73e0a87b614c68db15ffc83c734177a159. Full paired local validation, Windows/WSL jobs and actual staging/production body/source-mtime and cold-receiver checks passed. The additional Global English matrix passed832 cases/5120 inspections with0 failures on each Windows/WSL platform, across Chromium/WebKit, modeled legacy/current host rendering, narrow/fold/rotate/desktop viewports and enlarged fonts. This confirms the reproduced430px/32px account/device label clipping is repaired in those modeled browser paths. The actual maintained Hub parser/download/manifest/hash/tamper path and anonymous stable downloads pass; no formal vault was installed or migrated by this delivery.
+
+| Platform | Exact repaired-build acceptance |
+| --- | --- |
+| Windows | Automated runtime/browser checks pass; native Obsidian large-font/handoff acceptance remains unverified |
+| macOS | Shared guarded CSS/runtime support; physical acceptance remains unverified |
+| Linux desktop | WSL runtime/browser evidence only; native Linux desktop acceptance remains unverified |
+| Android | Existing conditional mobile path and safe wrapping; physical large-font/browser-return checks remain unverified |
+| iPhone/iOS | Existing conditional mobile path and safe wrapping; physical Safari/Obsidian handoff/lifecycle checks remain unverified |
+| iPad/iPadOS | Existing conditional mobile path and safe wrapping; physical split-view/lock/return checks remain unverified |
+
+Earlier user-reported ordinary iOS/Android/Windows flows retain their recorded scope; no unnamed iOS subtype is promoted to both iPhone and iPad acceptance. The one separately authorized staging mailbox-delivery check passes; real Google/GitHub consent, hosted-card flow and native six-platform acceptance remain separate. No new native API, sync/body/key/progress/source-mtime contract or background behavior is introduced by the CSS fix. Program-file rollback restores the old layout without undoing cloud operations.
