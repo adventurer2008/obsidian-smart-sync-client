@@ -1,5 +1,9 @@
 # Source change record
 
+## China 1.1.5 delivery record — CHG-20261105-CN-FULL-PRODUCTION
+
+Requirement: publish the maintained China backlog through the full staging, production and public release flow, and assess shared Global changes. China 1.1.5 is now published; this delivery changes no Client runtime beyond fixed source 2393a5c8653a70317dcaf002822fc58c5f6653f2. Notes-first synchronization, safe account closure, readable failures, mobile browser fallback and shared layout changes reach China while its identity, login, billing, storage and source-mtime contracts remain. Both local platform UI matrices passed 832 cases/5,120 inspections; real staging/production content/source-mtime, official assets, domestic downloads and the actual Hub loader passed. Native six-platform acceptance and capacity claims remain bounded; Windows directory-rename EPERM failed attempts and full-size successful retries are both retained, with cause unresolved. Global service deployment is owned separately. See the platform ledger for the exact boundary.
+
 ## Global production user acceptance — CHG-20261105-GLOBAL-USER-PRODUCTION-ACCEPTANCE
 
 Record the user's2026-11-05 iOS/Android production login and payment-page passes. This updates the native acceptance ledger only for the reported scope; it does not certify every sign-in method, actual charge/entitlement/refund or separately identify iPhone/iPad hardware. No runtime changes or test rerun. See docs/validation/global-user-production-acceptance-2026-11-05.md.

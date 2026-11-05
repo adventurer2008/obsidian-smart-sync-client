@@ -1,5 +1,20 @@
 # Cross-platform feature and scenario review
 
+## CHG-20261105-CN-FULL-PRODUCTION — China 1.1.5 delivery
+
+China 1.1.5 has completed the full paired validation and real staging/production release flow, anonymous official asset checks, domestic download mirror and actual maintained Hub loader/download/hash/manifest/tamper checks. Fixed Client source is 2393a5c8653a70317dcaf002822fc58c5f6653f2; this entry changes documentation only. China keeps wujie-sync identity, domestic sign-in, billing and storage. Shared notes-first processing, safe account closure, readable failures, localized encryption UI, browser fallback and wrapping reach China without changing content/key/progress/source-mtime contracts. Overseas service rollout is separately owned.
+
+| Platform | Support and evidence | Native boundary |
+| --- | --- | --- |
+| Windows desktop | Conditional shared features; full local automation and 832 browser cases / 5,120 inspections passed | No formal vault installation. Initial directory-rename EPERM failures retained alongside unchanged full-size successful retries; cause unresolved |
+| macOS desktop | Conditional shared engine and UI | New China package not physically verified on macOS |
+| Linux desktop | Conditional shared engine and UI; WSL automated checks and the same full browser matrix passed | WSL does not certify native desktop Obsidian |
+| Android | Conditional host-allowed foreground synchronization and guarded browser handoff | New China native bridge, touch/rotation, lifecycle and update checks pending |
+| iPhone/iOS | Conditional host-allowed foreground synchronization and guarded browser handoff | WebKit models and earlier Global feedback do not certify the new China package |
+| iPad/iPadOS | Conditional host-allowed foreground synchronization and guarded browser handoff | Native split view, focus/handoff and lifecycle pending; do not infer acceptance from iPhone |
+
+Narrow/touch/large-font geometry is modeled on Chromium/WebKit; no new desktop-native API is introduced. Background/lock/reboot behavior is bounded by the host, without unlimited mobile background promises. Automated reconnect, device revocation, legacy/mixed protocol and original-mtime cases passed within their recorded fixtures; native mixed-device updates remain unverified. Code-only rollback keeps each device's data.json, keys and progress and cannot undo cloud deletion/payment facts. Prior China capacity failure remains; this functional release is not a new capacity certification.
+
 ## CHG-20261105-GLOBAL-USER-PRODUCTION-ACCEPTANCE
 
 On2026-11-05 the user reports production login and payment-page testing passed on iOS and Android. Mark that reported native scope accepted, superseding prior blanket unverified statements only for it. Specific Google/GitHub/email methods, successful charge/entitlement/refund, sign-out/closure and exceptional lifecycle flows were not enumerated. Device/build versions and iPhone versus iPad were not specified; do not separately certify both Apple device families. Windows/macOS/Linux desktop and distinct iPad acceptance gain no new result from this report. Earlier explicitly reported passes retain their own scopes. Evidence and limits: global-user-production-acceptance-2026-11-05.md. Documentation only; no runtime/layout/content/key/progress/source-mtime change.
