@@ -1,5 +1,9 @@
 # Source change record
 
+## CHG-20261105-GLOBAL-ENGLISH-ACTION-WRAP
+
+Requirement: full overseas release validation must include English narrow/touch layouts. The Global matrix reproduced clipped account/device action labels at430px with enlarged text. Allow these actions to wrap within their control width and grow in height, keeping existing minimum touch targets. No synchronization, credentials, source mtime or service identity changes. Windows/WSL browser matrices and six-platform native acceptance are recorded separately; full rerun is pending.
+
 ## Global critical workflows — CHG-20261105-GLOBAL-CRITICAL-FLOWS
 
 Requirement: include Google/GitHub/email login, sign-out, account closure and payment in a maintained overseas full-workflow gate. Add synthetic online/offline tests of the actual Global signOut method: revoke scoped/account-device sessions online, clear local credentials/identity offline without claiming remote revocation, discard billing handoff and isolate pending login state. No runtime or vault-content change. The private Server runner also executes maintained Global login/delete/billing suites and three loopback HTTP account journeys; failed or skipped coverage blocks the Global gate. Actual provider/mailbox/Stripe hosted checkout and six-platform native acceptance remain separate, unverified checks.

@@ -446,7 +446,8 @@
   .smart-sync-overview-card .smart-sync-identity-row:not(.smart-sync-devices-row) .setting-item-name { flex:0 0 auto; white-space:nowrap; }
   .smart-sync-overview-card .smart-sync-identity-row:not(.smart-sync-devices-row) .setting-item-description { flex:1 1 100%; order:1; margin:0; }
   .smart-sync-common.smart-sync-overview-card > .setting-item.smart-sync-identity-row:not(.smart-sync-devices-row) > .setting-item-control { flex:0 0 auto; margin-inline-start:auto; }
-  .smart-sync-common.smart-sync-overview-card > .setting-item.smart-sync-identity-row > .setting-item-control button { white-space:nowrap; }
+  /* CHG-20261105-GLOBAL-ENGLISH-ACTION-WRAP: enlarged English account/device actions must remain readable. */
+  .smart-sync-common.smart-sync-overview-card > .setting-item.smart-sync-identity-row > .setting-item-control button { white-space:normal; overflow-wrap:anywhere; height:auto; min-width:0; max-width:100%; }
 }
 /* Keep whole device actions readable on very narrow foldable covers with enlarged text. */
 @container wujie (max-width:319px) {
