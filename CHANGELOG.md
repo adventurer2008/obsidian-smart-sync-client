@@ -1,5 +1,9 @@
 # Source change record
 
+## Global critical workflows — CHG-20261105-GLOBAL-CRITICAL-FLOWS
+
+Requirement: include Google/GitHub/email login, sign-out, account closure and payment in a maintained overseas full-workflow gate. Add synthetic online/offline tests of the actual Global signOut method: revoke scoped/account-device sessions online, clear local credentials/identity offline without claiming remote revocation, discard billing handoff and isolate pending login state. No runtime or vault-content change. The private Server runner also executes maintained Global login/delete/billing suites and three loopback HTTP account journeys; failed or skipped coverage blocks the Global gate. Actual provider/mailbox/Stripe hosted checkout and six-platform native acceptance remain separate, unverified checks.
+
 ## Global full release candidate 1.1.5 — CHG-20261105-GLOBAL-STAGING-SPLIT-FULL-RELEASE
 
 Requirement: move Global staging to the second host, then validate and publish the latest maintained overseas version using the full domestic-standard checks with independently named Global deployment scripts. The candidate includes the maintained changes through Global Alpha.4: settings row/group cleanup, browser sign-in recovery, interrupted account-operation recovery, readable failures and direct mobile plan-browser opening with guarded fallback. Preserve all synchronization, encryption, isolation and source-mtime functions. Root version metadata becomes 1.1.5; this does not publish or deploy the China edition. Full-release verification, native-device gaps and actual delivery status must be recorded before claiming production/release completion.
