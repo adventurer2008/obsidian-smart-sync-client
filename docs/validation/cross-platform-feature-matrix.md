@@ -1,5 +1,9 @@
 # Cross-platform feature and scenario review
 
+## CHG-20261107-GLOBAL-PAYMENT-INHERIT-LANGUAGE
+
+Global Alpha.6 uses the existing plugin language fragment for the paired payment UI; Client runtime is unchanged. Windows/macOS/Linux desktop, Android, iPhone/iOS and iPad/iPadOS are conditionally supported through the existing browser handoff. All six native installations, touch/layout, foreground/background/lock/reboot, offline recovery and merchant return paths remain unverified for this change. Browser fixtures cover language selection, blocked storage, refresh, and old preferences; they do not establish native acceptance. No sync, identity, vault isolation, encryption, progress, original mtime or schema change. Previous Client versions without a language hint use browser defaults; reverting the payment UI may restore its language selector.
+
 ## CHG-20261106-GLOBAL-SUBSCRIPTION-MANAGEMENT
 
 Requirement: Global Manage plan is always available, opening subscription management and order history. After confirmed renewal cancellation a new plan can be purchased immediately; successful payment replaces the old paid period with no credit/refund/carryover. The paired Server/UI is required in the next Alpha; a Client-only package does not deliver that behavior. China and synchronization content, encryption, keys, progress and original modification times are unchanged.

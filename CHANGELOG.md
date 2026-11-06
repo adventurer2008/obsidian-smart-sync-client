@@ -1,5 +1,9 @@
 # Source change record
 
+## CHG-20261107-GLOBAL-PAYMENT-INHERIT-LANGUAGE
+
+Requirement: provide an Alpha for testing payment pages that inherit the plugin language without a second language selector. Prepare Global 1.1.8-alpha.6 with the paired Server presentation update. The existing plugin browser handoff already carries the selected language; Client runtime is unchanged. Preserve prior downloads, settings, keys, checkpoints and source modification times. Native Windows/macOS/Linux/Android/iPhone/iPad and actual hosted merchant acceptance remain unverified; publication acceptance is recorded separately.
+
 ## CHG-20261106-GLOBAL-SUBSCRIPTION-ALPHA5
 
 Published Global 1.1.8-alpha.5 through the official Alpha download/Hub feed. Anonymous package checks and the maintained Hub three-file/ZIP hash and tamper-rejection checks pass; prior Alpha assets and Stable 1.1.7 remain. Paired deployment, full Windows/WSL checks, 169 critical cases on each, and 832 Global UI cases on each pass. One Windows content-test rename EPERM required an isolated successful retry; its root cause is not claimed fixed. Six native platforms, hosted merchant operations and native-language review remain pending user acceptance. Retain data.json, keys, checkpoints and vault files when updating.
