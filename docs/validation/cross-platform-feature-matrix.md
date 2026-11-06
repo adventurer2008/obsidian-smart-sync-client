@@ -1,5 +1,22 @@
 # Cross-platform feature and scenario review
 
+## CHG-20261106-GLOBAL-SUBSCRIPTION-MANAGEMENT
+
+Requirement: Global Manage plan is always available, opening subscription management and order history. After confirmed renewal cancellation a new plan can be purchased immediately; successful payment replaces the old paid period with no credit/refund/carryover. The paired Server/UI is required in the next Alpha; a Client-only package does not deliver that behavior. China and synchronization content, encryption, keys, progress and original modification times are unchanged.
+
+| Platform | Support | This change's native acceptance |
+| --- | --- | --- |
+| Windows desktop | Conditional: existing HTTPS/browser handoff | Unverified; Node/desktop browser automation is separate. |
+| macOS desktop | Conditional: existing HTTPS/browser handoff | Unverified; Windows WebKit is not macOS. |
+| Linux desktop | Conditional: existing HTTPS/browser handoff | Unverified. |
+| Android | Conditional: existing mobile handoff/fallback | Unverified; modeled narrow layouts are not Android. |
+| iPhone / iOS | Conditional: existing mobile handoff/fallback | Unverified; modeled WebKit is not iPhone. |
+| iPad / iPadOS | Conditional: existing mobile handoff/fallback | Unverified; modeled widths are not iPad. |
+
+Verification: Node v26.12.1 focused Client billing suites 31/31; paired Global critical suite 169/169, zero failures/skips. Both regional builds and closure checks pass. Windows Chromium/WebKit model 427 subscription/order states at narrow/desktop widths and enlarged fonts; final support-label translations have 70 additional narrow Chromium states. Chromium covers ten languages; WebKit covers English/Chinese/German/Russian. Models check document/button overflow and touch-target sizing, not physical-device support or real charges. No Alpha published in this task; the next Alpha still requires paired runtime and deployment/release gates.
+
+Narrow/touch/enlarged-font layouts and keyboard access are applicable; no new native desktop API. Existing identity-bound tickets/fallback and payment-state rereads handle re-entry; real offline/background/lock/reboot, session expiry, native provider return and rotation/split-view are pending. Mixed-version Clients remain subject to Server cancellation/consent guards; an old Server conservatively refuses early repurchase. No schema migration; newer payment events and replacement blocks must survive rollback. Do not restore old paid time or overwrite newer payment events. No installed-vault or real payment operation is performed here.
+
 ## CHG-20261105-CN-FULL-PRODUCTION — China 1.1.5 delivery
 
 China 1.1.5 has completed the full paired validation and real staging/production release flow, anonymous official asset checks, domestic download mirror and actual maintained Hub loader/download/hash/manifest/tamper checks. Fixed Client source is 2393a5c8653a70317dcaf002822fc58c5f6653f2; this entry changes documentation only. China keeps wujie-sync identity, domestic sign-in, billing and storage. Shared notes-first processing, safe account closure, readable failures, localized encryption UI, browser fallback and wrapping reach China without changing content/key/progress/source-mtime contracts. Overseas service rollout is separately owned.

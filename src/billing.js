@@ -69,6 +69,7 @@ export function billingCard(data, connected, now = Date.now()) {
 	if (edition.edition === 'global') {
 		const title = id => { const match=/^global-([1-9][0-9]*)gb-(month|year)$/.exec(id ?? ''); return match ? `${match[1]} GB · ${match[2] === 'year' ? translateEnglish("Yearly") : translateEnglish("Monthly")}` : translateEnglish("Subscription"); };
 		Object.assign(model, {
+			prominent: true,
 			overage: connected && capacityWarning(data) ? translateEnglish("Plan capacity exceeded") : '',
 			label: free ? translateEnglish("Get more storage") : purchased ? translateEnglish("Manage plan") : translateEnglish("Choose a plan"),
 			badge: !purchased ? '' : refunded ? translateEnglish("Refunded") : expired ? translateEnglish("Expired") : due ? translateEnglish("Expiring soon") : translateEnglish("Active"),

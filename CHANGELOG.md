@@ -1,5 +1,13 @@
 # Source change record
 
+## CHG-20261106-GLOBAL-SUBSCRIPTION-ALPHA5
+
+Requirement: deliver the approved subscription management now for user Alpha testing. Prepare Global 1.1.8-alpha.5 with paired Server 0.1.45, confirmed cancellation, immediate repurchase and order history/details. Keep prior Alpha/Stable assets and stored settings. Production-connected payment operations remain real; no automatic purchase/cancellation/refund is part of release verification. Fixed-candidate Windows/WSL, staging/production and anonymous download/Hub evidence will be recorded separately. Six native platforms and real merchant acceptance remain pending.
+
+## CHG-20261106-GLOBAL-SUBSCRIPTION-MANAGEMENT
+
+Requirement: keep Global Manage plan available throughout every paid period and deliver subscription management/order history in the next Alpha. The Global plan action is now always visible, including annual plans far from expiry. China keeps its existing renewal visibility. Uses the existing account-bound browser handoff; the paired Server/UI supplies cancellation, immediate repurchase and order history. No version bump, installation or publication in this change. Targeted synthetic tests and regional builds are separate from physical-device acceptance; all six native platforms and real payment remain pending.
+
 ## CHG-20261106-GLOBAL-PLAN-LARGE-FONT
 
 Requirement: user reports Android enlarged-font settings deformation and requests removing the marked shared-capacity/automatic-renewal paragraph. Remove generic Global free/active plan prose, keeping expired/refunded/test-mode notices and the management action. Replace the Global fixed two-column plan card with content-sensitive wrapping so its button cannot squeeze plan details into a narrow column; the badge no longer floats beside large text. Preserve the user-verified iPad language layout, all plan fields and account controls. No payment, synchronization, identity, source-mtime or persisted-data changes. Native six-platform enlarged-font acceptance remains bounded by actual user testing.

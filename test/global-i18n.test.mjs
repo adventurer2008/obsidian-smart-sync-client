@@ -8,6 +8,11 @@ const {supportedLanguages,resolveLanguage,configureLanguage,englishDraft,t,local
 const {catalogs}=await import('../src/locales/catalogs.js');
 const {billingCard,capacityWarning}=await import('../src/billing.js');
 const slots=value=>[...value.matchAll(/\{(\w+)\}/g)].map(m=>m[1]).sort();
+test('Manage plan remains visible for a paid annual subscription long before expiry',()=>{
+ configureLanguage('en');
+ const card=billingCard({entitlement:{plan:'global-1gb-year',paid:true,logical:1024**3,ends:Date.now()+300*86400000}},true);
+ assert.equal(card.prominent,true);assert.equal(card.label,'Manage plan');
+});
 test('all ten Global locales are complete, retain placeholders and the machine deletion token',()=>{
  assert.equal(Object.keys(supportedLanguages).length,10);
  for(const code of Object.keys(supportedLanguages)){
