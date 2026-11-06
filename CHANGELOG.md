@@ -1,5 +1,13 @@
 # Source change record
 
+## CHG-20261106-LANGUAGE-ROW-RESPONSIVE
+
+User authorizes Alpha publication as 1.1.8-alpha.2. Client presentation update only; retain the existing production service/database/live Stripe and Stable 1.1.7. Native-device acceptance remains pending user testing.
+
+Requirement: keep the interface-language label at the left and dropdown at the right on one line when their content fits; otherwise wrap the dropdown below with both left aligned. Override the Global mobile forced stacking only for this row, using intrinsic content widths rather than device breakpoints. Keep the description removed and saved/automatic language behavior unchanged. No synchronization, payment or data changes. Native six-platform acceptance remains unverified; this change is not yet packaged or published.
+
+Validation: Windows and WSL language tests pass 6/6 each; Global build and dependency isolation pass. Chromium/WebKit geometry using actual Obsidian 1.15 CSS passes 720 cases across ten locales, 240–1024px containers, 16/24/32px fonts and desktop/mobile host classes. Both single-line right alignment and wrapped left alignment occur without page overflow. Browser models do not establish physical iPad/Android acceptance.
+
 ## Global 1.1.8-alpha.1 — CHG-20261106-GLOBAL-CURRENT-PLAN-ALPHA
 
 Requirement: deliver an Alpha for the current-plan Stripe checkout change. The user explicitly requires production services, the production database and live Stripe, and authorizes the associated Git commits, production deployment and Alpha distribution. Include the language-description removal below. Preserve the Stable download channel and previous assets. Production activation and physical-device acceptance remain pending until separately evidenced; this metadata alone does not establish delivery. The payment correction requires the matching Server and payment page.

@@ -5463,13 +5463,16 @@ export class IndependentSettings extends PluginSettingTab {
 		});
 		return [
 			...header.map(present),
-            ...(edition.edition === 'global' ? [row(t('language.title'), setting => setting.addDropdown(input => input.addOptions({auto:t('language.auto'),...supportedLanguages}).setValue(plugin.data.interfaceLanguage ?? 'auto').onChange(async value => {
+            ...(edition.edition === 'global' ? [row(t('language.title'), setting => {
+                setting.settingEl?.classList.add('smart-sync-language-row');
+                return setting.addDropdown(input => input.addOptions({auto:t('language.auto'),...supportedLanguages}).setValue(plugin.data.interfaceLanguage ?? 'auto').onChange(async value => {
                 if (value !== 'auto' && !Object.hasOwn(supportedLanguages,value)) return;
                 const previous = plugin.data.interfaceLanguage;
                 plugin.data.interfaceLanguage = value;
                 try { await plugin.saveData(plugin.data); plugin.notify(t('language.saved')); }
                 catch (error) { if (plugin.data.interfaceLanguage === value) plugin.data.interfaceLanguage = previous; plugin.notify(failureMessage(error)); }
-            })))] : []),
+                }));
+            })] : []),
 			{ type: 'group', name: t('overview.card'), cls: 'smart-sync-overview-group', items: [
 				...(accountConnected ? [overviewItem(notebook)] : []),
 				overviewItem(account), overviewItem(devices), overviewItem(status),

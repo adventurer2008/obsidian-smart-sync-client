@@ -653,3 +653,8 @@
 .smart-sync-global-ui button { min-width:44px !important; }
 .smart-sync-global-ui .smart-sync-scope-choice .setting-item-control { flex-wrap:wrap !important; }
 .smart-sync-global-ui .smart-sync-scope-choice .setting-item-control button { width:auto !important; flex:1 1 auto; }
+
+.smart-sync-global-ui .setting-item.smart-sync-language-row { display:flex; flex-direction:row; flex-wrap:wrap; align-items:center; justify-content:flex-start; gap:8px 16px; }
+.smart-sync-global-ui .smart-sync-language-row > .setting-item-info { flex:1 0 max-content; width:auto; max-width:100%; margin:0; text-align:start; }
+.smart-sync-global-ui .smart-sync-language-row > .setting-item-control { display:flex; flex:0 1 auto; width:auto; max-width:100%; margin:0; justify-content:flex-start; }
+.smart-sync-global-ui .smart-sync-language-row select { max-width:100%; }
