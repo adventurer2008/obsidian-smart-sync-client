@@ -1,10 +1,18 @@
 # Source change record
 
+## CHG-20261106-LANGUAGE-ROW-MOBILE-CASCADE
+
+User reports alpha.2 still stacks the language row on iPad and Android. Reproduced with the actual smart-sync-common group: the earlier mobile column selector has higher specificity than the alpha.2 override. Increase specificity for this row only and preserve natural wrapping. Earlier 720 cases omitted that ancestor and do not establish the real grouped mobile layout. Retain that failed acceptance explicitly; repeat with the actual ancestor, native/legacy group classes and both browser engines. Physical six-platform acceptance remains pending user testing; no synchronization, payment or stored-data changes.
+
+Prepare Alpha 1.1.8-alpha.3. Corrected grouped geometry passes 720 cases in Chromium/WebKit, including mobile 768/1024px single-line alignment, narrow widths and enlarged fonts; 300 content-driven wrapped cases retain left alignment. Windows/WSL language tests pass 6/6 each; build and isolation pass. Reuse the existing production backend, preserve Alpha.2 and Stable; actual iPad/Android acceptance awaits user retest.
+
 ## CHG-20261106-LANGUAGE-ROW-RESPONSIVE
 
 User authorizes Alpha publication as 1.1.8-alpha.2. Client presentation update only; retain the existing production service/database/live Stripe and Stable 1.1.7. Native-device acceptance remains pending user testing.
 
 Alpha 1.1.8-alpha.2 is now available from the Global Alpha download feed. Fixed source fb8b7d3fecba5a00fd0c54dca72f459168e4675e; three-file ZIP SHA256 2e647590c8dc3d44c10395bf02261e0e658a5a7c636ea03a9f041c931986e7ca. Anonymous verification passes 19 published paths; Stable pointers and 170 existing files are retained. Production runtime, database, live Stripe configuration and service generations are unchanged. The first static deployment attempt stopped at Python stdin encoding before any remote mutation; UTF-8 retry succeeds. Synchronization and payment regressions are omitted for this presentation-only release, not reported as newly passed.
+
+Publication correction: the initial alpha.2 entry omitted publishedAt. Although raw-feed parsing and direct downloads passed, Hub sorts by publication time before retaining only three Alpha choices, so the new release was absent from its actual dropdown. Add the original publication time (2026-11-06T12:57:30Z) consistently to combined/Alpha/latest metadata; installation files, Stable and service generations remain unchanged. Delivery verification must run the maintained recentReleases selection as well as parsing/download checks. This was a publication metadata defect, not established user-side caching.
 
 Requirement: keep the interface-language label at the left and dropdown at the right on one line when their content fits; otherwise wrap the dropdown below with both left aligned. Override the Global mobile forced stacking only for this row, using intrinsic content widths rather than device breakpoints. Keep the description removed and saved/automatic language behavior unchanged. No synchronization, payment or data changes. Native six-platform acceptance remains unverified; this change is not yet packaged or published.
 
