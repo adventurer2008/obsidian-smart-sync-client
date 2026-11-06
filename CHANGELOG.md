@@ -807,3 +807,8 @@ Requirement: user approved ten languages for the Global website, GitHub home/man
 Windows Client 368/368, WSL 367 passed/one Windows-specific skip, final locale/parity 34/34 and both regional builds/closure checks passed. Ten-language modeled narrow-screen/large-font checks exposed and repaired German/Russian clipping. Preserve all brands, Global USD amounts and DELETE. Website publication and GitHub documents are independent from the unreleased plugin/customer-page runtime candidate. No new plugin Release or service deployment. Physical six-platform and native-speaker acceptance remain pending; see docs/validation/cross-platform-feature-matrix.md.
 
 CHG-20261106-GLOBAL-I18N: normalize generated catalog line endings to LF; emitter sorts customer keys and emits stable LF resources across authoring platforms. No message or runtime behavior changes.
+
+
+### CHG-20261106-PUBLIC-DOC-COPY
+
+Requirement: simplify public documentation by removing readiness/review wording. README only; runtime, release assets and recorded validation evidence are unchanged.

@@ -30,7 +30,7 @@ The synthetic three-device position integration test also needs a local Server c
 
 Full and incremental synchronization prioritize Markdown notes (`.md`, case insensitive) before attachments for uploads and downloads. Necessary directory, rename and deletion dependencies keep their safe ordering. Notes can become available before embedded images/PDFs finish downloading. Existing attachment download policies still apply. New queued Markdown edits can take priority at file/batch boundaries; an active transfer is allowed to finish safely.
 
-Receiving first inspects encrypted metadata in bounded windows, so this improves body-transfer priority rather than guaranteeing shorter total synchronization time. Pending files survive interrupted reordered progress in the existing retry queue. Mobile systems can suspend the application; remaining work continues when the host resumes and synchronization runs again. All-platform physical-device acceptance remains pending; see [the platform review](docs/validation/cross-platform-feature-matrix.md).
+Receiving first inspects encrypted metadata in bounded windows, so this improves body-transfer priority rather than guaranteeing shorter total synchronization time. Pending files survive interrupted reordered progress in the existing retry queue. Mobile systems can suspend the application; remaining work continues when the host resumes and synchronization runs again.
 
 ## Accounts, network and privacy
 
@@ -60,4 +60,4 @@ User device management: https://user.wujiesync.cc/ . Downloads: https://user.wuj
 
 ## Global interface languages (unreleased candidate)
 
-The Global source candidate supports English, Simplified Chinese, Traditional Chinese, Japanese, Korean, German, French, Spanish, Brazilian Portuguese and Russian. It follows Obsidian by default; a device/vault-local choice applies after reloading the plugin or restarting Obsidian once sync finishes. Unknown languages fall back to English. Brands remain unchanged. Non-English translations await native review; physical platform acceptance is tracked in docs/validation/cross-platform-feature-matrix.md. Existing stable 1.1.5 downloads are unchanged. China retains its regional interface.
+The Global source candidate supports English, Simplified Chinese, Traditional Chinese, Japanese, Korean, German, French, Spanish, Brazilian Portuguese and Russian. It follows Obsidian by default; a device/vault-local choice applies after reloading the plugin or restarting Obsidian once sync finishes. Unknown languages fall back to English. Brands remain unchanged. Existing stable 1.1.5 downloads are unchanged. China retains its regional interface.
