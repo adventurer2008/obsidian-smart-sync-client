@@ -369,3 +369,23 @@ Global 1.1.5 is published from the fixed runtime source 4643be73e0a87b614c68db15
 | iPad/iPadOS | Existing conditional mobile path and safe wrapping; physical split-view/lock/return checks remain unverified |
 
 Earlier user-reported ordinary iOS/Android/Windows flows retain their recorded scope; no unnamed iOS subtype is promoted to both iPhone and iPad acceptance. The one separately authorized staging mailbox-delivery check passes; real Google/GitHub consent, hosted-card flow and native six-platform acceptance remain separate. No new native API, sync/body/key/progress/source-mtime contract or background behavior is introduced by the CSS fix. Program-file rollback restores the old layout without undoing cloud operations.
+
+
+## CHG-20261106-GLOBAL-DOCS-I18N
+
+English documentation refresh for published Global 1.1.5; no runtime changes or new locales. Windows/macOS/Linux desktop/Android/iPhone/iPad retain their existing conditional host support and separately recorded acceptance. Manual distinguishes guarded desktop tray, Windows-only startup and mobile foreground/browser-return limits. Documentation/build/link checks do not constitute new physical-device acceptance. Native APIs, background/lock/reboot, offline synchronization, mixed-version interoperability, account/vault isolation, content, keys, checkpoints and source mtime are unchanged; new runtime scenario testing is not applicable to this text-only change. Static narrow/touch layout and actual device accessibility remain separate checks. Website/doc rollback restores prior text only.
+
+## CHG-20261106-GLOBAL-I18N
+
+Ten Global locales, local device/vault preference and reload-only switching; China stays isolated.
+
+| Platform | Support and verification for this change |
+| --- | --- |
+| Windows | Shared implementation; Node tests and modeled browser layout passed; physical Obsidian acceptance pending |
+| macOS | Shared implementation; physical host and browser-return acceptance unverified |
+| Linux desktop | Shared implementation; WSL Node tests passed; physical Linux desktop acceptance unverified |
+| Android | Conditional foreground/browser handoff support retained; real touch, font scaling and lifecycle acceptance unverified |
+| iPhone/iOS | Conditional foreground/browser handoff support retained; physical Safari/Obsidian return and lifecycle acceptance unverified |
+| iPad/iPadOS | Conditional support retained; physical split-view, touch, font scaling and lifecycle acceptance unverified |
+
+Windows Client 368/368; WSL 367 passed/one Windows-specific skip; final locale/parity checks 34/34; both builds/closure checks passed. Synthetic three-device integration ran with isolated Server. Modeled Windows browser settings layout: ten languages × two host models, all sections expanded at 280px/32px, no button clipping or whole-page overflow. This is not native Obsidian acceptance. Mother-tongue review and physical six-platform touch/font/lifecycle/low-memory checks remain pending. Catalogs work offline; network/auth/payment recovery contracts are unchanged. No automatic reload during sync. Language is outside synchronized settings, preserving mixed-device/account/vault isolation. No new native API, body/key/checkpoint/source-mtime change. Older binaries safely ignore the preference; code rollback does not reverse cloud actions. No plugin Release or customer-service runtime deployment in this change.

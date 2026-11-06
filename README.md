@@ -4,7 +4,7 @@ Shared Client source for Wujie Sync (China) and Smart Sync (Global). [简体中�
 
 ## Scope
 
-This is the Client development repository. Regional builds share the synchronization runtime, with separate identities and service configuration. China includes account login, free-plan enrollment, purchase and renewal entry with server-verified payment status. Global includes English account flows, Google/GitHub/email sign-in and separate Stripe checkout. Its service, storage and account data are independent. Source publication does not publish an installable Global plugin or establish Community approval.
+This is the Client development repository. Regional builds share the synchronization runtime, with separate identities and service configuration. China includes account login, free-plan enrollment, purchase and renewal entry with server-verified payment status. Global includes English account flows, Google/GitHub/email sign-in and separate Stripe checkout. Its service, storage and account data are independent. The installable Global 1.1.5 package and [operation manual](https://github.com/adventurer2008/obsidian-smart-sync-release-global/blob/main/USER-GUIDE.md) are available from its regional distribution; source publication does not establish Community approval.
 
 Server source, internal archives, deployment tools and private acceptance evidence are maintained privately. The public synthetic tests do not replace Client/Server integration, production, official Community review or physical-device acceptance.
 
@@ -26,7 +26,7 @@ Regional outputs are in artifacts/cn and artifacts/global. The default build is 
 
 The synthetic three-device position integration test also needs a local Server checkout. Set `SMART_SYNC_SERVER_DIR` to that checkout and run `node --test test/note-positions-integration.test.mjs`. Without that explicit path, this integration test is skipped; it does not access a hosted service or a real vault.
 
-## Planned synchronization order (1.1.4)
+## Notes-first synchronization (since 1.1.4)
 
 Full and incremental synchronization prioritize Markdown notes (`.md`, case insensitive) before attachments for uploads and downloads. Necessary directory, rename and deletion dependencies keep their safe ordering. Notes can become available before embedded images/PDFs finish downloading. Existing attachment download policies still apply. New queued Markdown edits can take priority at file/batch boundaries; an active transfer is allowed to finish safely.
 
@@ -38,7 +38,7 @@ Synchronization needs an approved account and the matching regional service. Con
 
 Global diagnostics stay on the device and can be exported manually; the Global client does not upload diagnostic telemetry. Device presence and local vault-size reports support the user's device-management and peer-discovery features. Server request logs and account metadata are described in the regional privacy policy. Enabling Windows launch at login explicitly creates a shortcut in the current user's Startup folder outside the vault; disabling that setting removes its owned shortcut.
 
-[China installation and distribution](https://github.com/adventurer2008/obsidian-smart-sync-release-cn) · [China privacy](https://github.com/adventurer2008/obsidian-smart-sync-release-cn/blob/main/PRIVACY.md) · [Global distribution preparation](https://github.com/adventurer2008/obsidian-smart-sync-release-global) · [Global privacy](https://smartsync.cc/privacy/). Global release preparation is distinct from publishing an installable release.
+[China installation and distribution](https://github.com/adventurer2008/obsidian-smart-sync-release-cn) · [China privacy](https://github.com/adventurer2008/obsidian-smart-sync-release-cn/blob/main/PRIVACY.md) · [Global downloads and manual](https://github.com/adventurer2008/obsidian-smart-sync-release-global) · [Global privacy](https://smartsync.cc/privacy/). The current Global stable release is 1.1.5; official Community listing is a separate process.
 
 ## License and provenance
 
@@ -57,3 +57,7 @@ Version 1.0.5 supports Obsidian 1.12.7 and newer through shared legacy and decla
 Custom Obsidian user-data profiles cannot enable launch at login because the host may route a warm startup URI to another instance; normal tray operation remains available. Native default-profile login acceptance is still pending.
 
 User device management: https://user.wujiesync.cc/ . Downloads: https://user.wujiesync.cc/download/ . Existing synchronization settings and legacy download compatibility are retained.
+
+## Global interface languages (unreleased candidate)
+
+The Global source candidate supports English, Simplified Chinese, Traditional Chinese, Japanese, Korean, German, French, Spanish, Brazilian Portuguese and Russian. It follows Obsidian by default; a device/vault-local choice applies after reloading the plugin or restarting Obsidian once sync finishes. Unknown languages fall back to English. Brands remain unchanged. Non-English translations await native review; physical platform acceptance is tracked in docs/validation/cross-platform-feature-matrix.md. Existing stable 1.1.5 downloads are unchanged. China retains its regional interface.

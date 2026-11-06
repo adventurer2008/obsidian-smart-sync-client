@@ -19,7 +19,7 @@ test('Global mobile storage upgrade presents an English fallback when direct bro
   await Plugin.prototype.openBilling.call(plugin);
   const dialog=modals.at(-1),link=dialog.contentEl.children.find(child=>child.tag==='a');
   assert.equal(dialog.title,'My plan');assert.equal(link.text,'Open plans in browser');
-  assert.equal(link.href,'https://pay.smartsync.cc/pay/plans#ticket='+'a'.repeat(43));dialog.close();
+  assert.equal(link.href,'https://pay.smartsync.cc/pay/plans#ticket='+'a'.repeat(43)+'&lang=en');dialog.close();
  }finally{Platform.isMobile=false;window.open=previousOpen;}
 });
 
@@ -33,10 +33,10 @@ test('prepared mobile billing opens in the original click stack with no modal an
  const modalsBefore=modals.length;
  await Plugin.prototype.openBilling.call(plugin,undefined,true);await Plugin.prototype.openBilling.call(plugin,undefined,true);
  assert.equal(entries,1);assert.equal(opened.length,0);assert.equal(modals.length,modalsBefore);
- const first=Plugin.prototype.openBilling.call(plugin);assert.equal(opened.length,1,'must open before another await/network request');await first;assert.equal(entries,1);assert.match(opened[0][0],/#ticket=a+$/);
+ const first=Plugin.prototype.openBilling.call(plugin);assert.equal(opened.length,1,'must open before another await/network request');await first;assert.equal(entries,1);assert.match(opened[0][0],/#ticket=a+&lang=en$/);
  plugin.billingHandoffCancel();
- await Plugin.prototype.openBilling.call(plugin,undefined,true);account='synthetic-two';await Plugin.prototype.openBilling.call(plugin);assert.equal(entries,3);assert.match(opened[1][0],/#ticket=c+$/);plugin.billingHandoffCancel();
- await Plugin.prototype.openBilling.call(plugin,undefined,true);at+=90001;await Plugin.prototype.openBilling.call(plugin);assert.equal(entries,5);assert.match(opened[2][0],/#ticket=e+$/);plugin.billingHandoffCancel();
+ await Plugin.prototype.openBilling.call(plugin,undefined,true);account='synthetic-two';await Plugin.prototype.openBilling.call(plugin);assert.equal(entries,3);assert.match(opened[1][0],/#ticket=c+&lang=en$/);plugin.billingHandoffCancel();
+ await Plugin.prototype.openBilling.call(plugin,undefined,true);at+=90001;await Plugin.prototype.openBilling.call(plugin);assert.equal(entries,5);assert.match(opened[2][0],/#ticket=e+&lang=en$/);plugin.billingHandoffCancel();
  assert.equal(modals.length,modalsBefore);assert.equal(timers.size,0);
 });
 
@@ -160,7 +160,7 @@ test('Global reuses the plan card and account-bound entry with its own currency,
  assert.match(capacityWarning({...data,usage:{logicalBytes:6*1024**3}}).action,/storage/);
  const opened=[];window.open=(...args)=>opened.push(args);
  const plugin={data:{localId:'synthetic',settings:{origin:'https://sync.smartsync.cc'}},secret:()=> 'synthetic-key',accountApi:async()=>({accessKey:'synthetic-key'}),billingApi:()=>({request:async()=>({url:'https://pay.smartsync.cc/pay/plans#ticket='+'a'.repeat(43)})})};
- await Plugin.prototype.openBilling.call(plugin);assert.equal(opened[0][0],'https://pay.smartsync.cc/pay/plans#ticket='+'a'.repeat(43));
+ await Plugin.prototype.openBilling.call(plugin);assert.equal(opened[0][0],'https://pay.smartsync.cc/pay/plans#ticket='+'a'.repeat(43)+'&lang=en');
  plugin.billingApi=()=>({request:async()=>({url:'https://pay.wujiesync.cc/pay/plans#ticket='+'a'.repeat(43)})});
  await assert.rejects(Plugin.prototype.openBilling.call(plugin),/Invalid purchase entry/);
 });
@@ -180,7 +180,7 @@ test('Global browser authentication sends only a PKCE challenge, confines the re
  }}),workspaceApi:(origin,access)=>{assert.equal(origin,'https://sync.smartsync.cc');assert.equal(access,key);return{request:async()=>({owner:'owner',email:'auth@example.invalid',scope:null,accountDevice:true,deviceId:device})};}};
  const flow=await Plugin.prototype.beginGlobalSignIn.call(plugin,'google');
  const expected=Buffer.from(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(flow.verifier))).toString('base64url');
- assert.equal(sent.challenge,expected);assert.equal(sent.verifier,undefined);assert.equal(opened[0][0],'https://pay.smartsync.cc/auth/login#flow='+id+'&method=google');assert.ok(!opened[0][0].includes(flow.verifier));
+ assert.equal(sent.challenge,expected);assert.equal(sent.verifier,undefined);assert.equal(opened[0][0],'https://pay.smartsync.cc/auth/login#flow='+id+'&method=google&lang=en');assert.ok(!opened[0][0].includes(flow.verifier));
  await Plugin.prototype.finishGlobalSignIn.call(plugin,flow);
  assert.equal(refreshed,1);
  assert.equal(stored.get('smart-sync-global-isolated-auth-account'),key);assert.equal(stored.get('smart-sync-global-isolated-auth-oauth'),'');assert.equal(acked,true);

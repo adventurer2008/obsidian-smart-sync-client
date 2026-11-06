@@ -626,3 +626,30 @@
  max-width: 100%;
  white-space: normal;
 }
+
+/* CHG-20261106-GLOBAL-I18N: Global only; retain readable enlarged labels and touch targets. */
+.smart-sync-global-ui .setting-item { min-width:0; max-width:100%; box-sizing:border-box; flex-wrap:wrap; }
+.smart-sync-global-ui .setting-item-info { min-width:0; max-width:100%; }
+.smart-sync-global-ui .setting-item-name, .smart-sync-global-ui .setting-item-description, .smart-sync-global-ui .smart-sync-section-title, .smart-sync-global-ui .smart-sync-section-description { min-width:0; max-width:100%; white-space:normal !important; overflow-wrap:anywhere; }
+.smart-sync-global-ui .setting-item-control { min-width:0; max-width:100%; flex-wrap:wrap; }
+.smart-sync-global-ui button { min-width:0; max-width:100%; min-height:44px; height:auto; white-space:normal !important; overflow-wrap:anywhere; }
+.smart-sync-global-ui input, .smart-sync-global-ui select { min-width:0; max-width:100%; box-sizing:border-box; }
+@media(max-width:640px) {
+ .smart-sync-global-ui .setting-item-info { flex:1 1 100%; }
+ .smart-sync-global-ui .setting-item-control { width:100%; justify-content:flex-start; }
+ .smart-sync-global-ui .smart-sync-title .setting-item-info { padding-left:0 !important; }
+ .smart-sync-global-ui .smart-sync-title .setting-item-name { display:block; }
+ .smart-sync-global-ui .smart-sync-title .setting-item-name::before { position:static; display:block; width:48px; height:48px; margin-bottom:8px; }
+}
+
+.smart-sync-global-ui button { min-width:0 !important; max-width:100% !important; }
+.smart-sync-global-ui .smart-sync-title .setting-item-name { overflow:visible !important; text-overflow:clip; -webkit-line-clamp:unset; height:auto !important; max-height:none !important; flex:0 0 auto; }
+
+.smart-sync-global-ui .smart-sync-lan-entry { display:inline-block; max-width:100%; white-space:normal; overflow-wrap:anywhere; vertical-align:top; }
+
+.smart-sync-global-ui button { display:inline-block; overflow-wrap:anywhere !important; word-break:break-word; }
+.smart-sync-global-ui .smart-sync-lan-status span { min-width:0; max-width:100%; white-space:normal !important; overflow-wrap:anywhere !important; }
+
+.smart-sync-global-ui button { min-width:44px !important; }
+.smart-sync-global-ui .smart-sync-scope-choice .setting-item-control { flex-wrap:wrap !important; }
+.smart-sync-global-ui .smart-sync-scope-choice .setting-item-control button { width:auto !important; flex:1 1 auto; }

@@ -1,5 +1,9 @@
 # Source change record
 
+## CHG-20261106-GLOBAL-DOCS-I18N
+
+Requirement: refresh the overseas website and GitHub home/operation manual from the published 1.1.5 features, and research Obsidian/competitor language coverage before selecting locales. Correct stale source-publication wording and the notes-first heading, link the current Global operation manual, and retain physical-device acceptance boundaries. English documentation only: no runtime, protocol, account/vault, content/key/checkpoint/source-mtime or version changes. Locale rollout remains a proposal, not delivered multilingual support.
+
 ## China 1.1.5 delivery record — CHG-20261105-CN-FULL-PRODUCTION
 
 Requirement: publish the maintained China backlog through the full staging, production and public release flow, and assess shared Global changes. China 1.1.5 is now published; this delivery changes no Client runtime beyond fixed source 2393a5c8653a70317dcaf002822fc58c5f6653f2. Notes-first synchronization, safe account closure, readable failures, mobile browser fallback and shared layout changes reach China while its identity, login, billing, storage and source-mtime contracts remain. Both local platform UI matrices passed 832 cases/5,120 inspections; real staging/production content/source-mtime, official assets, domestic downloads and the actual Hub loader passed. Native six-platform acceptance and capacity claims remain bounded; Windows directory-rename EPERM failed attempts and full-size successful retries are both retained, with cause unresolved. Global service deployment is owned separately. See the platform ledger for the exact boundary.
@@ -785,3 +789,12 @@ Requirement: publish the committed account-flow exception repairs for user retes
 ## Global 1.1.5-alpha.4 — CHG-20261105-GLOBAL-ALPHA4
 
 Requirement: open the browser directly from Get more storage and show the link dialog only as a fallback; publish the next Alpha after verification. Prepare a short-lived account-bound Global plan ticket during mobile card loading so clicks can navigate before awaiting network calls. Try direct opening first, monitor observed host departure and offer the guarded native link only on an exception or absent acknowledgement. Do not mistake null noopener/native return values for failure. Preserve prior Alpha assets, desktop/CN behavior boundaries and all sync/billing semantics. Six-platform limitations, exact tests and publication evidence: docs/validation/global-alpha4-2026-11-05.md.
+
+
+## CHG-20261106-GLOBAL-I18N
+
+Requirement: user approved ten languages for the Global website, GitHub home/manual, plugin and owned customer login/plan/payment pages; preserve China and synchronization, and leave management unchanged. Add offline catalogs, host-language/default or per-device vault preference, reload-safe switching, script/region aliases and English fallback. Separate Global billing from language, preserve DELETE, account/origin/PKCE/checkout ownership and USD-only billing. Add static locale URLs and language navigation, translated release-document export and an independent customer-page selector with safe storage failure. Initial translations are explicitly unreviewed; runtime never calls a translation service. Native six-platform/large-font/lifecycle/low-memory acceptance and production deployment are distinct from local checks. See the requirement and validation records for exact results and unperformed gates.
+
+### CHG-20261106-GLOBAL-I18N verification and delivery boundary
+
+Windows Client 368/368, WSL 367 passed/one Windows-specific skip, final locale/parity 34/34 and both regional builds/closure checks passed. Ten-language modeled narrow-screen/large-font checks exposed and repaired German/Russian clipping. Preserve all brands, Global USD amounts and DELETE. Website publication and GitHub documents are independent from the unreleased plugin/customer-page runtime candidate. No new plugin Release or service deployment. Physical six-platform and native-speaker acceptance remain pending; see docs/validation/cross-platform-feature-matrix.md.
