@@ -39,6 +39,21 @@ test('translated Global billing keeps the actual Global free quota and subscript
  configureLanguage('en');
 });
 
+test('Global plan cards omit generic capacity prose but retain actionable billing notices',()=>{
+ const now=Date.UTC(2026,10,6);
+ const paid={entitlement:{plan:'global-1gb-month',paid:true,logical:1024**3,ends:now+86400000},usage:{logicalBytes:416*1024**2}};
+ for(const code of Object.keys(supportedLanguages)){
+  configureLanguage(code);
+  const card=billingCard(paid,true,now);
+  assert.equal(card.help,'',code);assert.ok(card.title);assert.ok(card.usage);assert.ok(card.expires);assert.ok(card.label);assert.equal(card.prominent,true);
+  assert.equal(billingCard({entitlement:{plan:'global-free',paid:false,logical:50*1024**2}},true,now).help,'',code);
+  assert.ok(billingCard({...paid,testMode:true},true,now).help,code);
+  assert.ok(billingCard({everPurchased:true,lastPurchase:{plan:'global-1gb-month',status:'refunded',ends:now+86400000}},true,now).help,code);
+  assert.ok(billingCard({everPurchased:true,lastPurchase:{plan:'global-1gb-month',ends:now-1}},true,now).help,code);
+ }
+ configureLanguage('en');
+});
+
 test('Global confirmation hints match the exact existing validation words in every language',()=>{
  for(const code of Object.keys(supportedLanguages)){
   configureLanguage(code);

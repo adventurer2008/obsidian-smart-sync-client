@@ -1,5 +1,11 @@
 # Source change record
 
+## CHG-20261106-GLOBAL-PLAN-LARGE-FONT
+
+Requirement: user reports Android enlarged-font settings deformation and requests removing the marked shared-capacity/automatic-renewal paragraph. Remove generic Global free/active plan prose, keeping expired/refunded/test-mode notices and the management action. Replace the Global fixed two-column plan card with content-sensitive wrapping so its button cannot squeeze plan details into a narrow column; the badge no longer floats beside large text. Preserve the user-verified iPad language layout, all plan fields and account controls. No payment, synchronization, identity, source-mtime or persisted-data changes. Native six-platform enlarged-font acceptance remains bounded by actual user testing.
+
+Prepare Global Alpha 1.1.8-alpha.4. Actual settings definitions with Obsidian 1.15 CSS pass 64 Chromium/WebKit cases across modern/legacy hosts, widths 320/390/768/1024 and fonts 16/24/32/40. The legacy host puts Global and common classes on the same element; cover that layout explicitly. Assertions retain plan fields and visible actions, omit generic help, prevent overflow and move actions below details on narrow enlarged-font layouts. Windows and WSL targeted billing/i18n suites pass 18 each; Global build and dependency isolation pass. Native enlarged-font tests remain pending; the earlier iPad language confirmation is retained separately. No unaffected synchronization regression or backend deployment.
+
 ## CHG-20261106-LANGUAGE-ROW-MOBILE-CASCADE
 
 User reports alpha.2 still stacks the language row on iPad and Android. Reproduced with the actual smart-sync-common group: the earlier mobile column selector has higher specificity than the alpha.2 override. Increase specificity for this row only and preserve natural wrapping. Earlier 720 cases omitted that ancestor and do not establish the real grouped mobile layout. Retain that failed acceptance explicitly; repeat with the actual ancestor, native/legacy group classes and both browser engines. Physical six-platform acceptance remains pending user testing; no synchronization, payment or stored-data changes.
