@@ -2,6 +2,8 @@
 
 ## CHG-20261106-GLOBAL-SUBSCRIPTION-ALPHA5
 
+Published Global 1.1.8-alpha.5 through the official Alpha download/Hub feed. Anonymous package checks and the maintained Hub three-file/ZIP hash and tamper-rejection checks pass; prior Alpha assets and Stable 1.1.7 remain. Paired deployment, full Windows/WSL checks, 169 critical cases on each, and 832 Global UI cases on each pass. One Windows content-test rename EPERM required an isolated successful retry; its root cause is not claimed fixed. Six native platforms, hosted merchant operations and native-language review remain pending user acceptance. Retain data.json, keys, checkpoints and vault files when updating.
+
 Requirement: deliver the approved subscription management now for user Alpha testing. Prepare Global 1.1.8-alpha.5 with paired Server 0.1.45, confirmed cancellation, immediate repurchase and order history/details. Keep prior Alpha/Stable assets and stored settings. Production-connected payment operations remain real; no automatic purchase/cancellation/refund is part of release verification. Fixed-candidate Windows/WSL, staging/production and anonymous download/Hub evidence will be recorded separately. Six native platforms and real merchant acceptance remain pending.
 
 ## CHG-20261106-GLOBAL-SUBSCRIPTION-MANAGEMENT
