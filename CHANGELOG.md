@@ -6,6 +6,8 @@ User reports alpha.2 still stacks the language row on iPad and Android. Reproduc
 
 Prepare Alpha 1.1.8-alpha.3. Corrected grouped geometry passes 720 cases in Chromium/WebKit, including mobile 768/1024px single-line alignment, narrow widths and enlarged fonts; 300 content-driven wrapped cases retain left alignment. Windows/WSL language tests pass 6/6 each; build and isolation pass. Reuse the existing production backend, preserve Alpha.2 and Stable; actual iPad/Android acceptance awaits user retest.
 
+Alpha.3 published from f0b4b1157de33a300675443008348279a664c6f4. Flat legacy grouping additionally passes 48 browser cases. Anonymous verification passes 19 paths and preserves 176 previous files; package ZIP SHA256 1f805fcc9f2db7f269ae2786bdf4c4ed4960448fe764e0cb620b4cb941871d22. Original program JS and production runtime are unchanged; the fix is in scoped CSS and version metadata. Actual iPad/Android retest remains pending.
+
 ## CHG-20261106-LANGUAGE-ROW-RESPONSIVE
 
 User authorizes Alpha publication as 1.1.8-alpha.2. Client presentation update only; retain the existing production service/database/live Stripe and Stable 1.1.7. Native-device acceptance remains pending user testing.
