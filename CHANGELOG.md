@@ -1,5 +1,9 @@
 # Source change record
 
+## CHG-20261107-GLOBAL-118-STABLE-PROMOTION
+
+Requirement: the user reports Alpha.6 testing passed and requests production publication. Promote the tested Global Client to Stable 1.1.8 through Hub. Only version metadata changes; retain pairing guidance, inherited payment/login language and all existing runtime behavior. Verify identical main.js/styles.css and a version-only manifest difference against the published Alpha before promotion. Keep the already deployed Server 0.1.47, previous Alpha/Stable assets, settings, keys, checkpoints and original modification times. The user's acceptance does not establish unreported platform/device coverage; native Windows/macOS/Linux/Android/iPhone/iPad coverage remains explicitly bounded in the platform matrix.
+
 ## CHG-20261107-PAIRING-ACCOUNT-ROLE
 
 Requirement: a signed-in Global PC incorrectly offers to pair itself instead of approving a new device. CN and Global share the same workspace-only branch; account-only login exposes the latent error in both editions. Distinguish signed-out recipients, signed-in accounts without a connected vault, and connected approvers. Account-only devices retain device management and Add a device; guide users through explicit vault selection before entering the new device code. Preserve the existing vault-bound encrypted pairing protocol and connection confirmation; never auto-select or connect a vault. Add guidance in all ten Global languages. Account deletion remains account-scoped: managing/deleting cloud vaults and closing an empty account require no local vault connection. No real-account deletion, payment, service deployment or Alpha publication in this change.
