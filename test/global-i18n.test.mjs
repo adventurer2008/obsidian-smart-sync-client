@@ -65,12 +65,16 @@ test('language selection persists outside synchronized settings and applies only
  configureLanguage('en');
  const {IndependentSettings}=await import('../src/plugin.js');
  const settings={origin:'https://sync.smartsync.cc',workspace:'synthetic',direction:'both',interval:60,attachmentMiB:256,excludedExtensions:[],configuration:{}};
- const connection={synthetic:{key:'synthetic'}};let saves=0,changed,notice;
+ const connection={synthetic:{key:'synthetic'}};let saves=0,changed,notice,selected;
  const owner={data:{localId:'synthetic',settings,connections:connection},manifest:{version:'synthetic'},secret:()=>'',statusListeners:new Set(),status:{textContent:''},lanSummary:()=>'',saveData:async()=>{saves++;},notify:value=>{notice=value;}};
  const definitions=IndependentSettings.prototype.getSettingDefinitions.call({owner,expanded:new Set()});
  const row=definitions.find(item=>item.name===t('language.title'));assert.ok(row);
- row.render({setDesc(){return this;},addDropdown(callback){const input={addOptions(){return this;},setValue(){return this;},onChange(callback){changed=callback;return this;}};callback(input);return this;}});
+ const control={setDesc(){assert.fail('Language row must not show a description');},addDropdown(callback){const input={addOptions(){return this;},setValue(value){selected=value;return this;},onChange(callback){changed=callback;return this;}};callback(input);return this;}};
+ row.render(control);assert.equal(selected,'auto');
+ configureLanguage('zh-Hans');owner.data.interfaceLanguage='auto';row.render(control);assert.equal(selected,'auto');
+ configureLanguage('en');delete owner.data.interfaceLanguage;
  await changed('de');assert.equal(owner.data.interfaceLanguage,'de');assert.equal(owner.data.settings,settings);assert.equal(owner.data.connections,connection);assert.equal(settings.direction,'both');assert.equal(saves,1);assert.match(notice,/Reload/);assert.equal(t('language.auto'),'Follow Obsidian');
+ row.render(control);assert.equal(selected,'de');
  await changed('not-a-locale');assert.equal(saves,1);
  owner.saveData=async()=>{throw Error('Synthetic disk full');};await changed('ja');assert.equal(owner.data.interfaceLanguage,'de');assert.equal(settings.origin,'https://sync.smartsync.cc');
  let rejectFirst,attempt=0;owner.saveData=()=>++attempt===1?new Promise((resolve,reject)=>{rejectFirst=reject;}):Promise.resolve();

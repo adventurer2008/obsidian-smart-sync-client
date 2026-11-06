@@ -5463,7 +5463,7 @@ export class IndependentSettings extends PluginSettingTab {
 		});
 		return [
 			...header.map(present),
-            ...(edition.edition === 'global' ? [row(t('language.title'), setting => setting.setDesc(t('language.help')).addDropdown(input => input.addOptions({auto:t('language.auto'),...supportedLanguages}).setValue(plugin.data.interfaceLanguage ?? 'auto').onChange(async value => {
+            ...(edition.edition === 'global' ? [row(t('language.title'), setting => setting.addDropdown(input => input.addOptions({auto:t('language.auto'),...supportedLanguages}).setValue(plugin.data.interfaceLanguage ?? 'auto').onChange(async value => {
                 if (value !== 'auto' && !Object.hasOwn(supportedLanguages,value)) return;
                 const previous = plugin.data.interfaceLanguage;
                 plugin.data.interfaceLanguage = value;

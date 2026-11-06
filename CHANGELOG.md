@@ -1,5 +1,13 @@
 # Source change record
 
+## Global 1.1.8-alpha.1 — CHG-20261106-GLOBAL-CURRENT-PLAN-ALPHA
+
+Requirement: deliver an Alpha for the current-plan Stripe checkout change. The user explicitly requires production services, the production database and live Stripe, and authorizes the associated Git commits, production deployment and Alpha distribution. Include the language-description removal below. Preserve the Stable download channel and previous assets. Production activation and physical-device acceptance remain pending until separately evidenced; this metadata alone does not establish delivery. The payment correction requires the matching Server and payment page.
+
+## CHG-20261106-LANGUAGE-ROW-SIMPLIFY
+
+Requirement: show only the interface-language label and dropdown, without the descriptive paragraph. User correction: revert the dropdown default change; keep the original saved preference or Follow Obsidian when absent/automatic. Saving/reload behavior and device-local storage remain unchanged. Include in the next Global candidate; no publication or version bump. Targeted language regression covers no description, original automatic defaults and saved German selection. Physical six-platform acceptance remains unverified.
+
 ## Global 1.1.7 candidate — CHG-20261106-GLOBAL-117-RELEASE
 
 Requirement: publish the completed Global backlog and measure each release stage. Include the ten-language audit and the scheduled closed-order plan-card correction, together with the matching owned customer pages. Preserve China identity and behavior, account/vault isolation, encryption and original source modification times. Native-device limitations remain recorded; candidate metadata does not establish production acceptance.
