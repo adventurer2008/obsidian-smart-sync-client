@@ -11,6 +11,16 @@ const {billingCard,capacityWarning}=await import('../src/billing.js');
 const {default:Plugin}=await import('../src/plugin.js');
 const {modals,Modal,Platform}=await import('./obsidian-double.mjs');
 
+test('English plan cards hide closed orders and retain active plan details',()=>{
+ const now=Date.UTC(2026,10,6);
+ const account={entitlement:{paid:true,plan:'global-5gb-year',logical:5*1024**3,ends:Date.UTC(2027,9,25)},usage:{logicalBytes:3.9*1024**3}};
+ const expected=billingCard(account,true,now);
+ const actual=billingCard({...account,currentOrder:{id:'synthetic-closed',status:'expired',title:'5 GB'}},true,now);
+ assert.equal(actual.order,'');assert.equal(actual.resume,undefined);
+ assert.equal(actual.title,'Current plan: 5 GB · Yearly');assert.equal(actual.badge,'Active');
+ for(const key of ['title','usage','expires','help','badge','prominent']) assert.equal(actual[key],expected[key]);
+});
+
 test('Global mobile storage upgrade presents an English fallback when direct browser opening fails',async()=>{
  const previousOpen=window.open;Platform.isMobile=true;window.open=()=>{throw Error('Synthetic browser block');};
  const plugin={app:{},data:{localId:'mobile-global',settings:{origin:'https://sync.smartsync.cc'}},secret:()=> 'synthetic-account',

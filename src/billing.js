@@ -40,7 +40,7 @@ export function renewalReminderAt(ends) {
 export function billingCard(data, connected, now = Date.now()) {
 	const rights = data?.entitlement, order = data?.currentOrder;
 	const hidePendingOrder = rights?.paid === true && rights.ends > now && pending.has(order?.status) && order.failureCode !== 'paid_plan_conflict';
-	const showOrder = order && !hidePendingOrder && (order.status !== 'paid' || order.purpose === 'test' || order.failureCode === 'paid_plan_conflict');
+	const showOrder = order && order.status !== 'expired' && !hidePendingOrder && (order.status !== 'paid' || order.purpose === 'test' || order.failureCode === 'paid_plan_conflict');
 	const free = ['cn-free','global-free'].includes(rights?.plan) && rights?.paid !== true;
 	const purchased = !free && (rights?.paid === true || data?.everPurchased === true);
 	const ends = rights?.ends ?? data?.lastPurchase?.ends;
@@ -113,7 +113,7 @@ export function mountBillingCard(setting, { connected, load, open, live, onError
 		setting.settingEl.classList.toggle('is-compact', !model.title && !model.order);
 		setting.settingEl.classList.toggle('is-free', model.free);
 		upcoming.textContent = model.upcoming; upcoming.hidden = !model.upcoming;
-		help.textContent = model.help; status.textContent = model.order;
+		help.textContent = model.help; status.textContent = model.order; status.hidden = !model.order;
 		usage.hidden = !model.usage; expires.hidden = !model.expires; help.hidden = !model.help;
 		progress.hidden = model.ratio === null; progress.value = model.ratio ?? 0;
 		button.textContent = model.label; button.disabled = acting; button.hidden = !model.prominent;

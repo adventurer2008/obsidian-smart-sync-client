@@ -1,5 +1,19 @@
 # Source change record
 
+## Global 1.1.7 candidate — CHG-20261106-GLOBAL-117-RELEASE
+
+Requirement: publish the completed Global backlog and measure each release stage. Include the ten-language audit and the scheduled closed-order plan-card correction, together with the matching owned customer pages. Preserve China identity and behavior, account/vault isolation, encryption and original source modification times. Native-device limitations remain recorded; candidate metadata does not establish production acceptance.
+
+## Next Global release — CHG-20261106-APP-LOCALE-NEXT-RELEASE
+
+User assigns CHG-20261106-GLOBAL-APP-LOCALE-AUDIT to the next Global release after 1.1.6. Include Client e1288a2 and its verified successors: all ten language resources, exact confirmation hints, DELETE guidance and regression checks. Coordinate the owned login/plan/order/payment UI corrections from Server 87b3f8f and catalog generation from website 982c3a9; do not ship only the plugin half. Preserve brands, China behavior and synchronization/content/key/checkpoint/source-mtime contracts. Version number remains unassigned. This scheduling does not publish or install a plugin, deploy a service, or replace existing release assets; perform the applicable release gates and retain recorded physical-device limitations when freezing the candidate.
+
+## CHG-20261106-PLAN-HIDE-CLOSED-ORDER
+
+Requirement: remove the ambiguous closed-order notice from My plan. Hide expired orders and the empty order-status row in both regional cards while retaining current entitlement, usage, expiry, actionable payment/refund states and order history. No server/order mutation, authentication, synchronization, keys, progress or source-mtime change. Targeted billing tests recorded in the platform ledger; no new release or native-device acceptance claimed.
+
+Scheduling: the user explicitly requests that the Global fix ship in the next Global version. Keep it pending for the next release candidate; this records scheduling only, with no immediate publication or version bump. English parity tests pass (30 tests); six-platform native verification remains unperformed for this change.
+
 ## Global 1.1.6 candidate — CHG-20261106-GLOBAL-116-QUICK
 
 Release verification now includes the nested language catalog in the complete 27-module lint closure, with type-aware SDK rules and the deliberate unsupported-API probe retained.
