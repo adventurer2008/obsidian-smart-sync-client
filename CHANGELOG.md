@@ -2,6 +2,8 @@
 
 ## Global 1.1.6 candidate — CHG-20261106-GLOBAL-116-QUICK
 
+Release verification now includes the nested language catalog in the complete 27-module lint closure, with type-aware SDK rules and the deliberate unsupported-API probe retained.
+
 Requirement: publish all completed Global backlog using the explicitly requested quick flow. Include ten local interface languages and the device/vault language preference, alongside the associated service's USD Stripe/Dodo routing, pending-checkout recovery and refund fixes. Preserve China behavior, encryption, account/vault isolation, synchronization and original source modification times. This version metadata does not claim production acceptance before the fixed candidate is deployed and verified. Native six-platform and hosted-browser interruption gaps remain recorded.
 
 
