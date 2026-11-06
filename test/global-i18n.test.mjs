@@ -39,6 +39,28 @@ test('translated Global billing keeps the actual Global free quota and subscript
  configureLanguage('en');
 });
 
+test('Global confirmation hints match the exact existing validation words in every language',()=>{
+ for(const code of Object.keys(supportedLanguages)){
+  configureLanguage(code);
+  for(const [hint,word] of [['notebooks.revokeConfirm','notebooks.revokeWord'],['msg_5211f581d5','msg_36f33adaf0'],['account.closeConfirm','account.closePhrase']]){
+   assert.ok(t(hint).includes(t(word)),code+':'+hint+' must show the case-sensitive accepted input');
+  }
+  assert.ok(t('error.ACCOUNT_ERASE_CONFIRMATION').includes('DELETE'),code);
+ }
+ configureLanguage('en');
+});
+
+test('Global runtime catalogs retain product brands and contain no untranslated prose paragraphs',()=>{
+ const brands=['Obsidian','Smart Sync','Stripe','Google','GitHub','Dodo Payments','Windows','macOS','Linux','Android','iPhone','iPad','Markdown'];
+ const count=(text,brand)=>text.toLowerCase().split(brand.toLowerCase()).length-1;
+ for(const [code,catalog] of Object.entries(catalogs))for(const [key,source]of Object.entries(englishDraft)){
+  const translated=catalog[key];
+  for(const brand of brands)assert.ok(count(translated,brand)>=count(source,brand),code+':'+key+':'+brand);
+  const prose=source.replace(/\{\w+\}/g,'').replace(/Smart Sync/g,'').replace(/[^A-Za-z]/g,'');
+  if(prose.length>=40)assert.notEqual(translated,source,code+':'+key);
+ }
+});
+
 test('language selection persists outside synchronized settings and applies only after reload',async()=>{
  configureLanguage('en');
  const {IndependentSettings}=await import('../src/plugin.js');

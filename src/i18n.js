@@ -169,7 +169,7 @@ const englishEditionFailures = {
 	ACCOUNT_ENCRYPTION_CONFIRM:'Account encryption passwords do not match. Try again.',
 	ACCOUNT_ENCRYPTION_LOCKED:'Unlock account encryption first.',ACCOUNT_ENCRYPTION_SETUP:'Set up account encryption first.',
 	NOTEBOOK_NAME_CONFIRMATION:'Vault name does not match. Enter the complete name without a device name. Nothing was deleted.',
-	ACCOUNT_ERASE_CONFIRMATION:'Type “ERASE ACCOUNT” to confirm. The original login key will be revoked immediately.',
+	ACCOUNT_ERASE_CONFIRMATION:'Type DELETE in uppercase to confirm account deletion. The account has not been deleted.',
 	PAIRING_CODE_INVALID:'Enter the six-digit code shown on the new device, including any leading zero.',
 	PAIRING_UNAVAILABLE:'This code expired, was used, or belongs to another service. Request a new code on the new device.',
 	PAIRING_EXPIRED:'Pairing code expired. Request a new code and enter it on the connected device.',

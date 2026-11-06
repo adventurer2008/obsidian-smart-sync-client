@@ -812,3 +812,7 @@ CHG-20261106-GLOBAL-I18N: normalize generated catalog line endings to LF; emitte
 ### CHG-20261106-PUBLIC-DOC-COPY
 
 Requirement: simplify public documentation by removing readiness/review wording. README only; runtime, release assets and recorded validation evidence are unchanged.
+
+## CHG-20261106-GLOBAL-APP-LOCALE-AUDIT
+
+Requirement: audit ten Global plugin/customer-page languages, retain product brands and preserve China/synchronization behavior. Correct translated revocation hints to display the exact existing case-sensitive accepted input; align legacy confirmation hints and the Global DELETE error. Fix remaining Vault/Startup/Check fragments and Japanese relocking wording. No validation token, authorization request, sync/crypto, source-mtime, account/vault selection or China message value changed. All 781 domestic message values match the pre-change source exactly. Catalog completeness, placeholders, brands and confirmation-contract tests pass in all ten locales; both editions build and dependency isolation checks pass. This source correction has not been published as a plugin Release.

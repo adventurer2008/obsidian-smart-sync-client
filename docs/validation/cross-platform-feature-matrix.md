@@ -394,3 +394,20 @@ Windows Client 368/368; WSL 367 passed/one Windows-specific skip; final locale/p
 ## CHG-20261106-GLOBAL-116-QUICK — release candidate
 
 Global1.1.6 includes the ten-language interface and a separately deployed dual-provider USD payment service. Windows/browser, Windows/WSL synthetic and native ARM service checks are executed against frozen sources by private release tools. Native Windows Obsidian, macOS, Linux desktop, Android, iPhone/iOS and iPad/iPadOS remain unverified for the new language/payment combination; prior user reports retain only their original scope. Desktop browser handoff and mobile foreground/browser availability remain conditions. Mixed versions preserve data and ignore unknown local language settings; code rollback cannot undo completed payments or cloud actions. Background, lock/restart, real offline return and physical touch/large-font acceptance are pending. No note content, encryption key, progress/checkpoint or source-mtime semantics change. China behavior remains separately checked; its published version is not changed by this Global release.
+
+## CHG-20261106-GLOBAL-APP-LOCALE-AUDIT
+
+Presentation-only audit of 858 English message keys plus Global billing literals in all ten languages. Existing confirmation validation words are retained; translated hints now match them. Offline resources preserve brands/parameters. China labels/region, 100 MB quota and deletion phrase are separately tested; all 781 Chinese domestic message values match the previous source. No synchronized setting, connection, body, key, checkpoint or original-mtime change. Both regional builds/closure checks and 65 targeted Client tests pass. New plugin binaries have not been installed or released.
+
+| Platform | Executed scope and boundary |
+| --- | --- |
+| Windows | Node tests/builds and in-app browser modeling; native Obsidian confirmation/tray acceptance not executed |
+| macOS | Shared offline resources; physical Obsidian/browser acceptance not executed |
+| Linux desktop | Shared resources; physical Linux host acceptance not executed |
+| Android | Existing foreground/browser handoff unchanged; real touch, font scaling, background/lock/reopen not executed |
+| iPhone/iOS | Existing foreground/browser handoff unchanged; physical Safari/Obsidian lifecycle not executed |
+| iPad/iPadOS | Existing responsive UI unchanged; physical split-view, touch and lifecycle not executed |
+
+Hosted login/plans/orders/checkout fixtures modeled ten languages at 320/390/1440px, 120 cases without document overflow or clipped buttons. Synthetic rendering is not six-platform physical acceptance. Browser error translation triggers no extra request. Mixed-version vaults keep their existing local language selection and synchronization protocol. No native capability, migration, updater or downgrade action was added; code rollback cannot undo completed payments or cloud actions.
+
+Community lint: zero errors, seven pre-existing warnings in unchanged fetch/config-path modules. The deliberate low-minimum SDK probe still detects 144 unsupported-API errors. Warnings were not suppressed or fixed through unrelated sync changes.
