@@ -1,5 +1,11 @@
 # Source change record
 
+## CHG-20261107-PAIRING-ACCOUNT-ROLE
+
+Requirement: a signed-in Global PC incorrectly offers to pair itself instead of approving a new device. CN and Global share the same workspace-only branch; account-only login exposes the latent error in both editions. Distinguish signed-out recipients, signed-in accounts without a connected vault, and connected approvers. Account-only devices retain device management and Add a device; guide users through explicit vault selection before entering the new device code. Preserve the existing vault-bound encrypted pairing protocol and connection confirmation; never auto-select or connect a vault. Add guidance in all ten Global languages. Account deletion remains account-scoped: managing/deleting cloud vaults and closing an empty account require no local vault connection. No real-account deletion, payment, service deployment or Alpha publication in this change.
+
+Verification: 55 targeted settings, Global parity, language and CN account-closure tests pass on Windows. CN/Global builds and dependency-isolation checks pass. Native pairing on Windows/macOS/Linux/Android/iPhone/iPad remains unverified; no real account or vault was used.
+
 ## CHG-20261107-GLOBAL-PAYMENT-INHERIT-LANGUAGE
 
 Requirement: provide an Alpha for testing payment pages that inherit the plugin language without a second language selector. Prepare Global 1.1.8-alpha.6 with the paired Server presentation update. The existing plugin browser handoff already carries the selected language; Client runtime is unchanged. Preserve prior downloads, settings, keys, checkpoints and source modification times. Native Windows/macOS/Linux/Android/iPhone/iPad and actual hosted merchant acceptance remain unverified; publication acceptance is recorded separately.

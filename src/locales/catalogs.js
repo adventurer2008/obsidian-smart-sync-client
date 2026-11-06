@@ -1,6 +1,7 @@
 // CHG-20261106-GLOBAL-I18N: initial translations; native-language review pending.
 export const catalogs = {
   "zh-CN": {
+    "overview.pairSelectNotebook": "已登录账号。请先在“管理笔记库”中连接要配对的云端库，再点“添加设备”输入新设备的六位码。连接后，本机笔记也可能上传，请确认选择正确。",
     "account.closeTitle": "删除账户",
     "account.closeCloudFirst": "备份您需要的任何笔记，然后在删除您的帐户之前删除所有云笔记库。等待云清理完成。",
     "account.closeCloudStatus": "云笔记库：{vaults}。清理工作：{pending}。",
@@ -900,6 +901,7 @@ export const catalogs = {
     "literal:Access ends: {date}": "访问结束：{date}"
   },
   "zh-TW": {
+    "overview.pairSelectNotebook": "已登入帳號。請先在「管理筆記庫」中連接要配對的雲端庫，再點「新增設備」輸入新設備的六位碼。連接後，本機筆記也可能上傳，請確認選擇正確。",
     "account.closeTitle": "刪除帳戶",
     "account.closeCloudFirst": "備份您需要的任何筆記，然後在刪除您的帳戶之前刪除所有雲端筆記庫。等待雲清理完成。",
     "account.closeCloudStatus": "雲端筆記庫：{vaults}。清理工作：{pending}。",
@@ -1799,6 +1801,7 @@ export const catalogs = {
     "literal:Access ends: {date}": "訪問結束：{date}"
   },
   "ja": {
+    "overview.pairSelectNotebook": "ログイン済みです。まず「ノートブックの管理」で対象のクラウド保管庫に接続し、「デバイスを追加」で新しいデバイスの6桁のコードを入力してください。接続後はローカルのノートもアップロードされる場合があるため、選択を確認してください。",
     "account.closeTitle": "アカウントを削除する",
     "account.closeCloudFirst": "必要なメモをバックアップし、アカウントを削除する前にすべてのクラウド保管庫を削除してください。クラウドのクリーンアップが完了するまで待ちます。",
     "account.closeCloudStatus": "クラウドボルト: {vaults}。クリーンアップ ジョブ: {pending}。",
@@ -2698,6 +2701,7 @@ export const catalogs = {
     "literal:Access ends: {date}": "アクセス終了: {date}"
   },
   "ko": {
+    "overview.pairSelectNotebook": "로그인된 상태입니다. 먼저 노트북 관리에서 연결할 클라우드 보관함을 선택한 다음 장치 추가에서 새 장치의 6자리 코드를 입력하세요. 연결 후 로컬 노트도 업로드될 수 있으므로 선택을 확인하세요.",
     "account.closeTitle": "계정 삭제",
     "account.closeCloudFirst": "필요한 모든 메모를 백업한 다음 계정을 삭제하기 전에 모든 클라우드 볼트를 삭제하세요. 클라우드 정리가 완료될 때까지 기다립니다.",
     "account.closeCloudStatus": "클라우드 볼트: {vaults}. 정리 작업: {pending}.",
@@ -3597,6 +3601,7 @@ export const catalogs = {
     "literal:Access ends: {date}": "액세스 종료: {date}"
   },
   "de": {
+    "overview.pairSelectNotebook": "Sie sind angemeldet. Verbinden Sie zuerst den gewünschten Cloud-Tresor unter Notizbücher verwalten. Geben Sie danach unter Gerät hinzufügen den sechsstelligen Code des neuen Geräts ein. Lokale Notizen können nach dem Verbinden hochgeladen werden. Prüfen Sie daher Ihre Auswahl.",
     "account.closeTitle": "Konto löschen",
     "account.closeCloudFirst": "Sichern Sie alle benötigten Notizen und löschen Sie dann alle Cloud-Tresore, bevor Sie Ihr Konto löschen. Warten Sie, bis die Cloud-Bereinigung abgeschlossen ist.",
     "account.closeCloudStatus": "Cloud-Tresore: {vaults}. Bereinigungsjobs: {pending}.",
@@ -4496,6 +4501,7 @@ export const catalogs = {
     "literal:Access ends: {date}": "Zugriff endet: {date}"
   },
   "fr": {
+    "overview.pairSelectNotebook": "Vous êtes connecté. Connectez d’abord le coffre cloud souhaité dans Gérer les carnets, puis saisissez le code à six chiffres du nouvel appareil dans Ajouter un appareil. Les notes locales peuvent être téléversées après la connexion. Vérifiez votre sélection.",
     "account.closeTitle": "Supprimer le compte",
     "account.closeCloudFirst": "Sauvegardez toutes les notes dont vous avez besoin, puis supprimez tous les coffres-forts cloud avant de supprimer votre compte. Attendez la fin du nettoyage du cloud.",
     "account.closeCloudStatus": "Coffres cloud : {vaults}. Travaux de nettoyage : {pending}.",
@@ -5395,6 +5401,7 @@ export const catalogs = {
     "literal:Access ends: {date}": "Extrémités d'accès : {date}"
   },
   "es": {
+    "overview.pairSelectNotebook": "Has iniciado sesión. Conecta primero la bóveda en la nube deseada en Gestionar cuadernos y luego introduce el código de seis dígitos del nuevo dispositivo en Añadir dispositivo. Las notas locales pueden subirse al conectar. Comprueba tu selección.",
     "account.closeTitle": "Eliminar cuenta",
     "account.closeCloudFirst": "Haga una copia de seguridad de las notas que necesite y luego elimine todas las bóvedas en la nube antes de eliminar su cuenta. Espere a que finalice la limpieza de la nube.",
     "account.closeCloudStatus": "Bóvedas en la nube: {vaults}. Trabajos de limpieza: {pending}.",
@@ -6294,6 +6301,7 @@ export const catalogs = {
     "literal:Access ends: {date}": "Extremos de acceso: {date}"
   },
   "pt-BR": {
+    "overview.pairSelectNotebook": "Você está conectado à conta. Primeiro conecte o cofre desejado na nuvem em Gerenciar cadernos e depois insira o código de seis dígitos do novo dispositivo em Adicionar dispositivo. As notas locais podem ser enviadas após a conexão. Confira sua seleção.",
     "account.closeTitle": "Excluir conta",
     "account.closeCloudFirst": "Faça backup de todas as notas necessárias e exclua todos os cofres na nuvem antes de excluir sua conta. Aguarde a conclusão da limpeza da nuvem.",
     "account.closeCloudStatus": "Cofres em nuvem: {vaults}. Trabalhos de limpeza: {pending}.",
@@ -7193,6 +7201,7 @@ export const catalogs = {
     "literal:Access ends: {date}": "Fim do acesso: {date}"
   },
   "ru": {
+    "overview.pairSelectNotebook": "Вы вошли в аккаунт. Сначала подключите нужное облачное хранилище в управлении блокнотами, затем в разделе добавления устройства введите шестизначный код нового устройства. После подключения локальные заметки могут быть загружены в облако. Проверьте выбор.",
     "account.closeTitle": "Удалить аккаунт",
     "account.closeCloudFirst": "Создайте резервную копию всех необходимых заметок, а затем удалите все облачные хранилища перед удалением своей учетной записи. Дождитесь завершения очистки облака.",
     "account.closeCloudStatus": "Облачные хранилища: {vaults}. Задания по очистке: {pending}.",

@@ -11,6 +11,26 @@ const {billingCard,capacityWarning}=await import('../src/billing.js');
 const {default:Plugin}=await import('../src/plugin.js');
 const {modals,Modal,Platform}=await import('./obsidian-double.mjs');
 
+test('Global device addition distinguishes account-only, connected and signed-out devices',async()=>{
+ const calls=[];
+ const plugin={app:{},data:{settings:{workspace:''}},accountAuthorized:true,
+  manageNotebooks:async()=>calls.push('notebooks'),approveDevice:async()=>calls.push('approve'),pairThisDevice:async()=>calls.push('pair')};
+ let dialog=await Plugin.prototype.addDevice.call(plugin);
+ assert.equal(dialog.contentEl.children[0].text,t('overview.pairSelectNotebook'));
+ assert.equal(dialog.contentEl.settings[0].controls[0].text,'Manage notebooks');
+ await dialog.contentEl.settings[0].controls[0].click();
+ assert.deepEqual(calls,['notebooks']);
+ plugin.data.settings.workspace='synthetic-vault';
+ dialog=await Plugin.prototype.addDevice.call(plugin);
+ assert.equal(dialog.contentEl.settings[0].controls[0].text,'Approve a new device');
+ await dialog.contentEl.settings[0].controls[0].click();
+ plugin.data.settings.workspace='';plugin.accountAuthorized=false;
+ dialog=await Plugin.prototype.addDevice.call(plugin);
+ assert.equal(dialog.contentEl.settings[0].controls[0].text,'Pair this device');
+ await dialog.contentEl.settings[0].controls[0].click();
+ assert.deepEqual(calls,['notebooks','approve','pair']);
+});
+
 test('English plan cards hide closed orders and retain active plan details',()=>{
  const now=Date.UTC(2026,10,6);
  const account={entitlement:{paid:true,plan:'global-5gb-year',logical:5*1024**3,ends:Date.UTC(2027,9,25)},usage:{logicalBytes:3.9*1024**3}};
@@ -87,13 +107,15 @@ test('Global encryption menus and password dialog use English without changing c
 });
 
 test('Global deletion blocks for cloud vaults and never posts until exact confirmation',async()=>{
- const calls=[];let status={vaults:1,pending:0,requiresReauthentication:false},signedOut=0;
- const plugin={app:{},data:{localId:'delete-fixture',settings:{origin:'https://sync.smartsync.cc'}},secret:()=> 'account-key',stopped:false,
+ const calls=[];let status={vaults:1,pending:0,requiresReauthentication:false},signedOut=0,managed=0;
+ const plugin={app:{},data:{localId:'delete-fixture',settings:{origin:'https://sync.smartsync.cc',workspace:''}},secret:()=> 'account-key',stopped:false,
   accountApi:async()=>({request:async(method,path,input)=>{calls.push({method,path,input});return method==='GET'?status:{erased:true};}}),
-  exclusive:async work=>work(),signOut:async()=>{signedOut++;},notify(){},manageNotebooks:async()=>{}};
+  exclusive:async work=>work(),signOut:async()=>{signedOut++;},notify(){},manageNotebooks:async()=>{managed++;},connectWorkspace:()=>assert.fail('Deletion must not connect a local vault')};
  await Plugin.prototype.deleteGlobalAccount.call(plugin);
  assert.equal(modals.at(-1).contentEl.settings[0].controls[0].text,'Manage cloud vaults');
  assert.equal(calls.some(call=>call.method==='POST'),false);
+ await modals.at(-1).contentEl.settings[0].controls[0].click();
+ assert.equal(managed,1);assert.equal(plugin.data.settings.workspace,'');
  status={vaults:0,pending:0,requiresReauthentication:true};
  await Plugin.prototype.deleteGlobalAccount.call(plugin);
 	assert.equal(modals.at(-1).contentEl.settings[0].controls[0].text,'Verify identity to continue');

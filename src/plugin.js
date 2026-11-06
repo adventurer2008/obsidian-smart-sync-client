@@ -4279,9 +4279,11 @@ export default class IndependentSync extends Plugin {
 	}
 	async addDevice() {
 		const connected = Boolean(this.data.settings.workspace);
+		const signedIn = connected || this.accountAuthorized === true;
 		const dialog = new ChoiceWindow(this.app, t('overview.addDevice'), (area) => {
-			area.createEl('p', { text: t(connected ? 'overview.approveHelp' : 'overview.pairHelp') });
+			area.createEl('p', { text: t(connected ? 'overview.approveHelp' : signedIn ? 'overview.pairSelectNotebook' : 'overview.pairHelp') });
 			if (connected) action(area, t('msg_99bd7e2889'), () => this.approveDevice(dialog));
+			else if (signedIn) action(area, t('overview.manageNotebooks'), async () => { dialog.close(); await this.manageNotebooks(); });
 			else action(area, t('msg_7db459b789'), () => this.pairThisDevice());
 		});
 		dialog.open();
@@ -5407,12 +5409,12 @@ export class IndependentSettings extends PluginSettingTab {
 		const devices = row(
 			t('overview.devices'),
 			(setting) => {
-				setting.setDesc(t(connected ? 'overview.approveHelp' : 'overview.pairHelp'));
+				setting.setDesc(t(connected ? 'overview.approveHelp' : accountConnected ? 'overview.pairSelectNotebook' : 'overview.pairHelp'));
 				setting.settingEl?.classList.add('smart-sync-devices-row');
 				// Native settings refreshes can reuse the row and leave custom children.
 				for (const previous of setting.settingEl?.querySelectorAll('.smart-sync-pair-help') ?? []) previous.remove();
-				const help = setting.settingEl?.createEl('p', { cls: 'smart-sync-pair-help', text: t(connected ? 'overview.pairHint' : 'overview.pairHelp') });
-				if (connected) {
+				const help = setting.settingEl?.createEl('p', { cls: 'smart-sync-pair-help', text: t(connected ? 'overview.pairHint' : accountConnected ? 'overview.pairSelectNotebook' : 'overview.pairHelp') });
+				if (accountConnected) {
 					bindAction(setting, t('overview.deviceManagement'), () => plugin.devices());
 					bindAction(setting, t('overview.addDevice'), () => plugin.addDevice());
 				} else bindAction(setting, t('overview.pair'), () => plugin.pairThisDevice());

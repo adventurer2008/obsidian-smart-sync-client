@@ -482,6 +482,7 @@ export const messages = {
 		'更换笔记库前，请先在顶部退出当前账号，本机笔记会保留。创建笔记库需要使用账号登录密钥。',
 	'overview.approveHelp': '新设备获取六位码，本机点‘批准新设备’批准。',
 	'overview.pairHelp': '也可以由已经连接的设备批准，让这台设备加入同步。',
+	'overview.pairSelectNotebook': '已登录账号。请先在“管理笔记库”中连接要配对的云端库，再点“添加设备”输入新设备的六位码。连接后，本机笔记也可能上传，请确认选择正确。',
 	'overview.moreAccount': '更多账号操作',
 	'overview.moreAccountHelp': '注销账号并删除全部云端数据，原登录密钥将失效',
 	'overview.accountSearch': '已有账号登录、退出当前账号',
@@ -1048,6 +1049,7 @@ export const englishDraft = {
 		'Get a six-digit code on the new device, then approve it from this connected device.',
 	'overview.pairHelp':
 		'An already connected device can approve this device to join synchronization.',
+	'overview.pairSelectNotebook': 'You are signed in. First connect the intended cloud vault in Manage notebooks, then use Add a device to enter the new device’s six-digit code. Local notes may upload after connecting, so check your selection.',
 	'overview.moreAccount': 'More account actions',
 	'overview.moreAccountHelp':
 		'Delete the account and all cloud data; the original login key becomes invalid',
