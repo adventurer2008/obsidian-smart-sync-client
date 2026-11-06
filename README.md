@@ -4,7 +4,7 @@ Shared Client source for Wujie Sync (China) and Smart Sync (Global). [简体中�
 
 ## Scope
 
-This is the Client development repository. Regional builds share the synchronization runtime, with separate identities and service configuration. China includes account login, free-plan enrollment, purchase and renewal entry with server-verified payment status. Global includes English account flows, Google/GitHub/email sign-in and separate Stripe checkout. Its service, storage and account data are independent. The installable Global 1.1.5 package and [operation manual](https://github.com/adventurer2008/obsidian-smart-sync-release-global/blob/main/USER-GUIDE.md) are available from its regional distribution; source publication does not establish Community approval.
+This is the Client development repository. Regional builds share the synchronization runtime, with separate identities and service configuration. China includes account login, free-plan enrollment, purchase and renewal entry with server-verified payment status. Global includes ten interface languages, Google/GitHub/email sign-in and account-assigned USD checkout through Stripe or Dodo Payments. Its service, storage and account data are independent. Installable Global packages and [operation manual](https://github.com/adventurer2008/obsidian-smart-sync-release-global/blob/main/USER-GUIDE.md) are available from its regional distribution; source publication does not establish Community approval.
 
 Server source, internal archives, deployment tools and private acceptance evidence are maintained privately. The public synthetic tests do not replace Client/Server integration, production, official Community review or physical-device acceptance.
 
@@ -38,7 +38,7 @@ Synchronization needs an approved account and the matching regional service. Con
 
 Global diagnostics stay on the device and can be exported manually; the Global client does not upload diagnostic telemetry. Device presence and local vault-size reports support the user's device-management and peer-discovery features. Server request logs and account metadata are described in the regional privacy policy. Enabling Windows launch at login explicitly creates a shortcut in the current user's Startup folder outside the vault; disabling that setting removes its owned shortcut.
 
-[China installation and distribution](https://github.com/adventurer2008/obsidian-smart-sync-release-cn) · [China privacy](https://github.com/adventurer2008/obsidian-smart-sync-release-cn/blob/main/PRIVACY.md) · [Global downloads and manual](https://github.com/adventurer2008/obsidian-smart-sync-release-global) · [Global privacy](https://smartsync.cc/privacy/). The current Global stable release is 1.1.5; official Community listing is a separate process.
+[China installation and distribution](https://github.com/adventurer2008/obsidian-smart-sync-release-cn) · [China privacy](https://github.com/adventurer2008/obsidian-smart-sync-release-cn/blob/main/PRIVACY.md) · [Global downloads and manual](https://github.com/adventurer2008/obsidian-smart-sync-release-global) · [Global privacy](https://smartsync.cc/privacy/). See the Global distribution for the current stable release; official Community listing is a separate process.
 
 ## License and provenance
 

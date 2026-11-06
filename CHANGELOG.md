@@ -1,5 +1,10 @@
 # Source change record
 
+## Global 1.1.6 candidate — CHG-20261106-GLOBAL-116-QUICK
+
+Requirement: publish all completed Global backlog using the explicitly requested quick flow. Include ten local interface languages and the device/vault language preference, alongside the associated service's USD Stripe/Dodo routing, pending-checkout recovery and refund fixes. Preserve China behavior, encryption, account/vault isolation, synchronization and original source modification times. This version metadata does not claim production acceptance before the fixed candidate is deployed and verified. Native six-platform and hosted-browser interruption gaps remain recorded.
+
+
 ## CHG-20261106-GLOBAL-DOCS-I18N
 
 Requirement: refresh the overseas website and GitHub home/operation manual from the published 1.1.5 features, and research Obsidian/competitor language coverage before selecting locales. Correct stale source-publication wording and the notes-first heading, link the current Global operation manual, and retain physical-device acceptance boundaries. English documentation only: no runtime, protocol, account/vault, content/key/checkpoint/source-mtime or version changes. Locale rollout remains a proposal, not delivered multilingual support.
