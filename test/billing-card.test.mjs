@@ -95,6 +95,21 @@ test('renewal action is hidden for a healthy plan and uses the purchase CTA with
 });
 
 
+test('plan refresh failures stay visible after an empty order status and recover on focus',async()=>{
+ const dom=new JSDOM('<div id="setting"><div id="info"></div><div id="controls"></div></div>',{pretendToBeVisual:true}),doc=dom.window.document;
+ const setting={settingEl:doc.querySelector('#setting'),infoEl:doc.querySelector('#info'),controlEl:doc.querySelector('#controls'),setName(){}};
+ let failed=false;
+ const dispose=mountBillingCard(setting,{connected:true,live:()=>true,now:()=>at,target:dom.window,load:async()=>{if(failed)throw Error('offline');return paid(Date.UTC(2027,0,1));},open:async()=>{},onError:error=>{throw error;}});
+ try{
+  await new Promise(done=>setImmediate(done));
+  const status=doc.querySelector('[aria-live="polite"]');assert.equal(status.hidden,true);
+  failed=true;dom.window.dispatchEvent(new dom.window.Event('focus'));await new Promise(done=>setImmediate(done));
+  assert.equal(status.hidden,false);assert.match(status.textContent,/套餐信息暂时无法更新/);
+  failed=false;dom.window.dispatchEvent(new dom.window.Event('focus'));await new Promise(done=>setImmediate(done));
+  assert.equal(status.hidden,true);assert.equal(status.textContent,'');
+ }finally{dispose();dom.window.close();}
+});
+
 test('current and scheduled packages are distinct in the account card',()=>{
     const value=paid(Date.UTC(2028,9,22));value.entitlement.upcoming={plan:'cn-20gb-year',starts:Date.UTC(2027,9,22)};
     const card=billingCard(value,true,at);assert.equal(card.title,'当期套餐：5GB 年付');assert.match(card.upcoming,/20GB 年付/);assert.match(card.upcoming,/生效/);

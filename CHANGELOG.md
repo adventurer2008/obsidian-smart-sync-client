@@ -1,5 +1,9 @@
 # Source change record
 
+## CHG-20261107-CN-116-ALPHA1
+
+Requirement: deliver the three completed China fixes in the next production-connected Hub Alpha. Prepare China 1.1.6-alpha.1 with closed-order text hidden, explicit vault selection for signed-in device approvers, and narrow/enlarged identity layout fixes. Keep failed plan refresh messages visible after hiding an empty order status; successful refresh hides the recovered warning. Preserve China identity, production endpoints and existing renewal behavior. The existing production Server remains the compatibility baseline. Release evidence is separate from preparation; native Windows/macOS/Linux/Android/iPhone/iPad installation and pairing remain unverified.
+
 ## CHG-20261107-GLOBAL-119-STABLE
 
 Requirement: publish the Community warning remediation as Global Stable 1.1.9 through Hub and refresh the official Community scan. Include the scoped CSS remediation and contribution guide; preserve runtime JavaScript, dependencies, settings, synchronization and original modification times. Publish a new immutable release, with source rebuild verification and manually generated GitHub artifact attestations. Keep existing releases and the deployed Server. Community scoring is verified separately after publication; native-device acceptance remains bounded by the platform matrix.

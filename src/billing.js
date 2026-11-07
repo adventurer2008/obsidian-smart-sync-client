@@ -126,7 +126,7 @@ export function mountBillingCard(setting, { connected, load, open, live, onError
 		if (!current() || loading || now() >= deadline || doc.hidden) return;
 		loading = true;
 		try { const result = await load(); if (current()) { data = result; render(); } }
-		catch { if (current()) status.textContent = edition.edition === 'global' ? translateEnglish("Plan information is unavailable. Reopen settings shortly.") : '套餐信息暂时无法更新，请稍后重新打开设置。'; }
+		catch { if (current()) { status.textContent = edition.edition === 'global' ? translateEnglish("Plan information is unavailable. Reopen settings shortly.") : '套餐信息暂时无法更新，请稍后重新打开设置。'; status.hidden = false; } }
 		finally { loading = false; if (current() && now() < deadline) timer = view.setTimeout(() => { void refresh(); }, billingCard(data, connected, now()).resume ? 5000 : 30000); }
 	}
 	const focus = () => { if (current()) { deadline = now() + 15 * 60000; void refresh(); } };

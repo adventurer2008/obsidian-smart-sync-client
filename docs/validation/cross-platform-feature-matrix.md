@@ -1,5 +1,11 @@
 # Cross-platform feature and scenario review
 
+## CHG-20261107-CN-116-ALPHA1
+
+China 1.1.6-alpha.1 combines hidden closed-order text, account-only pairing guidance and narrow identity layout fixes. Failed plan refresh remains visible and clears after recovery. Windows, macOS and Linux desktop, Android, iPhone/iOS and iPad/iPadOS are conditionally supported in Obsidian 1.12.7 or newer; native installation, real pairing and screen-reader acceptance on all six remain unverified. Windows/WSL checks and browser geometry are recorded separately and cannot replace native acceptance.
+
+Review narrow/touch/enlarged fonts, disconnected/account-only/connected roles, account/vault isolation and offline plan refresh. Pairing still requires explicit vault selection and confirmation; no automatic connection or permission changes. Existing mixed-version protocol, content, encryption, checkpoints and source mtime remain unchanged. Upgrade replaces only program files and keeps local state; older Alpha and Stable assets remain available. Background/lock/reboot introduce no new behavior and are outside these presentation and entry-guidance changes.
+
 ## CHG-20261107-COMMUNITY-WARNING-REMEDIATION
 
 Scoped CSS now uses ordinary selector priority instead of !important and keeps the narrow identity information wrapper in the layout/accessibility tree rather than display:contents. Full-width identity values and a following action row may make narrow cards taller. Hidden payment actions, enlarged labels, title visibility, LAN summaries and existing settings remain available. CONTRIBUTING.md adds contributor guidance without runtime behavior.
