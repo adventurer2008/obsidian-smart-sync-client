@@ -1,5 +1,9 @@
 # Cross-platform feature and scenario review
 
+## CHG-20261107-CN-116-STABLE
+
+China 1.1.6 promotes the delivered 1.1.6-alpha.1 with version-only metadata. All six platforms (Windows, macOS, Linux desktop, Android, iPhone/iOS, iPad/iPadOS) retain conditional support and unverified native installation, pairing and accessibility acceptance. Exact main.js/styles.css equality and a manifest version-only comparison bind reused Windows/WSL, browser and live compatibility evidence; promotion adds no device coverage. No new lifecycle, network, identity/vault, schema, mixed-version or rollback behavior is introduced. Keep local settings, secrets, checkpoints, content and source mtime when updating; existing Alpha and Stable assets remain available.
+
 ## CHG-20261107-CN-116-ALPHA1
 
 China 1.1.6-alpha.1 combines hidden closed-order text, account-only pairing guidance and narrow identity layout fixes. Failed plan refresh remains visible and clears after recovery. Windows, macOS and Linux desktop, Android, iPhone/iOS and iPad/iPadOS are conditionally supported in Obsidian 1.12.7 or newer; native installation, real pairing and screen-reader acceptance on all six remain unverified. Windows/WSL checks and browser geometry are recorded separately and cannot replace native acceptance.

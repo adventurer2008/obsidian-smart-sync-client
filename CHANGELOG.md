@@ -1,5 +1,9 @@
 # Source change record
 
+## CHG-20261107-CN-116-STABLE
+
+Requirement: publish the delivered China 1.1.6-alpha.1 as production Stable 1.1.6 and push the source and release records. Change version metadata only; verify identical main.js/styles.css and a version-only manifest difference. Reuse the fixed Alpha's 19 gates, 11 Windows/WSL jobs and live compatibility evidence with fresh build, source reproduction and public download checks. Keep existing production Server, Alpha assets and stored user data. Update GitHub, Hub Stable and official website together. Native six-platform acceptance remains bounded by the existing matrix and is not established by promotion.
+
 ## CHG-20261107-CN-116-ALPHA1
 
 Requirement: deliver the three completed China fixes in the next production-connected Hub Alpha. Prepare China 1.1.6-alpha.1 with closed-order text hidden, explicit vault selection for signed-in device approvers, and narrow/enlarged identity layout fixes. Keep failed plan refresh messages visible after hiding an empty order status; successful refresh hides the recovered warning. Preserve China identity, production endpoints and existing renewal behavior. The existing production Server remains the compatibility baseline. Release evidence is separate from preparation; native Windows/macOS/Linux/Android/iPhone/iPad installation and pairing remain unverified.
