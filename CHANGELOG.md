@@ -1,5 +1,9 @@
 # Source change record
 
+## CHG-20261107-CONTRIBUTING-PUBLISH
+
+Requirement: publish the previously drafted contribution guide to the public Client and Global distribution repositories. Add issue, pull-request, synthetic validation, cross-platform and private security-reporting instructions, with a README link. Documentation only; no version bump, runtime or existing release-asset changes. Verified guide contents and link targets; official Community health refresh remains external. Review warnings are separate from the missing-guide hygiene indicator. Native-platform behavior is unchanged; no native-device acceptance claimed.
+
 ## CHG-20261107-GLOBAL-118-STABLE-PROMOTION
 
 Requirement: the user reports Alpha.6 testing passed and requests production publication. Promote the tested Global Client to Stable 1.1.8 through Hub. Only version metadata changes; retain pairing guidance, inherited payment/login language and all existing runtime behavior. Verify identical main.js/styles.css and a version-only manifest difference against the published Alpha before promotion. Keep the already deployed Server 0.1.47, previous Alpha/Stable assets, settings, keys, checkpoints and original modification times. The user's acceptance does not establish unreported platform/device coverage; native Windows/macOS/Linux/Android/iPhone/iPad coverage remains explicitly bounded in the platform matrix.
