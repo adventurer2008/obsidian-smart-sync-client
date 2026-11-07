@@ -1,8 +1,18 @@
 # Source change record
 
+## CHG-20261107-GLOBAL-119-STABLE
+
+Requirement: publish the Community warning remediation as Global Stable 1.1.9 through Hub and refresh the official Community scan. Include the scoped CSS remediation and contribution guide; preserve runtime JavaScript, dependencies, settings, synchronization and original modification times. Publish a new immutable release, with source rebuild verification and manually generated GitHub artifact attestations. Keep existing releases and the deployed Server. Community scoring is verified separately after publication; native-device acceptance remains bounded by the platform matrix.
+
 ## CHG-20261107-CONTRIBUTING-PUBLISH
 
 Requirement: publish the previously drafted contribution guide to the public Client and Global distribution repositories. Add issue, pull-request, synthetic validation, cross-platform and private security-reporting instructions, with a README link. Documentation only; no version bump, runtime or existing release-asset changes. Verified guide contents and link targets; official Community health refresh remains external. Review warnings are separate from the missing-guide hygiene indicator. Native-platform behavior is unchanged; no native-device acceptance claimed.
+
+## CHG-20261107-COMMUNITY-WARNING-REMEDIATION
+
+Requirement: fix actionable Community warnings for the next release now, and add a contribution guide. Replace narrow identity-row display:contents with an intact flex container, remove all CSS !important declarations and consolidate Global button overrides using scoped selectors. Preserve hidden payment actions, readable enlarged text and touch targets. Add CONTRIBUTING.md with contribution, validation and private security-reporting guidance. No version bump or publication; existing 1.1.8 artifacts remain unchanged.
+
+Verification: CN and Global affected-layout models each pass 144 cases / 928 inspections across Chromium/WebKit, desktop/mobile/tablet viewports, two host contracts, themes, enlarged fonts and resize transitions. A further 80 Global cases cover ten languages at 32px, narrow/desktop widths, hidden/available payment actions and keyboard focus. Twenty-seven targeted billing/language tests and both regional builds/isolation checks pass. Global main.js retains its released SHA256 a4246f552faf26286a2a81a441888ec5c5e24d5966cf619875a425d039ef716d. Community lint remains zero errors/seven reviewed network/safety-path warnings; official CSS rescanning and six-platform native acceptance remain pending.
 
 ## CHG-20261107-GLOBAL-118-STABLE-PROMOTION
 

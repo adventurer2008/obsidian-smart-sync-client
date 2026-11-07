@@ -1,5 +1,22 @@
 # Cross-platform feature and scenario review
 
+## CHG-20261107-COMMUNITY-WARNING-REMEDIATION
+
+Scoped CSS now uses ordinary selector priority instead of !important and keeps the narrow identity information wrapper in the layout/accessibility tree rather than display:contents. Full-width identity values and a following action row may make narrow cards taller. Hidden payment actions, enlarged labels, title visibility, LAN summaries and existing settings remain available. CONTRIBUTING.md adds contributor guidance without runtime behavior.
+
+| Platform | Support | Native acceptance for this change |
+| --- | --- | --- |
+| Windows desktop | Conditional on supported Obsidian host | Unverified; Windows Chromium/WebKit models and Node checks pass, not native installation acceptance. |
+| macOS desktop | Conditional on supported Obsidian host | Unverified; Windows WebKit does not establish macOS acceptance. |
+| Linux desktop | Conditional on supported Obsidian host | Unverified; no native Linux desktop run. |
+| Android | Conditional foreground UI in supported host | Unverified; narrow touch/layout models only. |
+| iPhone/iOS | Conditional foreground UI in supported host | Unverified; WebKit models are not a physical iPhone. |
+| iPad/iPadOS | Conditional foreground UI in supported host | Unverified; tablet/resize models are not physical split-view acceptance. |
+
+CN/Global each pass 144 affected-layout cases / 928 inspections; Global adds 80 cases for all ten languages at 32px, 320/1280px widths, legacy/modern host contracts, light/dark themes, hidden/available payment controls and programmatic keyboard focus. These do not prove screen-reader behavior, custom-theme overrides or native keyboard navigation. Both builds/isolation and 27 focused billing/language tests pass. CSS triggers !important and display:contents are absent from source and built regional CSS; official rescan is pending the next publication. Seven reviewed network/safety-path lint warnings remain.
+
+No new native API, background/lock/reboot, network recovery or protocol path is introduced; those scenarios are outside this presentation-only change. Mixed versions remain protocol-compatible. Updating/reverting CSS does not migrate data or alter identities, vault boundaries, keys, checkpoints, content or source mtime. No installed vault, Server or published asset was changed.
+
 ## CHG-20261107-GLOBAL-PAYMENT-INHERIT-LANGUAGE
 
 Global Alpha.6 uses the existing plugin language fragment for the paired payment UI; Client runtime is unchanged. Windows/macOS/Linux desktop, Android, iPhone/iOS and iPad/iPadOS are conditionally supported through the existing browser handoff. All six native installations, touch/layout, foreground/background/lock/reboot, offline recovery and merchant return paths remain unverified for this change. Browser fixtures cover language selection, blocked storage, refresh, and old preferences; they do not establish native acceptance. No sync, identity, vault isolation, encryption, progress, original mtime or schema change. Previous Client versions without a language hint use browser defaults; reverting the payment UI may restore its language selector.
