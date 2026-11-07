@@ -10,6 +10,8 @@ Server source, internal archives, deployment tools and private acceptance eviden
 
 ## Build and test
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for issue reports, pull requests, platform validation and private security reporting.
+
 Use Node 26.12.1:
 
 ```sh
