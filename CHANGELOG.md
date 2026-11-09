@@ -2,7 +2,7 @@
 
 ## CHG-20261109-DESKTOP-STATUS-BAR-STEADY
 
-Release target: China Hub Alpha 1.1.7-alpha.2 for PC verification. The candidate also contains the existing China Alpha iPad sidebar fix.
+Delivery: China Hub Alpha 1.1.7-alpha.2 includes this fix and the preceding China Alpha iPad sidebar fix. On 2026-11-09, the user confirmed on PC that changing the digit count no longer shifts the status bar and that the completion status appears immediately. The user requested source-only delivery for Global. The shared fix is present in the verified Global build; the China Alpha PC result applies to the tested China package.
 
 Requirement: the desktop status bar jumps while sync counts update. Give the sync status item a viewport-bounded width, tabular numerals and a tooltip for clipped text. Coalesce desktop progress into the latest update per second while delivering terminal status and settings overview updates immediately. Discard queued progress when the cycle or account changes, the plugin unloads, or a terminal status replaces it. Retain the underlying progress counts, sync behavior and source modification times in both editions.
 

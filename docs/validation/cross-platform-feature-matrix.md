@@ -8,14 +8,14 @@ Windows Node 26.12.1 passed 377 tests with one skip. The progress regression che
 
 | Platform | Support | Native acceptance |
 | --- | --- | --- |
-| Windows desktop | Conditional on the Obsidian status bar | Original jumping reported. Fixed behavior in the installed native host remains unverified. |
+| Windows desktop | Conditional on the Obsidian status bar | User-confirmed on 2026-11-09 after delivery of China Hub Alpha 1.1.7-alpha.2. The bar stays in place when the number of digits changes, and the completion status appears immediately. Narrow windows, enlarged text, error/stop and unload were not separately reported. |
 | macOS desktop | Conditional on the Obsidian status bar | Native host and themes unverified. |
 | Linux desktop | Conditional on the Obsidian status bar | Native host and themes unverified. |
 | Android | Desktop bar not applicable | Existing settings feedback is used. Native behavior for this change was not retested. |
 | iPhone/iOS | Desktop bar not applicable | Existing settings feedback is used. Native behavior for this change was not retested. |
 | iPad/iPadOS | Desktop bar not applicable | Existing settings feedback is used. Native behavior for this change was not retested. |
 
-Check narrow desktop windows, enlarged status text, adjacent items, immediate failure/completion, and cancellation of pending progress on stop or unload. Desktop lifecycle matters only to the pending display timer. Mobile touch and lock behavior for the desktop bar are not applicable. Offline recovery, mixed-version clients and upgrades or rollback keep existing sync and storage behavior. The bar introduces no persisted state, network work, account/vault data changes or changes to encryption, progress accounting or source mtime.
+Remaining native coverage includes narrow desktop windows, enlarged status text, immediate failure and cancellation of pending progress on stop or unload. Desktop lifecycle matters only to the pending display timer. Mobile touch and lock behavior for the desktop bar are not applicable. Offline recovery, mixed-version clients and upgrades or rollback keep existing sync and storage behavior. The bar introduces no persisted state, network work, account/vault data changes or changes to encryption, progress accounting or source mtime.
 
 ## CHG-20261109-NOTE-TOOLS-SIDEBAR-RESTORE
 
