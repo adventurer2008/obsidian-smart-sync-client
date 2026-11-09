@@ -851,6 +851,7 @@ export default class IndependentSync extends Plugin {
 			});
 		}
 		this.status = this.addStatusBarItem();
+		if (!Platform.isMobile) this.status.classList.add('smart-sync-status-bar');
 		this.setStatus(t(this.data.manualSyncStopped ? 'task.stopped' : this.data.settings.direction === 'paused' ? 'msg_c4f91c861a' : 'sync.ready'));
 		this.tab = new IndependentSettings(this.app, this);
 		this.addSettingTab(this.tab);
@@ -2369,7 +2370,7 @@ export default class IndependentSync extends Plugin {
 				if (this.cycleActivity && Number.isSafeInteger(scan?.checked) && Number.isSafeInteger(scan?.total) && scan.checked >= 0 && scan.total >= scan.checked)
 					this.cycleActivity.scan = { checked: scan.checked, total: scan.total };
 				this.syncStage('scanning');
-				this.setStatus(t('msg_242eab2e90', { text: text }), { overview: this.transferPhase ?? t('overview.scanning') });
+				this.setStatus(t('msg_242eab2e90', { text: text }), { overview: this.transferPhase ?? t('overview.scanning'), progress: true });
 				this.logEvent(text);
 			},
 			onTask: async (event) => {
@@ -2451,7 +2452,18 @@ export default class IndependentSync extends Plugin {
 		for (const update of this.statusListeners ?? []) update(text);
 		if (this.logViews?.size) this.refreshTasks();
 	}
-	setStatus(text, { overview = text } = {}) {
+	writeStatusBar(text) {
+		if (this.status.textContent === text) return;
+		this.status.setText(text);
+		if (!Platform.isMobile) this.status.setAttribute('title', text);
+	}
+	clearStatusBarProgress() {
+		if (!this.statusBarProgress) return;
+		window.clearTimeout(this.statusBarProgress.timer);
+		this.statusBarProgress = undefined;
+	}
+	setStatus(text, { overview = text, progress = false } = {}) {
+		if (this.stopped) return;
 		if (this.deferBackgroundStatus && [t('msg_4c9b675ab6'), t('overview.scanning')].includes(overview)) {
 			this.backgroundStatus = { text, overview };
 			return;
@@ -2459,9 +2471,26 @@ export default class IndependentSync extends Plugin {
 		window.clearTimeout(this.backgroundStatusTimer);
 		this.deferBackgroundStatus = false;
 		this.backgroundStatus = undefined;
-		if (!this.data?.settings.workspace) text = t(this.data?.lastDeletedWorkspace ? 'notebooks.deletedStatus' : 'sync.notConnected');
-		this.status.setText(text);
-		this.publishOverview(this.data?.settings.workspace ? overview : text);
+		const workspace = this.data?.settings.workspace;
+		if (!workspace) text = t(this.data?.lastDeletedWorkspace ? 'notebooks.deletedStatus' : 'sync.notConnected');
+		if (!progress || !workspace || Platform.isMobile) {
+			this.clearStatusBarProgress();
+			this.writeStatusBar(text);
+		} else if (this.statusBarProgress) {
+			this.statusBarProgress.text = text;
+		} else {
+			const activity = this.cycleActivity;
+			const { localId, settings: { origin } } = this.data;
+			const pending = { text };
+			pending.timer = window.setTimeout(() => {
+				this.statusBarProgress = undefined;
+				if (this.cycleActivity === activity && this.data.localId === localId &&
+					this.data.settings.origin === origin && this.data.settings.workspace === workspace)
+					this.writeStatusBar(pending.text);
+			}, 1000);
+			this.statusBarProgress = pending;
+		}
+		this.publishOverview(workspace ? overview : text);
 	}
 
 	automaticChangesAllowed(sending = false) {
@@ -2611,6 +2640,7 @@ export default class IndependentSync extends Plugin {
 		this.detachLinkMaintenanceTimes?.();
 		window.clearTimeout(this.explorerSortTimer);
 		this.stopped = true;
+		this.clearStatusBarProgress();
 		for (const detach of this.explorerSortViews?.values() ?? []) detach();
 		this.explorerSortViews?.clear();
 		this.statusListeners?.clear();
@@ -2901,6 +2931,7 @@ export default class IndependentSync extends Plugin {
 			}
 		})().finally(() => {
 			window.clearInterval(this.stageTimer);
+			this.clearStatusBarProgress();
 			this.lastCycleActivity = { ...this.cycleActivity, finishedAt: Date.now() };
 			this.cycleActivity = undefined;
 			window.clearTimeout(this.backgroundStatusTimer);

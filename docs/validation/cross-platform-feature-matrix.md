@@ -1,5 +1,22 @@
 # Cross-platform feature and scenario review
 
+## CHG-20261109-DESKTOP-STATUS-BAR-STEADY
+
+Both editions use a fixed-width desktop status item that adapts to the viewport. Long status text remains available by hovering over the item. The desktop bar samples progress once per second. The settings overview and manual synchronization feedback keep their existing delivery paths and actual counts.
+
+Windows Node 26.12.1 passed 377 tests with one skip. The progress regression checks timer coalescing, latest counts, immediate error and overview updates, stale account suppression and the mobile path. Windows Chromium and WebKit reproduced the old shift with Obsidian 1.15 host CSS, then passed 288 combined layout checks with 400–1920 px windows, 12–24 px fonts and both text directions. Both regional builds and isolation checks passed. China Community lint reported zero errors and seven existing warnings. Browser checks use synthetic DOM and do not establish native acceptance.
+
+| Platform | Support | Native acceptance |
+| --- | --- | --- |
+| Windows desktop | Conditional on the Obsidian status bar | Original jumping reported. Fixed behavior in the installed native host remains unverified. |
+| macOS desktop | Conditional on the Obsidian status bar | Native host and themes unverified. |
+| Linux desktop | Conditional on the Obsidian status bar | Native host and themes unverified. |
+| Android | Desktop bar not applicable | Existing settings feedback is used. Native behavior for this change was not retested. |
+| iPhone/iOS | Desktop bar not applicable | Existing settings feedback is used. Native behavior for this change was not retested. |
+| iPad/iPadOS | Desktop bar not applicable | Existing settings feedback is used. Native behavior for this change was not retested. |
+
+Check narrow desktop windows, enlarged status text, adjacent items, immediate failure/completion, and cancellation of pending progress on stop or unload. Desktop lifecycle matters only to the pending display timer. Mobile touch and lock behavior for the desktop bar are not applicable. Offline recovery, mixed-version clients and upgrades or rollback keep existing sync and storage behavior. The bar introduces no persisted state, network work, account/vault data changes or changes to encryption, progress accounting or source mtime.
+
 ## CHG-20261109-NOTE-TOOLS-SIDEBAR-RESTORE
 
 The user reports repeated internal search IDs in the iPad drawer that resolve on tap. After layout readiness, load only the enabled Recent and Note Search sidebar views without opening the drawer or selecting a tab. The same public workspace API applies to the six supported hosts in both editions.

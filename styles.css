@@ -1,3 +1,13 @@
+.status-bar-item.smart-sync-status-bar:not(:empty) {
+	display: block;
+	box-sizing: border-box;
+	inline-size: min(27em, 45vw);
+	min-inline-size: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-variant-numeric: tabular-nums;
+}
 .smart-sync-v2-preview {
 	white-space: pre-wrap;
 	overflow-wrap: anywhere;
