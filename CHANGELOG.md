@@ -1,5 +1,13 @@
 # Source change record
 
+## CHG-20261109-NOTE-TOOLS-SIDEBAR-RESTORE
+
+Release target: include this fix in the next China Hub Alpha. Carry the shared fix into the next Global Client build. Check the left sidebar on iPad after cold start and foreground return before selecting Note Search. Confirm that the title and icon are correct and the previously selected panel is preserved.
+
+Validation: the new sidebar fixture reproduces the internal title on the previous source and passes with the fix. Windows Node 26.12.1 reports 376 passed, one skipped. Both regional builds and isolation checks pass. China Community lint reports zero errors and seven existing warnings. Native retest is pending.
+
+Requirement: the iPad left sidebar repeatedly shows the internal note-search ID and a ghost icon until tapped. After layout readiness, load deferred Recent and Note Search views through the Obsidian workspace API so the sidebar can render their real titles and icons before selection. Keep existing view IDs, restored leaf state, selection, and the feature switches in both regional builds. A blank search does not scan notes. See the cross-platform matrix for native acceptance boundaries.
+
 ## CHG-20261107-CN-116-STABLE
 
 Requirement: publish the delivered China 1.1.6-alpha.1 as production Stable 1.1.6 and push the source and release records. Change version metadata only; verify identical main.js/styles.css and a version-only manifest difference. Reuse the fixed Alpha's 19 gates, 11 Windows/WSL jobs and live compatibility evidence with fresh build, source reproduction and public download checks. Keep existing production Server, Alpha assets and stored user data. Update GitHub, Hub Stable and official website together. Native six-platform acceptance remains bounded by the existing matrix and is not established by promotion.

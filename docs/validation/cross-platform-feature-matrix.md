@@ -1,5 +1,20 @@
 # Cross-platform feature and scenario review
 
+## CHG-20261109-NOTE-TOOLS-SIDEBAR-RESTORE
+
+The user reports repeated internal search IDs in the iPad drawer that resolve on tap. After layout readiness, load only the enabled Recent and Note Search sidebar views without opening the drawer or selecting a tab. The same public workspace API applies to the six supported hosts in both editions.
+
+| Platform | Support | Native acceptance |
+| --- | --- | --- |
+| Windows desktop | Conditional on supported Obsidian host | Fixed behavior unverified in the native host. |
+| macOS desktop | Conditional on supported Obsidian host | Fixed behavior unverified in the native host. |
+| Linux desktop | Conditional on supported Obsidian host | Fixed behavior unverified in the native host. |
+| Android | Conditional on supported Obsidian host | Touch drawer and restart unverified. |
+| iPhone/iOS | Conditional on supported Obsidian host | Touch drawer and restart unverified. |
+| iPad/iPadOS | Conditional on supported Obsidian host | Original symptom reported; repaired cold start, foreground return, touch drawer and Split View unverified. |
+
+Retest with a saved layout and a fresh layout, before selecting the search tab, including cold start and return after lock. The entry is local and has no network dependency, background task, storage migration or cross-device protocol. Upgrade and rollback reuse the same view IDs and vault-local state. Account and vault isolation, sync progress, encrypted content, keys and source mtime are outside this UI change.
+
 ## CHG-20261107-CN-116-STABLE
 
 China 1.1.6 promotes the delivered 1.1.6-alpha.1 with version-only metadata. All six platforms (Windows, macOS, Linux desktop, Android, iPhone/iOS, iPad/iPadOS) retain conditional support and unverified native installation, pairing and accessibility acceptance. Exact main.js/styles.css equality and a manifest version-only comparison bind reused Windows/WSL, browser and live compatibility evidence; promotion adds no device coverage. No new lifecycle, network, identity/vault, schema, mixed-version or rollback behavior is introduced. Keep local settings, secrets, checkpoints, content and source mtime when updating; existing Alpha and Stable assets remain available.
