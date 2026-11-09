@@ -11,9 +11,9 @@ The user reports repeated internal search IDs in the iPad drawer that resolve on
 | Linux desktop | Conditional on supported Obsidian host | Fixed behavior unverified in the native host. |
 | Android | Conditional on supported Obsidian host | Touch drawer and restart unverified. |
 | iPhone/iOS | Conditional on supported Obsidian host | Touch drawer and restart unverified. |
-| iPad/iPadOS | Conditional on supported Obsidian host | Original symptom reported; repaired cold start, foreground return, touch drawer and Split View unverified. |
+| iPad/iPadOS | Conditional on supported Obsidian host | User-confirmed on 2026-11-09 after delivery of China Hub Alpha 1.1.7-alpha.1: the Note Search title appears before tapping it after restart and looks normal after foreground return. Icon, prior panel selection, Split View and return after lock were not separately reported. |
 
-Retest with a saved layout and a fresh layout, before selecting the search tab, including cold start and return after lock. The entry is local and has no network dependency, background task, storage migration or cross-device protocol. Upgrade and rollback reuse the same view IDs and vault-local state. Account and vault isolation, sync progress, encrypted content, keys and source mtime are outside this UI change.
+Remaining native coverage includes a fresh layout, Split View and return after lock, plus the unverified hosts above. The entry is local and has no network dependency, background task, storage migration or cross-device protocol. Upgrade and rollback reuse the same view IDs and vault-local state. Account and vault isolation, sync progress, encrypted content, keys and source mtime are outside this UI change.
 
 ## CHG-20261107-CN-116-STABLE
 

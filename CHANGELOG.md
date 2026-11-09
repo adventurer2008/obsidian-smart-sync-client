@@ -2,9 +2,11 @@
 
 ## CHG-20261109-NOTE-TOOLS-SIDEBAR-RESTORE
 
-Release target: include this fix in the next China Hub Alpha. Carry the shared fix into the next Global Client build. Check the left sidebar on iPad after cold start and foreground return before selecting Note Search. Confirm that the title and icon are correct and the previously selected panel is preserved.
+Delivery: China Hub Alpha 1.1.7-alpha.1 includes the fix. The Global Client uses the same sidebar implementation from the canonical Client main branch. The user requested a source-only submission for Global. Global native acceptance is tracked separately from the China Alpha retest.
 
-Validation: the new sidebar fixture reproduces the internal title on the previous source and passes with the fix. Windows Node 26.12.1 reports 376 passed, one skipped. Both regional builds and isolation checks pass. China Community lint reports zero errors and seven existing warnings. Native retest is pending.
+Validation: the new sidebar fixture reproduces the internal title on the previous source and passes with the fix. Windows Node 26.12.1 reports 376 passed, one skipped. Both regional builds and isolation checks pass. China Community lint reports zero errors and seven existing warnings.
+
+2026-11-09 iPad retest after delivery of China Hub Alpha 1.1.7-alpha.1: the user confirmed that the Note Search title appears without a tap after restart and looks normal after returning from the background. See the platform matrix for remaining native checks.
 
 Requirement: the iPad left sidebar repeatedly shows the internal note-search ID and a ghost icon until tapped. After layout readiness, load deferred Recent and Note Search views through the Obsidian workspace API so the sidebar can render their real titles and icons before selection. Keep existing view IDs, restored leaf state, selection, and the feature switches in both regional builds. A blank search does not scan notes. See the cross-platform matrix for native acceptance boundaries.
 
