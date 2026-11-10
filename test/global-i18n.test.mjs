@@ -85,13 +85,14 @@ test('language selection persists outside synchronized settings and applies only
  configureLanguage('en');
  const {IndependentSettings}=await import('../src/plugin.js');
  const settings={origin:'https://sync.smartsync.cc',workspace:'synthetic',direction:'both',interval:60,attachmentMiB:256,excludedExtensions:[],configuration:{}};
- const connection={synthetic:{key:'synthetic'}};let saves=0,changed,notice,selected;
+ const connection={synthetic:{key:'synthetic'}};let saves=0,changed,notice,selected,options;
  const owner={data:{localId:'synthetic',settings,connections:connection},manifest:{version:'synthetic'},secret:()=>'',statusListeners:new Set(),status:{textContent:''},lanSummary:()=>'',saveData:async()=>{saves++;},notify:value=>{notice=value;}};
  const definitions=IndependentSettings.prototype.getSettingDefinitions.call({owner,expanded:new Set()});
  const row=definitions.find(item=>item.name===t('language.title'));assert.ok(row);
  const classes=new Set();
- const control={settingEl:{classList:{add(value){classes.add(value);}}},setDesc(){assert.fail('Language row must not show a description');},addDropdown(callback){const input={addOptions(){return this;},setValue(value){selected=value;return this;},onChange(callback){changed=callback;return this;}};callback(input);return this;}};
+ const control={settingEl:{classList:{add(value){classes.add(value);}}},setDesc(){assert.fail('Language row must not show a description');},addDropdown(callback){const input={addOptions(value){options=value;return this;},setValue(value){selected=value;return this;},onChange(callback){changed=callback;return this;}};callback(input);return this;}};
  row.render(control);assert.equal(selected,'auto');
+ assert.deepEqual(Object.keys(options),['auto','en','de','fr','es','pt-BR','ru','zh-CN','zh-TW','ja','ko']);
  assert.ok(classes.has('smart-sync-language-row'));
  configureLanguage('zh-Hans');owner.data.interfaceLanguage='auto';row.render(control);assert.equal(selected,'auto');
  configureLanguage('en');delete owner.data.interfaceLanguage;

@@ -4,7 +4,18 @@ import { catalogs as allCatalogs } from './locales/catalogs.js';
 const catalogs = typeof __SMART_SYNC_GLOBAL_UI__ === 'undefined' || __SMART_SYNC_GLOBAL_UI__ ? allCatalogs : {};
 const owns = (object, key) => Object.prototype.hasOwnProperty.call(object, key);
 // Language is local presentation state; it never selects a service or account.
-export const supportedLanguages = Object.freeze({ en:'English', 'zh-CN':'简体中文', 'zh-TW':'繁體中文', ja:'日本語', ko:'한국어', de:'Deutsch', fr:'Français', es:'Español', 'pt-BR':'Português (Brasil)', ru:'Русский' });
+export const supportedLanguages = Object.freeze({
+ en: 'English',
+ de: 'Deutsch',
+ fr: 'Français',
+ es: 'Español',
+ 'pt-BR': 'Português (Brasil)',
+ ru: 'Русский',
+ 'zh-CN': '简体中文',
+ 'zh-TW': '繁體中文',
+ ja: '日本語',
+ ko: '한국어',
+});
 export function resolveLanguage(value) {
  const tag = typeof value === 'string' ? value.replaceAll('_','-').toLowerCase() : '';
  if (/^zh-(tw|hk|mo|hant)(-|$)/.test(tag)) return 'zh-TW';

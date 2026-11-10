@@ -1,5 +1,9 @@
 # Source change record
 
+## CHG-20261110-GLOBAL-LANGUAGE-ORDER
+
+Requirement: match the Global website and documentation language order in plugin settings. Keep Follow Obsidian first, then English, German, French, Spanish, Brazilian Portuguese, Russian, Simplified Chinese, Traditional Chinese, Japanese and Korean. Existing preferences use the same locale codes.
+
 ## CHG-20261109-DESKTOP-STATUS-BAR-STEADY
 
 Delivery: China Hub Alpha 1.1.7-alpha.2 includes this fix and the preceding China Alpha iPad sidebar fix. On 2026-11-09, the user confirmed on PC that changing the digit count no longer shifts the status bar and that the completion status appears immediately. The user requested source-only delivery for Global. The shared fix is present in the verified Global build; the China Alpha PC result applies to the tested China package.

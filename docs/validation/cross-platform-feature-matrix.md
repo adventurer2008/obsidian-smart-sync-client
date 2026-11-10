@@ -1,5 +1,9 @@
 # Cross-platform feature and scenario review
 
+## CHG-20261110-GLOBAL-LANGUAGE-ORDER
+
+The Global settings dropdown uses the same Obsidian control on Windows, macOS, desktop Linux, Android, iPhone/iOS and iPad/iPadOS. The options keep their labels and locale codes, and their display order now matches the website with Follow Obsidian first. The settings regression covers the order, the automatic default, and selection by saved locale code. Native dropdown rendering, including narrow screens and touch, is unverified on all six platforms. The China edition has no language dropdown. The order has no dependency on network or lifecycle state and requires no migration for upgrades, rollback or mixed client versions.
+
 ## CHG-20261109-DESKTOP-STATUS-BAR-STEADY
 
 Both editions use a fixed-width desktop status item that adapts to the viewport. Long status text remains available by hovering over the item. The desktop bar samples progress once per second. The settings overview and manual synchronization feedback keep their existing delivery paths and actual counts.
