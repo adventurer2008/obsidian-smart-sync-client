@@ -676,29 +676,84 @@
 .smart-sync-global-ui .smart-sync-billing .smart-sync-plan-title { clear:both; }
 .cm-tooltip.smart-sync-translation-tooltip {
 	z-index: var(--layer-popover);
-	border-radius: var(--radius-m);
+	border: 0;
+	background: transparent;
+	box-shadow: none;
+}
+.smart-sync-translation-tooltip button.smart-sync-translation-trigger {
+	display: grid;
+	place-items: center;
+	width: 32px;
+	height: 32px;
+	padding: 0;
+	border-radius: 50%;
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	box-shadow: var(--shadow-s);
+}
+.smart-sync-translation-tooltip button.smart-sync-translation-trigger:hover {
+	background: var(--interactive-accent-hover);
+}
+.smart-sync-translation-tooltip button.smart-sync-translation-trigger[hidden] {
+	display: none;
 }
 .cm-editor:not(.cm-focused) .smart-sync-translation-trigger:not(:focus-visible) {
 	visibility: hidden;
 }
 .smart-sync-translation-panel {
 	box-sizing: border-box;
-	width: min(360px, calc(100vw - 32px));
-	padding: var(--size-4-3);
+	width: min(420px, calc(100vw - 24px));
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m);
+	background: var(--background-primary);
+	color: var(--text-normal);
+	box-shadow: var(--shadow-s);
 	font-family: var(--font-interface);
+}
+.smart-sync-translation-header {
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-2);
+	padding: var(--size-4-1) var(--size-4-3);
+	border-bottom: 1px solid var(--background-modifier-border);
+	background: var(--background-secondary);
+	border-radius: var(--radius-m) var(--radius-m) 0 0;
+}
+.smart-sync-translation-source {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-weight: var(--font-semibold);
+}
+.smart-sync-translation-header button.smart-sync-translation-dismiss {
+	display: grid;
+	flex: none;
+	place-items: center;
+	width: 28px;
+	height: 28px;
+	padding: 0;
+	background: transparent;
+	box-shadow: none;
+}
+.smart-sync-translation-header button.smart-sync-translation-dismiss:hover {
+	background: var(--background-modifier-hover);
 }
 .smart-sync-translation-controls {
 	display: flex;
 	align-items: center;
 	flex-wrap: wrap;
 	gap: var(--size-4-2);
-	margin-bottom: var(--size-4-2);
+	padding: var(--size-4-2) var(--size-4-3);
+	border-top: 1px solid var(--background-modifier-border);
 }
 .smart-sync-translation-controls [hidden] {
 	display: none;
 }
 .smart-sync-translation-output {
 	max-height: 35vh;
+	padding: var(--size-4-3);
 	overflow: auto;
 	overflow-wrap: anywhere;
 	white-space: pre-wrap;
@@ -715,4 +770,8 @@
 }
 .smart-sync-translation-sheet .smart-sync-translation-controls :is(button, select) {
 	min-height: 44px;
+}
+.smart-sync-translation-sheet .smart-sync-translation-header button.smart-sync-translation-dismiss {
+	width: 44px;
+	height: 44px;
 }

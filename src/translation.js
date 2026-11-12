@@ -1,7 +1,8 @@
-import { Modal, Notice, Platform, editorInfoField } from 'obsidian';
+import * as ObsidianSdk from 'obsidian';
 import { showTooltip } from '@codemirror/view';
 import { containsLockedText } from './note-crypto.js';
 
+const { Modal, Notice, Platform, editorInfoField } = ObsidianSdk;
 const languages = {
 	'zh-Hans': '简体中文', en: '英语', ja: '日语', ko: '韩语', fr: '法语',
 	de: '德语', es: '西班牙语', ru: '俄语', pt: '葡萄牙语',
@@ -17,6 +18,13 @@ function button(container, label) {
 	return container.createEl('button', { text: label, attr: { type: 'button' } });
 }
 
+function iconButton(container, label, icon, cls) {
+	const control = container.createEl('button', { cls, attr: { type: 'button', 'aria-label': label, title: label } });
+	if (ObsidianSdk.setIcon) ObsidianSdk.setIcon(control, icon);
+	else control.setText(label);
+	return control;
+}
+
 function errorMessage(error) {
 	switch (error?.status) {
 		case 401:
@@ -29,6 +37,12 @@ function errorMessage(error) {
 
 function renderTranslation(container, text, request, close) {
 	const doc = container.ownerDocument;
+	const header = container.createDiv({ cls: 'smart-sync-translation-header' });
+	header.createDiv({ cls: 'smart-sync-translation-source', text, attr: { dir: 'auto' } });
+	const dismiss = iconButton(header, '关闭翻译', 'x', 'smart-sync-translation-dismiss');
+	const output = container.createDiv({
+		cls: 'smart-sync-translation-output', attr: { role: 'status', 'aria-live': 'polite', dir: 'auto' },
+	});
 	const controls = container.createDiv({ cls: 'smart-sync-translation-controls' });
 	const target = controls.createEl('select', { attr: { 'aria-label': '目标语言' } });
 	for (const [code, label] of Object.entries(languages))
@@ -38,10 +52,6 @@ function renderTranslation(container, text, request, close) {
 		(text.match(/\p{Script=Han}/gu)?.length ?? 0) > letters / 2 ? 'en' : 'zh-Hans';
 	const copy = button(controls, '复制译文');
 	const retry = button(controls, '重试');
-	const dismiss = button(controls, '关闭');
-	const output = container.createDiv({
-		cls: 'smart-sync-translation-output', attr: { role: 'status', 'aria-live': 'polite', dir: 'auto' },
-	});
 	let current, translation;
 	const run = async () => {
 		current?.abort();
@@ -75,7 +85,7 @@ function renderTranslation(container, text, request, close) {
 	});
 	target.addEventListener('change', () => void run());
 	retry.addEventListener('click', () => void run());
-	dismiss.addEventListener('click', close);
+	dismiss.addEventListener('click', () => close(true));
 	const onVisibility = () => { if (doc.hidden) close(); };
 	doc.addEventListener('visibilitychange', onVisibility);
 	void run();
@@ -95,13 +105,13 @@ function translationTooltip(open) {
 		const text = selectionText(file, state.sliceDoc(main.from, main.to));
 		if (!text) return null;
 		return {
-			pos: main.head, above: true, clip: true,
+			pos: main.head, above: true, clip: true, offset: { x: 4, y: 6 },
 			create(view) {
 				const doc = view.dom.ownerDocument;
 				const dom = doc.win.createDiv();
 				dom.addClass('smart-sync-translation-tooltip');
-				const trigger = button(dom, '翻译');
-				trigger.addClass('smart-sync-translation-trigger');
+				const trigger = iconButton(dom, title, 'languages', 'smart-sync-translation-trigger');
+				trigger.setAttribute('aria-expanded', 'false');
 				let close;
 				trigger.addEventListener('mousedown', event => event.preventDefault());
 				trigger.addEventListener('click', () => { close = open(text, dom, trigger); });
@@ -161,24 +171,29 @@ export function registerNoteTranslation(owner) {
 			modal.open();
 			return;
 		}
-		const panel = anchor.createDiv({ cls: 'smart-sync-translation-panel' });
-		trigger.hidden = true;
+		const panel = anchor.createDiv({ cls: 'smart-sync-translation-panel', attr: { role: 'group', 'aria-label': '划词翻译' } });
 		const doc = anchor.ownerDocument;
+		const focusPanel = doc.activeElement === trigger;
+		trigger.hidden = true;
+		trigger.setAttribute('aria-expanded', 'true');
 		const outside = event => { if (!anchor.contains(event.target)) closePanel(); };
-		const escape = event => { if (event.key === 'Escape') closePanel(); };
-		const closePanel = () => {
+		const escape = event => { if (event.key === 'Escape') closePanel(anchor.contains(doc.activeElement)); };
+		const closePanel = (restoreFocus = false) => {
 			if (closeActive !== closePanel) return;
 			closeActive = undefined;
 			cleanup();
 			panel.remove();
 			trigger.hidden = false;
+			trigger.setAttribute('aria-expanded', 'false');
 			doc.removeEventListener('pointerdown', outside, true);
 			doc.removeEventListener('keydown', escape, true);
+			if (restoreFocus) trigger.focus();
 		};
 		const cleanup = renderTranslation(panel, text, request, closePanel);
 		closeActive = closePanel;
 		doc.addEventListener('pointerdown', outside, true);
 		doc.addEventListener('keydown', escape, true);
+		if (focusPanel) panel.querySelector('.smart-sync-translation-dismiss')?.focus();
 		return closePanel;
 	};
 	owner.addCommand({
