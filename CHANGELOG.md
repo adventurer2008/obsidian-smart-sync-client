@@ -1,6 +1,10 @@
 # Source change record
 
 ## CHG-20261112-CN-RECEIVE-START — Keep LAN negotiation off the sync startup path
+## Unreleased — CHG-20261112-CN-DICTIONARY-STYLE
+
+Requirement R-CN-SELECTION-TRANSLATION. Give the selection button and card an original robot mascot, teal toolbar and clearer dictionary sections. Use the same design in the mobile sheet. Translation behavior and the text-only dictionary stay the same.
+
 ## Unreleased — CHG-20261112-CN-DICTIONARY-CARD
 
 Requirement R-CN-SELECTION-TRANSLATION. Show a dictionary card for an English word when looking up its Chinese meaning. Display available British and American IPA, grouped Chinese definitions, forms and bilingual examples as text. The existing sentence translation remains available in the same panel.

@@ -71,7 +71,6 @@ test('desktop selection waits for a click and renders only the translation as pl
 		const trigger = view.dom.querySelector('.smart-sync-translation-trigger');
 		assert.equal(trigger.textContent, '');
 		assert.equal(trigger.getAttribute('aria-label'), '翻译所选文字');
-		assert.equal(trigger.getAttribute('data-icon'), 'languages');
 		assert.equal(view.dom.querySelector('.smart-sync-translation-panel'), null);
 		trigger.click();
 		assert.equal(trigger.getAttribute('aria-expanded'), 'true');

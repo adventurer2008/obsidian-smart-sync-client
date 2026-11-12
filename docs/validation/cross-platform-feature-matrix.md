@@ -1,6 +1,10 @@
 # Cross-platform feature and scenario review
 
 ## CHG-20261112-CN-RECEIVE-START
+## CHG-20261112-CN-DICTIONARY-STYLE
+
+Conditional support remains the same: Windows, macOS and Linux use the editor popover; Android, iPhone/iOS and iPad/iPadOS use the editor sheet. The light and dark palettes, wrapping, scroll limits and mobile touch targets are defined in the shared styles. The focused Windows tests passed and the local, CN and Global builds succeeded. The updated isolated Windows vault opened and its service returned a real word lookup and sentence translation. Native visual acceptance remains pending: Windows rejected screen capture and input, and macOS, Linux, Android, iPhone and iPad devices were unavailable. No new native capability, persistence, protocol, identity or network behavior was introduced; lifecycle and upgrade/rollback boundaries are unchanged.
+
 ## CHG-20261112-CN-DICTIONARY-CARD
 
 Windows Obsidian 1.15.0: selected Access and opened the popover in the isolated vault. The live test endpoint verified both IPA fields, noun/verb/adjective grouping, forms and bilingual examples after normalizing the provider response. Focused Windows tests and the local, China and Global builds passed; the Global build has no translation entry.
