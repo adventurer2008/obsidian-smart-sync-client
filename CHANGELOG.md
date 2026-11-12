@@ -1,5 +1,9 @@
 # Source change record
 
+## CHG-20261112-CN-SELECTION-TRANSLATION
+
+Requirement R-CN-SELECTION-TRANSLATION. Add one-click selected-text translation in the China Markdown editor. Desktop shows an inline button and result. Mobile uses the editor selection toolbar, command or menu and a bottom sheet. The client sends the selection and target language to the existing regional service after the user clicks. Copy reads from the result and leaves the Markdown editor untouched. Global has no translation entry.
+
 ## CHG-20261110-GLOBAL-LANGUAGE-ORDER
 
 Requirement: match the Global website and documentation language order in plugin settings. Keep Follow Obsidian first, then English, German, French, Spanish, Brazilian Portuguese, Russian, Simplified Chinese, Traditional Chinese, Japanese and Korean. Existing preferences use the same locale codes.
