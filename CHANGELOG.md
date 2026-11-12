@@ -1,6 +1,11 @@
 # Source change record
 
 ## CHG-20261112-CN-RECEIVE-START — Keep LAN negotiation off the sync startup path
+## CHG-20261112-CN-SELECTION-TRANSLATION
+
+Requirement R-CN-SELECTION-TRANSLATION. Add one-click selected-text translation in the China Markdown editor. Desktop shows an inline button and result. Mobile uses the editor selection toolbar, command or menu and a bottom sheet. The client sends the selection and target language to the existing regional service after the user clicks. Copy reads from the result and leaves the Markdown editor untouched. Global has no translation entry.
+
+## CHG-20261110-GLOBAL-LANGUAGE-ORDER
 
 Requirement: investigate the roughly six-second China Alpha iPad receive delay. In the slow sample the receive cycle had already started about four seconds before the file transfer, which took under 100 ms. China Alpha now waits for the device presence and direction check, then lets local peer negotiation run while cloud synchronization proceeds. Established peers can still accelerate eligible transfers. The diagnostic report records the trigger and elapsed milestones for the last successful receive cycle in the current notebook. Markdown priority and the existing service protocol are preserved.
 

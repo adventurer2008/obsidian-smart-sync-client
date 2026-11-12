@@ -1,6 +1,22 @@
 # Cross-platform feature and scenario review
 
 ## CHG-20261112-CN-RECEIVE-START
+## CHG-20261112-CN-SELECTION-TRANSLATION
+
+Windows Node 26.12.1 completed 379 tests with one skipped integration test on rerun. An initial concurrent run had one note-priority ordering failure, which passed on the focused and full reruns. WSL Node 26.12.1 passed all 11 translation and note-priority tests. Both edition builds and isolation checks passed, including the China-only command and request in built JavaScript.
+
+| Platform | Support | Native acceptance |
+| --- | --- | --- |
+| Windows desktop | Conditional on the Obsidian Markdown editor and an enabled CN translation service. Inline CodeMirror button, editor menu and command. | Unverified in Obsidian. Synthetic editor and DOM verified on Windows. |
+| macOS desktop | Same desktop paths. | Unverified in Obsidian. Check pop-out windows and clipboard. |
+| Linux desktop | Same desktop paths. | Unverified in Obsidian. WSL is synthetic coverage. |
+| Android | Conditional on an active Markdown editor selection and enabled CN service. Selection toolbar, command and menu where the host supplies them. Bottom sheet. | Unverified. Check touch selection retention, small screens, clipboard and Android transport. |
+| iPhone/iOS | Same mobile paths. | Unverified. Check touch selection, safe area, lock and foreground return. |
+| iPad/iPadOS | Same mobile paths, including keyboard command. | Unverified. Check Split View, orientation, keyboard selection and lock. |
+
+Reading view and Global have no translation entry. Desktop narrow windows and keyboard use and mobile touch and rotation remain native checks. File changes, hidden documents, sign-out and unload cancel the result UI. A request may already have reached a provider before cancellation. Offline errors require an explicit retry. Reboot does not restore pending translations or results. Client builds with no matching server route report that translation is unavailable. Mixed client versions keep the existing sync protocol. No note or vault file is written. Translation neither loads vault keys nor enters sync progress or changes source mtime. Results and selected text are kept in memory only by the Client.
+
+## CHG-20261110-GLOBAL-LANGUAGE-ORDER
 
 Windows, macOS, desktop Linux, Android, iPhone/iOS and iPad/iPadOS use the China Alpha cloud path independently of WebRTC negotiation. LAN acceleration remains conditional on host WebRTC support, device permissions and an available peer. The regression holds an active signaling request open and verifies that cloud startup can proceed, and that a fresh device pause prevents the pending offer from opening a link. There is no layout, touch, native background or lock-screen change. Existing account and notebook binding, restart and cancellation, mixed versions, upgrade and rollback, Markdown priority, and source modification-time paths are used. Native acceptance and foreground latency after this change remain unverified on all six platforms.
 

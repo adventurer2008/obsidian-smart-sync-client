@@ -7,6 +7,8 @@ import { ConnectionCheckpoints } from './checkpoint.js';
 import { notePinState, queueNotePosition, moveNotePins, pinPathSet, synchronizeNotePins } from './pinning.js';
 import { registerNoteSearch } from './search.js';
 import { registerNoteEncryption } from './note-encryption.js';
+import { registerNoteTranslation } from './translation.js';
+/* global __SMART_SYNC_CN_TRANSLATION__ -- injected by the regional build. */
 import {
 	ItemView,
 	Modal,
@@ -773,7 +775,12 @@ export default class IndependentSync extends Plugin {
 			}
 		this.logViews = new Set();
 		registerNoteSearch(this);
-		registerNoteEncryption(this);
+		let translation;
+		if (typeof __SMART_SYNC_CN_TRANSLATION__ === 'undefined' ? edition.edition === 'cn' : __SMART_SYNC_CN_TRANSLATION__) {
+			translation = registerNoteTranslation(this);
+		}
+		this.closeTranslation = translation?.close;
+		registerNoteEncryption(this, translation?.addMobileAction);
 		this.refreshBackgroundTray();
 		if (!Platform.isMobile && windowsStartupSupported(window.require) && this.registerObsidianProtocolHandler) {
 			this.registerObsidianProtocolHandler(`${this.manifest.id}-startup`, params => {
@@ -2640,6 +2647,7 @@ export default class IndependentSync extends Plugin {
 		} catch { this.notify(t('tray.unavailable')); }
 	}
 	onunload() {
+		this.closeTranslation?.();
 		this.backgroundTray?.dispose();
 		this.backgroundTray = undefined;
 		this.tab?.disposeLegacySettings?.();
@@ -3086,6 +3094,7 @@ export default class IndependentSync extends Plugin {
 		});
 	}
 	async signOut() {
+		this.closeTranslation?.();
 		this.billingHandoffCancel?.();this.billingFallbackWindow?.close();this.preparedBillingEntry=undefined;
 		this.accountEmail = '';
 		this.overviewIdentity = undefined;
