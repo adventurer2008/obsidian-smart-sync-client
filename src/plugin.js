@@ -915,6 +915,7 @@ export default class IndependentSync extends Plugin {
 		const automaticStartedAt = Date.now();
 		this.registerInterval(
 			window.setInterval(() => {
+				if (this.pollRemoteChanges()) return;
 				if (
 					this.data.settings.direction !== 'paused' &&
 					this.data.settings.autoTimer !== false &&
@@ -2430,7 +2431,8 @@ export default class IndependentSync extends Plugin {
 			peers.provideNote = localNoteProvider({ keys, workspace: api.workspace, state, host: scopedHost, cache: receiveCache, accepts: path => !engine.excluded(path) });
 			api.peerContents = (note, manifest, info, sinkFor, onTiming) => receivePeerNote(peers, keys, api.workspace, note, manifest, info, sinkFor, onTiming);
 		}
-		return { api, keys, engine, host: scopedHost, pinsSupported: info.notePins === 1, positionsSupported: info.notePositions === 1 };
+		return { api, keys, engine, host: scopedHost, pinsSupported: info.notePins === 1, positionsSupported: info.notePositions === 1,
+			changeWatch: info.changeWatch === 1 && transport.route === 'primary' };
 	}
 	async exclusive(task) {
 		if (this.stopped) throw new Error('Plugin is unloaded');
@@ -2757,6 +2759,39 @@ export default class IndependentSync extends Plugin {
 			void save.catch(() => this.notify(t('msg_4439f34880')));
 		}, 100);
 	}
+	canWatchRemote(target) {
+		const settings = this.data.settings;
+		return target && !this.stopped && !this.stopping && !this.connecting && !this.configurationPending && !this.running &&
+			!this.data.manualSyncStopped && settings.autoTimer !== false && settings.autoChanges !== false &&
+			!['send', 'paused'].includes(settings.direction) && !['send', 'paused'].includes(this.lanPeers?.mode) &&
+			globalThis.document?.visibilityState === 'visible' && window.navigator?.onLine !== false && !target.parentSignal.aborted &&
+			target.api.workspace === settings.workspace && target.api.origin === new URL(settings.origin).origin &&
+			target.api.accessKey === this.secret('access');
+	}
+	pollRemoteChanges() {
+		const target = this.remoteWatchTarget;
+		const now = Date.now();
+		const auditDue = now - (this.lastFinished ?? now) >= Math.max(30000, this.data.settings.interval * 1000);
+		if (!this.canWatchRemote(target) || auditDue || now < (this.remoteWatchRetryAt ?? 0)) {
+			this.remoteWatch?.abort();
+			return false;
+		}
+		if (this.remoteWatch) return true;
+		const controller = new AbortController();
+		const scope = cancellationScope([controller.signal, target.parentSignal]);
+		this.remoteWatch = controller;
+		target.api.signal = scope.signal;
+		void target.api.watchChanges(target.cursor, target.pinsCursor).then(changed => {
+			if (!scope.signal.aborted && this.remoteWatchTarget === target && changed && this.canWatchRemote(target))
+				void this.synchronize(undefined, undefined, true);
+		}).catch(() => {
+			if (!scope.signal.aborted && this.remoteWatchTarget === target) this.remoteWatchRetryAt = Date.now() + 30000;
+		}).finally(() => {
+			scope.dispose();
+			if (this.remoteWatch === controller) this.remoteWatch = undefined;
+		});
+		return true;
+	}
 	async synchronize(retryRow, approval, automatic = false) {
 		if (automatic && this.data?.manualSyncStopped) return;
 		if (this.stopped) return;
@@ -2768,6 +2803,8 @@ export default class IndependentSync extends Plugin {
 			this.setStatus(t('sync.notConnected'));
 			return;
 		}
+		this.remoteWatch?.abort();
+		this.remoteWatchTarget = undefined;
 		this.lastStarted = Date.now();
 		const coalesceCycle = automatic && !retryRow && !approval && this.lastQuietCycleAt !== undefined && Date.now() >= this.lastQuietCycleAt && Date.now() - this.lastQuietCycleAt < 60000;
 		this.cycleActivity = { startedAt: this.lastStarted, progressAt: this.lastStarted, stage: 'connecting', stages: {}, changed: false, persisted: !coalesceCycle };
@@ -2814,7 +2851,7 @@ export default class IndependentSync extends Plugin {
 					version: this.manifest.version,
 				});
 				if (!coalesceCycle) await this.persistTasks();
-				const { engine, keys, pinsSupported, positionsSupported } = await this.connection({ allowIdleScan: automatic && !retryRow && !approval });
+				const { engine, keys, pinsSupported, positionsSupported, changeWatch } = await this.connection({ allowIdleScan: automatic && !retryRow && !approval });
 				if (engine.remoteMode === 'paused' || (!approval && engine.direction === 'paused')) {
 					this.journal.update(cycle, { status: 'skipped' });
 					await this.persistTasks();
@@ -2883,6 +2920,15 @@ export default class IndependentSync extends Plugin {
 					this.queueDiagnostic(this.journal.rows.find((row) => row.id === cycle), diagnosticApi);
 					await this.persistTasks();
 					this.lastQuietCycleAt = idle ? Date.now() : undefined;
+				}
+				if (edition.edition === 'cn' && /-alpha\./.test(this.manifest.version) && changeWatch &&
+					!remaining && !waitingForTree && !Object.keys(engine.state.pendingReceives ?? {}).length &&
+					!Object.keys(pins.pending).length && !['paused', 'send'].includes(engine.direction)) {
+					const { origin, accessKey, workspace, fetcher, signal } = engine.api;
+					this.remoteWatchTarget = {
+						api: this.workspaceApi(origin, accessKey, workspace, fetcher), parentSignal: signal,
+						cursor: engine.state.cursor, pinsCursor: pins.cursor,
+					};
 				}
 				this.setStatus(
 					waitingForTree ? t('sync.changedWait') : remaining

@@ -1,5 +1,9 @@
 # Cross-platform feature and scenario review
 
+## CHG-20261112-CN-CHANGE-WATCH
+
+Windows, macOS, desktop Linux, Android, iPhone/iOS and iPad/iPadOS have conditional foreground support in China Alpha with the capable primary service. The existing timer handles background, unsupported routes, older servers and connection failures. An ordinary sync reconciles changes on foreground resume, reconnect, and periodic audits. Account and notebook switches invalidate pending notifications. There is no new interface or data format. Native latency, background and lock behavior are unverified on each platform. Automated coverage exercises the wake path, workspace isolation, abort, replay, timeout, fallback, content order and original modification times.
+
 ## CHG-20261112-SYNC-FEED-CADENCE
 
 Windows, macOS, desktop Linux, Android, iPhone/iOS and iPad/iPadOS use the shared elapsed-time rule while Obsidian can run synchronization. Screen layout and touch are outside the change. The same feed and checkpoint formats support mixed versions, upgrades, and rollback. Account and vault binding, recovery, encryption and original modification times use the existing paths. Automated coverage exercises cancellation and restart, failed receives, source modification times, Markdown order, and the timed scan. Device-level performance, network recovery, and foreground, background and lock behavior remain unverified for this change.

@@ -1,5 +1,9 @@
 # Source change record
 
+## CHG-20261112-CN-CHANGE-WATCH — Wake foreground sync when the service commits a change
+
+The China Alpha keeps one bounded long poll open while a verified primary connection is idle. Committed content revisions and note positions wake the existing sync cycle. The client resumes its timer on connection failure or with an older service. A periodic full sync still reconciles local changes and missed events. The target remains bound to the current workspace, credential and cancellation signal. Delivery near one second requires separate end-to-end device measurement.
+
 ## CHG-20261112-SYNC-FEED-CADENCE — Check remote changes by elapsed time
 
 Requirement: reduce the roughly 220 feed requests seen on iPad in Alpha 1.1.7-alpha.3 while preserving Markdown priority. While scanning unchanged files, check for changes about once per second. Also check before starting attachment uploads, and at the existing batch boundaries during downloads and while publishing changes. A local Markdown edit can still advance at the next file boundary without requiring a remote check. Initial feed reads and pagination follow the existing protocol. In a synthetic six-second scan of 13,971 cached files, Alpha 1.1.7-alpha.3 made 219 feed requests and the new code made seven. The regression covers receiving a remote Markdown edit before the next attachment and before attachment uploads when the phase changes.
