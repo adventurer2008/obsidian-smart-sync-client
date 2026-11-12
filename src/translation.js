@@ -26,6 +26,10 @@ function iconButton(container, label, icon, cls) {
 	return control;
 }
 
+function addTranslationMascot(container) {
+	container.createEl('span', { cls: 'smart-sync-translation-mascot', attr: { 'aria-hidden': 'true' } });
+}
+
 function errorMessage(error) {
 	switch (error?.status) {
 		case 401:
@@ -39,9 +43,11 @@ function errorMessage(error) {
 function renderDictionary(output, entry, text) {
 	output.empty();
 	const card = output.createDiv({ cls: 'smart-sync-dictionary' });
-	card.createEl('div', { cls: 'smart-sync-dictionary-word', text: entry.word || text.trim() });
+	const hero = card.createDiv({ cls: 'smart-sync-dictionary-hero' });
+	hero.createDiv({ cls: 'smart-sync-dictionary-kicker', text: '英汉词典' });
+	hero.createEl('div', { cls: 'smart-sync-dictionary-word', text: entry.word || text.trim() });
 	if (entry.uk || entry.us) {
-		const phonetics = card.createDiv({ cls: 'smart-sync-dictionary-phonetics' });
+		const phonetics = hero.createDiv({ cls: 'smart-sync-dictionary-phonetics' });
 		if (entry.uk) phonetics.createEl('span', { text: '英 /' + entry.uk.replace(/^\/|\/$/g, '') + '/' });
 		if (entry.us) phonetics.createEl('span', { text: '美 /' + entry.us.replace(/^\/|\/$/g, '') + '/' });
 	}
@@ -51,6 +57,7 @@ function renderDictionary(output, entry, text) {
 		group.push(meaning);
 		groups.set(part, group);
 	}
+	card.createDiv({ cls: 'smart-sync-dictionary-label', text: '释义' });
 	const definitions = card.createEl('dl', { cls: 'smart-sync-dictionary-definitions' });
 	for (const [part, meanings] of groups) {
 		definitions.createEl('dt', { text: part || '释义' });
@@ -74,6 +81,7 @@ function renderDictionary(output, entry, text) {
 function renderTranslation(container, text, request, close) {
 	const doc = container.ownerDocument;
 	const header = container.createDiv({ cls: 'smart-sync-translation-header' });
+	addTranslationMascot(header);
 	header.createDiv({ cls: 'smart-sync-translation-source', text, attr: { dir: 'auto' } });
 	const dismiss = iconButton(header, '关闭翻译', 'x', 'smart-sync-translation-dismiss');
 	const output = container.createDiv({
@@ -150,7 +158,10 @@ function translationTooltip(open) {
 				const doc = view.dom.ownerDocument;
 				const dom = doc.win.createDiv();
 				dom.addClass('smart-sync-translation-tooltip');
-				const trigger = iconButton(dom, title, 'languages', 'smart-sync-translation-trigger');
+				const trigger = dom.createEl('button', { cls: 'smart-sync-translation-trigger', attr: {
+					type: 'button', 'aria-label': title, title,
+				} });
+				addTranslationMascot(trigger);
 				trigger.setAttribute('aria-expanded', 'false');
 				let close;
 				trigger.addEventListener('mousedown', event => event.preventDefault());
