@@ -1,6 +1,20 @@
 # Cross-platform feature and scenario review
 
 ## CHG-20261112-CN-RECEIVE-START
+## CHG-20261112-CN-TRANSLATION-POPOVER
+
+| Platform | Support | Acceptance for this change |
+| --- | --- | --- |
+| Windows desktop | Obsidian Markdown editor with CN translation service. Round selection icon and anchored translation card. | The isolated Obsidian 1.15.0 test window opened with the updated build. Baidu returned HTTP 200 through the test service. Native selection and card rendering are unverified because Windows rejected input from the desktop controller. |
+| macOS desktop | Same desktop editor path. | Native placement, keyboard focus and pop-out window behavior unverified. |
+| Linux desktop | Same desktop editor path. | Native placement and keyboard behavior unverified. |
+| Android | Existing selection toolbar, menu and command open the updated sheet. | Native touch and narrow-screen layout unverified. |
+| iPhone/iOS | Same mobile editor path. | Native touch, safe areas and lock/foreground behavior unverified. |
+| iPad/iPadOS | Same mobile editor path. | Native keyboard, rotation and Split View unverified. |
+
+Synthetic tests cover click-to-request, source display, plain-text results, Escape focus restoration, cancellation and the mobile entry. Local and regional builds pass their isolation checks. Narrow windows, touch and keyboard placement still need native acceptance. The feature uses the existing foreground request, offline retry, account and vault checks and cancellation behavior. The UI has no persisted state or sync protocol changes for restart, mixed versions, upgrade or rollback. Translation reads selections without writing Markdown, keys, sync progress or source mtime. Reading view has no translation entry.
+
+
 ## CHG-20261112-CN-SELECTION-TRANSLATION
 
 Windows Node 26.12.1 completed 379 tests with one skipped integration test on rerun. An initial concurrent run had one note-priority ordering failure, which passed on the focused and full reruns. WSL Node 26.12.1 passed all 11 translation and note-priority tests. Both edition builds and isolation checks passed, including the China-only command and request in built JavaScript.

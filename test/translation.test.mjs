@@ -68,7 +68,14 @@ test('desktop selection waits for a click and renders only the translation as pl
 	try {
 		view.dispatch({ selection: { anchor: 7, head: 22 } });
 		assert.equal(requests.length, 0);
-		view.dom.querySelector('.smart-sync-translation-trigger').click();
+		const trigger = view.dom.querySelector('.smart-sync-translation-trigger');
+		assert.equal(trigger.textContent, '');
+		assert.equal(trigger.getAttribute('aria-label'), '翻译所选文字');
+		assert.equal(trigger.getAttribute('data-icon'), 'languages');
+		assert.equal(view.dom.querySelector('.smart-sync-translation-panel'), null);
+		trigger.click();
+		assert.equal(trigger.getAttribute('aria-expanded'), 'true');
+		assert.equal(view.dom.querySelector('.smart-sync-translation-source').textContent, 'Translate this.');
 		assert.deepEqual(requests[0].input, { text: 'Translate this.', target: 'zh-Hans' });
 		assert.equal(requests[0].path, 'account/translate');
 		requests[0].resolve({ translation: '<b>译文</b>' });
@@ -83,8 +90,14 @@ test('desktop selection waits for a click and renders only the translation as pl
 		assert.equal(copied, '<b>译文</b>');
 		assert.equal(view.state.doc.toString(), text);
 		assert.equal(file.stat.mtime, 1577836800123);
+		view.dom.querySelector('.smart-sync-translation-dismiss').focus();
+		document.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Escape' }));
+		assert.equal(document.activeElement, trigger);
+		assert.equal(trigger.getAttribute('aria-expanded'), 'false');
+		trigger.click();
 		view.dispatch({ selection: { anchor: 0 } });
 		assert.equal(requests[0].signal.aborted, true);
+		assert.equal(requests[1].signal.aborted, true);
 		assert.equal(view.dom.querySelector('.smart-sync-translation-output'), null);
 	} finally { dispose(); view.destroy(); }
 });

@@ -1,6 +1,11 @@
 # Source change record
 
 ## CHG-20261112-CN-RECEIVE-START — Keep LAN negotiation off the sync startup path
+## Unreleased — CHG-20261112-CN-TRANSLATION-POPOVER
+
+Requirement R-CN-SELECTION-TRANSLATION. Follow the user's Saladict selection interaction in the Markdown editor. Show a round translation icon beside the selection, then open an anchored card with the source excerpt and translation after a click. Use the same content order in the existing mobile sheet.
+
+
 ## CHG-20261112-CN-SELECTION-TRANSLATION
 
 Requirement R-CN-SELECTION-TRANSLATION. Add one-click selected-text translation in the China Markdown editor. Desktop shows an inline button and result. Mobile uses the editor selection toolbar, command or menu and a bottom sheet. The client sends the selection and target language to the existing regional service after the user clicks. Copy reads from the result and leaves the Markdown editor untouched. Global has no translation entry.
