@@ -1875,6 +1875,8 @@ export default class IndependentSync extends Plugin {
 		report.receiveCache = this.receiveCache?.snapshot();
 		report.timingScope = 'plugin-session';
 		report.timings = structuredClone(this.phaseTimings ?? {});
+		if (this.lastReceiveTiming?.scope === scope)
+			report.lastReceiveTiming = { ...this.lastReceiveTiming.timing };
 		report.pendingDiagnostics = this.data.taskOutbox?.length ?? 0;
 		report.androidTransportDiagnostics = this.data.androidTransportDiagnostics ?? [];
 		if (activity) report.activity = {
@@ -2003,7 +2005,8 @@ export default class IndependentSync extends Plugin {
 			peers.api = api;
 			peers.enabled = this.data.settings.lanAcceleration !== false;
 			try {
-				await peers.start();
+				const waitForSignaling = edition.edition !== 'cn' || !/-alpha\./.test(this.manifest.version);
+				await peers.start({ waitForSignaling });
 			} catch (error) {
 				if (!peers.mode) throw error;
 				peers.drop();
@@ -2014,7 +2017,7 @@ export default class IndependentSync extends Plugin {
 		});
 		await this.devicePreparing;
 	}
-	async connection({ allowIdleScan = false } = {}) {
+	async connection({ allowIdleScan = false, mark = () => {} } = {}) {
 		const notePath = value => safeHostPath(value, Platform.isWin === true);
 		const api = this.api();
 		this.syncStage('connecting');
@@ -2053,6 +2056,7 @@ export default class IndependentSync extends Plugin {
 			});
 		this.ensureCurrent(api);
 		this.workspaceKeys = { binding: keyBinding, at: cachedKeys?.keys === keys ? cachedKeys.at : Date.now(), keys };
+		mark('unlockedMs');
 		const connectionId = `${api.origin}|${api.workspace}`;
 		const taskScope = await fingerprint(new TextEncoder().encode(connectionId));
 		this.taskScope = taskScope;
@@ -2066,6 +2070,7 @@ export default class IndependentSync extends Plugin {
 		this.syncStage('device');
 		await this.prepareDevice(api);
 		this.ensureCurrent(api);
+		mark('deviceReadyMs');
 		if (info.logicalStorage === 1 && this.lanPeers?.mode !== 'paused') {
 			await reconcileLogicalUsage(api, keys);
 			this.ensureCurrent(api);
@@ -2087,6 +2092,13 @@ export default class IndependentSync extends Plugin {
 		};
 		this.syncStage('scanning');
 		await desktop?.prepare();
+		const feed = api.feed.bind(api);
+		api.feed = async (...args) => {
+			mark('firstFeedRequestedMs');
+			const batch = await feed(...args);
+			mark('firstFeedReceivedMs');
+			return batch;
+		};
 		let aliasRevision, aliasIndex;
 		const abstractForPath = async path => {
 			const direct = this.app.vault.getAbstractFileByPath(path);
@@ -2376,6 +2388,8 @@ export default class IndependentSync extends Plugin {
 			},
 			onTask: async (event) => {
 				if (this.cycleActivity) this.cycleActivity.changed = true;
+				if (event.direction === 'receive' && event.status === 'running') mark('firstReceiveStartedMs');
+				if (event.direction === 'receive' && event.status === 'done') mark('firstReceiveFinishedMs');
 				if (this.cycleActivity && event.direction === 'receive' && event.status === 'done')
 					this.cycleActivity.received = (this.cycleActivity.received ?? 0) + 1;
 				if (event.direction === 'send' || event.direction === 'receive') {
@@ -2783,7 +2797,7 @@ export default class IndependentSync extends Plugin {
 		target.api.signal = scope.signal;
 		void target.api.watchChanges(target.cursor, target.pinsCursor).then(changed => {
 			if (!scope.signal.aborted && this.remoteWatchTarget === target && changed && this.canWatchRemote(target))
-				void this.synchronize(undefined, undefined, true);
+				void this.synchronize(undefined, undefined, true, 'watch');
 		}).catch(() => {
 			if (!scope.signal.aborted && this.remoteWatchTarget === target) this.remoteWatchRetryAt = Date.now() + 30000;
 		}).finally(() => {
@@ -2792,7 +2806,7 @@ export default class IndependentSync extends Plugin {
 		});
 		return true;
 	}
-	async synchronize(retryRow, approval, automatic = false) {
+	async synchronize(retryRow, approval, automatic = false, trigger = automatic ? 'scheduled' : 'manual') {
 		if (automatic && this.data?.manualSyncStopped) return;
 		if (this.stopped) return;
 		if (this.configurationPending) return;
@@ -2806,6 +2820,9 @@ export default class IndependentSync extends Plugin {
 		this.remoteWatch?.abort();
 		this.remoteWatchTarget = undefined;
 		this.lastStarted = Date.now();
+		const started = performance.now();
+		const timing = { trigger };
+		const mark = stage => { timing[stage] ??= Math.round(performance.now() - started); };
 		const coalesceCycle = automatic && !retryRow && !approval && this.lastQuietCycleAt !== undefined && Date.now() >= this.lastQuietCycleAt && Date.now() - this.lastQuietCycleAt < 60000;
 		this.cycleActivity = { startedAt: this.lastStarted, progressAt: this.lastStarted, stage: 'connecting', stages: {}, changed: false, persisted: !coalesceCycle };
 		this.stageTimer = window.setInterval(() => {
@@ -2851,7 +2868,7 @@ export default class IndependentSync extends Plugin {
 					version: this.manifest.version,
 				});
 				if (!coalesceCycle) await this.persistTasks();
-				const { engine, keys, pinsSupported, positionsSupported, changeWatch } = await this.connection({ allowIdleScan: automatic && !retryRow && !approval });
+				const { engine, keys, pinsSupported, positionsSupported, changeWatch } = await this.connection({ allowIdleScan: automatic && !retryRow && !approval, mark });
 				if (engine.remoteMode === 'paused' || (!approval && engine.direction === 'paused')) {
 					this.journal.update(cycle, { status: 'skipped' });
 					await this.persistTasks();
@@ -2871,6 +2888,7 @@ export default class IndependentSync extends Plugin {
 						throw planChanged();
 				}
 				diagnosticApi = engine.api;
+				const receiveScope = this.taskScope;
 				const files = retries.filter((row) => row.direction !== 'cycle');
 				for (let attempt = 0; ; attempt++) {
 					try {
@@ -2887,6 +2905,7 @@ export default class IndependentSync extends Plugin {
 						this.setStatus(t('sync.changedRetry'), { overview: t('overview.scanning') });
 					}
 				}
+				if (timing.firstReceiveFinishedMs !== undefined) this.lastReceiveTiming = { scope: receiveScope, timing };
 				if (this.pluginStateRestartPending) {
 					this.pluginStateRestartPending = false;
 					this.notify(t('configuration.pluginEnabledRestart'), true);

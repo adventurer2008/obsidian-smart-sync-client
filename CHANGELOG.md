@@ -1,5 +1,9 @@
 # Source change record
 
+## CHG-20261112-CN-RECEIVE-START — Keep LAN negotiation off the sync startup path
+
+Requirement: investigate the roughly six-second China Alpha iPad receive delay. In the slow sample the receive cycle had already started about four seconds before the file transfer, which took under 100 ms. China Alpha now waits for the device presence and direction check, then lets local peer negotiation run while cloud synchronization proceeds. Established peers can still accelerate eligible transfers. The diagnostic report records the trigger and elapsed milestones for the last successful receive cycle in the current notebook. Markdown priority and the existing service protocol are preserved.
+
 ## CHG-20261112-CN-CHANGE-WATCH — Wake foreground sync when the service commits a change
 
 The China Alpha keeps one bounded long poll open while a verified primary connection is idle. Committed content revisions and note positions wake the existing sync cycle. The client resumes its timer on connection failure or with an older service. A periodic full sync still reconciles local changes and missed events. The target remains bound to the current workspace, credential and cancellation signal. Delivery near one second requires separate end-to-end device measurement.

@@ -1,5 +1,9 @@
 # Cross-platform feature and scenario review
 
+## CHG-20261112-CN-RECEIVE-START
+
+Windows, macOS, desktop Linux, Android, iPhone/iOS and iPad/iPadOS use the China Alpha cloud path independently of WebRTC negotiation. LAN acceleration remains conditional on host WebRTC support, device permissions and an available peer. The regression holds an active signaling request open and verifies that cloud startup can proceed, and that a fresh device pause prevents the pending offer from opening a link. There is no layout, touch, native background or lock-screen change. Existing account and notebook binding, restart and cancellation, mixed versions, upgrade and rollback, Markdown priority, and source modification-time paths are used. Native acceptance and foreground latency after this change remain unverified on all six platforms.
+
 ## CHG-20261112-CN-CHANGE-WATCH
 
 Windows, macOS, desktop Linux, Android, iPhone/iOS and iPad/iPadOS have conditional foreground support in China Alpha with the capable primary service. The existing timer handles background, unsupported routes, older servers and connection failures. An ordinary sync reconciles changes on foreground resume, reconnect, and periodic audits. Account and notebook switches invalidate pending notifications. There is no new interface or data format. Native latency, background and lock behavior are unverified on each platform. Automated coverage exercises the wake path, workspace isolation, abort, replay, timeout, fallback, content order and original modification times.
