@@ -1,5 +1,9 @@
 # Source change record
 
+## CHG-20261112-SYNC-SCAN-POLLING — Bound remote checks during local scans
+
+An iPad user reported slow synchronization and asked whether Markdown can arrive before attachments. Markdown already has priority. While scanning, fetch remote changes at eligible batch boundaries or when a queued Markdown edit needs priority. A queued attachment alone no longer triggers a request before each checked file. Skip rebuilding the local lookup when the priority check finds no changes. The regression reproduces 14 feed requests for 12 Markdown files and a queued attachment, then verifies four requests with the fix and checks the uploaded attachment's source modification time. The live iPad performance impact remains unverified.
+
 ## CHG-20261109-DESKTOP-STATUS-BAR-STEADY
 
 Delivery: China Hub Alpha 1.1.7-alpha.2 includes this fix and the preceding China Alpha iPad sidebar fix. On 2026-11-09, the user confirmed on PC that changing the digit count no longer shifts the status bar and that the completion status appears immediately. The user requested source-only delivery for Global. The shared fix is present in the verified Global build; the China Alpha PC result applies to the tested China package.

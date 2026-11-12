@@ -1,5 +1,11 @@
 # Cross-platform feature and scenario review
 
+## CHG-20261112-SYNC-SCAN-POLLING
+
+The shared synchronization engine applies this change to both editions on Windows, macOS, Linux desktop, Android, iPhone/iOS and iPad/iPadOS when Obsidian permits execution. The same batch rule uses the existing per-platform batch size. The local regression checks request counts, Markdown and attachment order, cancellation/restart, and original modification time. No physical-device acceptance has been performed for this patch. The iPad reported activity on the installed version before the fix.
+
+Screen layout and touch controls are outside this engine change. Foreground/background, lock, restart and offline recovery retain the host and existing checkpoints. Mixed versions and upgrades or rollback use the existing feed and state format. The change introduces no new account or vault state and uses the existing encryption, content and source-mtime paths.
+
 ## CHG-20261109-DESKTOP-STATUS-BAR-STEADY
 
 Both editions use a fixed-width desktop status item that adapts to the viewport. Long status text remains available by hovering over the item. The desktop bar samples progress once per second. The settings overview and manual synchronization feedback keep their existing delivery paths and actual counts.

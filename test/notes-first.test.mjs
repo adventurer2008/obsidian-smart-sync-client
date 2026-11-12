@@ -130,6 +130,23 @@ test('a new local Markdown edit interrupts attachment work at the next file boun
 	assert.equal(priorities.size, 0); assert.equal(f.times.get('new.md'), mtime + 100);
 });
 
+test('a queued attachment does not request the remote feed for every scanned note', async () => {
+	const f = fixture(true);
+	for (let i = 0; i < 12; i++) f.set(`note-${i}.md`, `body ${i}`);
+	f.set('edited.bin', 'attachment', mtime + 100);
+	const feed = f.api.feed;
+	let reads = 0;
+	f.api.feed = async after => { reads++; return feed(after); };
+	const priorities = new Map([['edited.bin', 1]]);
+	await f.engine({ batchFiles: 4, contentPriorities: priorities }).run();
+	assert.equal(reads, 4);
+	assert.deepEqual(f.events.filter(([kind]) => kind === 'send').at(-1), ['send', 'edited.bin']);
+	const uploaded = f.entries.at(-1);
+	const metadata = await inspectNote(keys, workspace, uploaded.note, uploaded.manifest, address => f.objects.get(address));
+	assert.equal(metadata.mtime, mtime + 100);
+	assert.equal(priorities.size, 0);
+});
+
 test('bounded classification reuses verified manifests without a second metadata decryption', async () => {
 	const f = fixture(true);
 	for (let i = 0; i < 24; i++) await f.add(`note-${i}.md`, `body ${i}`);

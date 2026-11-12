@@ -1471,16 +1471,26 @@ export class NotebookSynchronizer {
 				await flushUploads();
 				sendingAttachments = true;
 			}
-			if (!priorityPaths && !targets && ceiling === undefined && (this.contentPriorities.size || (checked > 0 && checked % this.batchFiles === 0 && this.#contentPoll))) {
-				// Finish an existing batch before sharing the normal send pipeline.
-				await flushUploads();
-				const prioritized = new Set([...(await this.#contentPoll?.() ?? []), ...await this.#prioritizeContent()]);
-				for (const [id, note] of Object.entries(this.state.notes))
-					if (!note.removed && prioritized.has(note.path)) { byPath.set(note.path, [id, note]); used.add(id); present.add(note.path); }
-			}
 			this.assertActive();
 			const path = safeNotePath(raw);
 			if (this.excluded(path)) continue;
+			if (!priorityPaths && !targets && ceiling === undefined) {
+				const hasPriorityNote = this.contentPriorities.size > 0 && Array.from(this.contentPriorities.keys()).some(isMarkdown);
+				const atBatchBoundary = checked > 0 && checked % this.batchFiles === 0;
+				if (hasPriorityNote || (atBatchBoundary && this.#contentPoll)) {
+					// Finish an existing batch before sharing the normal send pipeline.
+					await flushUploads();
+					const prioritized = new Set([...(await this.#contentPoll?.() ?? []), ...await this.#prioritizeContent()]);
+					if (prioritized.size) {
+						for (const [id, note] of Object.entries(this.state.notes)) {
+							if (note.removed || !prioritized.has(note.path)) continue;
+							byPath.set(note.path, [id, note]);
+							used.add(id);
+							present.add(note.path);
+						}
+					}
+				}
+			}
 			const kind = folderSet.has(path) ? 'folder' : 'file';
 			const file =
 				kind === 'folder'
