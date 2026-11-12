@@ -146,9 +146,6 @@ export class NotebookSynchronizer {
 	#queuedUploads = [];
 	#contentPoll;
 	#nextContentPollAt = Infinity;
-	get #contentPollDue() {
-		return !!this.#contentPoll && performance.now() >= this.#nextContentPollAt;
-	}
 	#bulkRemoved = new Set();
 	#remoteHeads = new Map();
 	#remoteFiles = new Map();
@@ -1233,7 +1230,7 @@ export class NotebookSynchronizer {
 				}
 				while (current[windowIndex] !== entry) windowIndex++;
 				if (windowIndex >= nextPrefetch) {
-					if (windowIndex > 0 && this.#contentPollDue) await this.#contentPoll();
+					if (windowIndex > 0) await this.#contentPoll?.();
 					const rank = receivePlan.ranks.get(entry.note);
 					const windowEntries = current.slice(windowIndex, windowIndex + this.batchFiles).filter(item => receivePlan.ranks.get(item.note) === rank);
 					if (!windowEntries.some(item => item.removed)) {
@@ -1473,6 +1470,7 @@ export class NotebookSynchronizer {
 		let checked = 0,
 			lastYield = Date.now();
 		let sendingAttachments = false;
+		let transferredSincePoll = false;
 		for (const raw of paths) {
 			this.assertActive();
 			const path = safeNotePath(raw);
@@ -1484,11 +1482,17 @@ export class NotebookSynchronizer {
 			}
 			if (!priorityPaths && !targets && ceiling === undefined) {
 				const hasPriorityNote = this.contentPriorities.size > 0 && Array.from(this.contentPriorities.keys()).some(isMarkdown);
-				const pollRemote = this.#contentPollDue || (startingAttachments && checked > 0 && !!this.#contentPoll);
+				// Keep the existing checkpoints while publishing changes. A scan
+				// of unchanged files only needs the elapsed-time checks.
+				const transferBoundary = transferredSincePoll && checked % this.batchFiles === 0;
+				const pollRemote = this.#contentPoll && (
+					transferBoundary || (startingAttachments && checked > 0) || performance.now() >= this.#nextContentPollAt
+				);
 				if (hasPriorityNote || pollRemote) {
 					// Finish an existing batch before sharing the normal send pipeline.
 					if (!startingAttachments) await flushUploads();
 					const remotePaths = pollRemote ? await this.#contentPoll() : [];
+					if (pollRemote) transferredSincePoll = false;
 					const prioritized = new Set([...remotePaths, ...await this.#prioritizeContent()]);
 					if (prioritized.size) {
 						for (const [id, note] of Object.entries(this.state.notes)) {
@@ -1573,6 +1577,7 @@ export class NotebookSynchronizer {
 				id = await fingerprint(crypto.getRandomValues(new Uint8Array(32)));
 			if (targets && !targets.has(id) && !targets.has(pathKey)) continue;
 			if (this.direction === 'update' && (!previous || previous.removed)) continue;
+			transferredSincePoll = true;
 			if (this.batchTransfer && typeof this.api.storeBatch === 'function' && typeof this.api.commitBatch === 'function' && kind === 'file' && previous?.digest === digest) {
 				await this.#task({ note: id, pathKey, direction: 'send', path }, async () => {
 					const reusable = await reusableInfo(id,previous);

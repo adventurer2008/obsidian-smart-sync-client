@@ -134,14 +134,14 @@ test('a fast scan with a queued attachment reads the feed once before the attach
 	context.mock.method(performance, 'now', () => 0);
 	const f = fixture(true);
 	const remote = await f.add('existing.md', 'old');
+	for (let i = 0; i < 12; i++) await f.add(`note-${i}.md`, `body ${i}`);
 	await f.engine({ direction: 'receive' }).run();
 	f.events.length = 0;
-	for (let i = 0; i < 12; i++) f.set(`note-${i}.md`, `body ${i}`);
 	f.set('edited.bin', 'attachment', mtime + 100);
-	const read = f.host.read;
-	f.host.read = async path => {
+	const fileTime = f.host.mtime;
+	f.host.mtime = async path => {
 		if (path === 'note-11.md') await f.add('existing.md', 'new', remote.id);
-		return read(path);
+		return fileTime(path);
 	};
 	const feed = f.api.feed;
 	let reads = 0;
@@ -161,26 +161,18 @@ test('a fast scan with a queued attachment reads the feed once before the attach
 	assert.equal(priorities.size, 0);
 });
 
-test('a remote Markdown edit preempts remaining attachments once the next feed check is due', async (context) => {
-	let now = 0;
-	context.mock.method(performance, 'now', () => now);
+test('a remote Markdown edit still preempts remaining attachments during a fast download', async (context) => {
+	context.mock.method(performance, 'now', () => 0);
 	const f = fixture(true), note = await f.add('existing.md', 'old');
 	await f.engine({ direction: 'receive' }).run();
 	f.events.length = 0;
 	for (const name of ['first.bin', 'second.bin', 'third.bin', 'fourth.bin']) await f.add(name, name);
-	const feed = f.api.feed, reads = [];
-	f.api.feed = async after => { reads.push(now); return feed(after); };
 	const write = f.host.write;
 	f.host.write = async (path, body, time) => {
 		await write(path, body, time);
-		if (path === 'first.bin') now = 500;
-		if (path === 'second.bin') {
-			await f.add('existing.md', 'new', note.id);
-			now = 1000;
-		}
+		if (path === 'second.bin') await f.add('existing.md', 'new', note.id);
 	};
 	await f.engine({ direction: 'receive', batchFiles: 1 }).run();
-	assert.deepEqual(reads, [0, 1000]);
 	assert.deepEqual(f.events.filter(([kind]) => kind === 'receive'), [
 		['receive', 'first.bin'], ['receive', 'second.bin'], ['receive', 'existing.md'],
 		['receive', 'third.bin'], ['receive', 'fourth.bin'],
