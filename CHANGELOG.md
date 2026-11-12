@@ -1,5 +1,9 @@
 # Source change record
 
+## 1.1.7-alpha.7 — CHG-20261112-CN-TRANSLATION-ALPHA
+
+Requirement R-CN-SELECTION-TRANSLATION. Add selection translation and the English dictionary card to the China Hub Alpha on top of the Alpha.6 client.
+
 ## CHG-20261112-CN-RECEIVE-START — Keep LAN negotiation off the sync startup path
 ## Unreleased — CHG-20261112-CN-DICTIONARY-STYLE
 
