@@ -130,21 +130,66 @@ test('a new local Markdown edit interrupts attachment work at the next file boun
 	assert.equal(priorities.size, 0); assert.equal(f.times.get('new.md'), mtime + 100);
 });
 
-test('a queued attachment does not request the remote feed for every scanned note', async () => {
+test('a fast scan with a queued attachment reads the feed once before the attachment phase', async (context) => {
+	context.mock.method(performance, 'now', () => 0);
 	const f = fixture(true);
+	const remote = await f.add('existing.md', 'old');
+	await f.engine({ direction: 'receive' }).run();
+	f.events.length = 0;
 	for (let i = 0; i < 12; i++) f.set(`note-${i}.md`, `body ${i}`);
 	f.set('edited.bin', 'attachment', mtime + 100);
+	const read = f.host.read;
+	f.host.read = async path => {
+		if (path === 'note-11.md') await f.add('existing.md', 'new', remote.id);
+		return read(path);
+	};
 	const feed = f.api.feed;
 	let reads = 0;
 	f.api.feed = async after => { reads++; return feed(after); };
 	const priorities = new Map([['edited.bin', 1]]);
 	await f.engine({ batchFiles: 4, contentPriorities: priorities }).run();
-	assert.equal(reads, 4);
+	assert.equal(reads, 2);
+	assert.deepEqual(f.events.filter(([kind]) => ['send', 'receive'].includes(kind)).slice(-2), [
+		['receive', 'existing.md'], ['send', 'edited.bin'],
+	]);
+	assert.deepEqual(f.files.get('existing.md'), bytes('new'));
+	assert.equal(f.times.get('existing.md'), mtime);
 	assert.deepEqual(f.events.filter(([kind]) => kind === 'send').at(-1), ['send', 'edited.bin']);
 	const uploaded = f.entries.at(-1);
 	const metadata = await inspectNote(keys, workspace, uploaded.note, uploaded.manifest, address => f.objects.get(address));
 	assert.equal(metadata.mtime, mtime + 100);
 	assert.equal(priorities.size, 0);
+});
+
+test('a remote Markdown edit preempts remaining attachments once the next feed check is due', async (context) => {
+	let now = 0;
+	context.mock.method(performance, 'now', () => now);
+	const f = fixture(true), note = await f.add('existing.md', 'old');
+	await f.engine({ direction: 'receive' }).run();
+	f.events.length = 0;
+	for (const name of ['first.bin', 'second.bin', 'third.bin', 'fourth.bin']) await f.add(name, name);
+	const feed = f.api.feed, reads = [];
+	f.api.feed = async after => { reads.push(now); return feed(after); };
+	const write = f.host.write;
+	f.host.write = async (path, body, time) => {
+		await write(path, body, time);
+		if (path === 'first.bin') now = 500;
+		if (path === 'second.bin') {
+			await f.add('existing.md', 'new', note.id);
+			now = 1000;
+		}
+	};
+	await f.engine({ direction: 'receive', batchFiles: 1 }).run();
+	assert.deepEqual(reads, [0, 1000]);
+	assert.deepEqual(f.events.filter(([kind]) => kind === 'receive'), [
+		['receive', 'first.bin'], ['receive', 'second.bin'], ['receive', 'existing.md'],
+		['receive', 'third.bin'], ['receive', 'fourth.bin'],
+	]);
+	assert.deepEqual(f.files.get('existing.md'), bytes('new'));
+	assert.equal(f.times.get('existing.md'), mtime);
+	await f.engine({ direction: 'receive' }).run();
+	assert.equal(f.durable().cursor, 6);
+	assert.deepEqual(f.durable().pendingReceives ?? {}, {});
 });
 
 test('bounded classification reuses verified manifests without a second metadata decryption', async () => {

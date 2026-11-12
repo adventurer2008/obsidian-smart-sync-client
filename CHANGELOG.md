@@ -1,5 +1,9 @@
 # Source change record
 
+## CHG-20261112-SYNC-FEED-CADENCE — Check remote changes by elapsed time
+
+Requirement: reduce the roughly 220 feed requests seen on iPad in Alpha 1.1.7-alpha.3 while preserving Markdown priority. During a full scan or a long download, check the feed at a safe processing boundary when one second has elapsed. Also check at the transition from local note scanning to attachment uploads. A local Markdown edit can still advance at the next file boundary without requiring a remote check. Initial feed reads and pagination follow the existing protocol. In a synthetic six-second scan of 13,971 cached files, Alpha 1.1.7-alpha.3 made 219 feed requests and the new code made seven. The regression covers receiving a remote Markdown edit before the next attachment when a check is due and before attachment uploads when the phase changes.
+
 ## CHG-20261112-SYNC-SCAN-POLLING — Bound remote checks during local scans
 
 An iPad user reported slow synchronization and asked whether Markdown can arrive before attachments. Markdown already has priority. While scanning, fetch remote changes at eligible batch boundaries or when a queued Markdown edit needs priority. A queued attachment alone no longer triggers a request before each checked file. Skip rebuilding the local lookup when the priority check finds no changes. The regression reproduces 14 feed requests for 12 Markdown files and a queued attachment, then verifies four requests with the fix and checks the uploaded attachment's source modification time. The live iPad performance impact remains unverified.

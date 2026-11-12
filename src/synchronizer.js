@@ -15,6 +15,7 @@ import { BATCH_BYTES } from './client.js';
 // Dirty state follows the connection across short-lived engine instances, including failed saves.
 const unsavedStates = new WeakSet();
 const isMarkdown = path => path.toLowerCase().endsWith('.md');
+const CONTENT_POLL_INTERVAL_MS = 1000;
 
 export function emptyState() {
 	return { format: 3, cursor: 0, notes: {}, conflicts: [] };
@@ -144,6 +145,10 @@ export class NotebookSynchronizer {
 	#prefetchedInfo = new Map();
 	#queuedUploads = [];
 	#contentPoll;
+	#nextContentPollAt = Infinity;
+	get #contentPollDue() {
+		return !!this.#contentPoll && performance.now() >= this.#nextContentPollAt;
+	}
 	#bulkRemoved = new Set();
 	#remoteHeads = new Map();
 	#remoteFiles = new Map();
@@ -1148,6 +1153,7 @@ export class NotebookSynchronizer {
 				}
 				if (!batch.more) break;
 			}
+			this.#nextContentPollAt = performance.now() + CONTENT_POLL_INTERVAL_MS;
 			// Read all pages before applying: historical intermediate paths can be
 			// occupied by the latest files retained across a reconnect. Only each
 			// note's newest validated revision describes the desired remote state.
@@ -1188,6 +1194,7 @@ export class NotebookSynchronizer {
 						}
 						if (!batch.more) break;
 					}
+					this.#nextContentPollAt = performance.now() + CONTENT_POLL_INTERVAL_MS;
 					// Applying ahead never advances the durable feed cursor across pending bulk entries.
 					return this.#receiveContent(fresh);
 				};
@@ -1226,7 +1233,7 @@ export class NotebookSynchronizer {
 				}
 				while (current[windowIndex] !== entry) windowIndex++;
 				if (windowIndex >= nextPrefetch) {
-					if (windowIndex > 0) await this.#contentPoll?.();
+					if (windowIndex > 0 && this.#contentPollDue) await this.#contentPoll();
 					const rank = receivePlan.ranks.get(entry.note);
 					const windowEntries = current.slice(windowIndex, windowIndex + this.batchFiles).filter(item => receivePlan.ranks.get(item.note) === rank);
 					if (!windowEntries.some(item => item.removed)) {
@@ -1467,20 +1474,22 @@ export class NotebookSynchronizer {
 			lastYield = Date.now();
 		let sendingAttachments = false;
 		for (const raw of paths) {
-			if (!folderSet.has(raw) && !isMarkdown(raw) && !sendingAttachments) {
-				await flushUploads();
-				sendingAttachments = true;
-			}
 			this.assertActive();
 			const path = safeNotePath(raw);
 			if (this.excluded(path)) continue;
+			const startingAttachments = !sendingAttachments && !folderSet.has(path) && !isMarkdown(path);
+			if (startingAttachments) {
+				await flushUploads();
+				sendingAttachments = true;
+			}
 			if (!priorityPaths && !targets && ceiling === undefined) {
 				const hasPriorityNote = this.contentPriorities.size > 0 && Array.from(this.contentPriorities.keys()).some(isMarkdown);
-				const atBatchBoundary = checked > 0 && checked % this.batchFiles === 0;
-				if (hasPriorityNote || (atBatchBoundary && this.#contentPoll)) {
+				const pollRemote = this.#contentPollDue || (startingAttachments && checked > 0 && !!this.#contentPoll);
+				if (hasPriorityNote || pollRemote) {
 					// Finish an existing batch before sharing the normal send pipeline.
-					await flushUploads();
-					const prioritized = new Set([...(await this.#contentPoll?.() ?? []), ...await this.#prioritizeContent()]);
+					if (!startingAttachments) await flushUploads();
+					const remotePaths = pollRemote ? await this.#contentPoll() : [];
+					const prioritized = new Set([...remotePaths, ...await this.#prioritizeContent()]);
 					if (prioritized.size) {
 						for (const [id, note] of Object.entries(this.state.notes)) {
 							if (note.removed || !prioritized.has(note.path)) continue;
