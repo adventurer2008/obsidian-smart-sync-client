@@ -1,6 +1,12 @@
 # Cross-platform feature and scenario review
 
 ## CHG-20261112-CN-RECEIVE-START
+## CHG-20261112-CN-DICTIONARY-CARD
+
+Windows Obsidian 1.15.0: selected Access and opened the popover in the isolated vault. The live test endpoint verified both IPA fields, noun/verb/adjective grouping, forms and bilingual examples after normalizing the provider response. Focused Windows tests and the local, China and Global builds passed; the Global build has no translation entry.
+
+Windows, macOS and Linux desktop use the editor popover. Android, iPhone/iOS and iPad/iPadOS use the editor sheet. Support is conditional on the China translation service enabling the dictionary. Missing entries and older servers use the translation path. The card handles narrow widths with wrapping and a scrollable results area. Native touch, narrow screens, clipboard, background/lock/restart and physical checks on macOS, Linux, Android, iPhone and iPad remain pending. Editor changes, sign-out and closing the card use the existing request cancellation path. Offline failure uses the existing retry control. Upgrade and rollback require no persisted state or sync protocol changes. The feature sends the selected word after a click, reads the result as text and leaves note content, keys, sync progress and source mtime intact.
+
 ## CHG-20261112-CN-TRANSLATION-POPOVER
 
 | Platform | Support | Acceptance for this change |

@@ -759,6 +759,46 @@
 	white-space: pre-wrap;
 	user-select: text;
 }
+.smart-sync-dictionary {
+	white-space: normal;
+}
+.smart-sync-dictionary-word {
+	font-size: var(--font-ui-larger);
+	font-weight: var(--font-semibold);
+}
+.smart-sync-dictionary-phonetics,
+.smart-sync-dictionary-forms {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--size-4-1) var(--size-4-3);
+	color: var(--text-muted);
+}
+.smart-sync-dictionary-definitions {
+	display: grid;
+	grid-template-columns: max-content minmax(0, 1fr);
+	gap: var(--size-4-1) var(--size-4-2);
+	margin: var(--size-4-2) 0;
+}
+.smart-sync-dictionary-definitions dt,
+.smart-sync-dictionary-label {
+	font-weight: var(--font-semibold);
+}
+.smart-sync-dictionary-definitions dd {
+	margin: 0;
+}
+.smart-sync-dictionary-label {
+	margin-top: var(--size-4-3);
+}
+.smart-sync-dictionary-examples {
+	margin: var(--size-4-1) 0 0;
+	padding-inline-start: 1.4em;
+}
+.smart-sync-dictionary-examples li + li {
+	margin-top: var(--size-4-2);
+}
+.smart-sync-dictionary-example-translation {
+	color: var(--text-muted);
+}
 .modal-container.smart-sync-translation-sheet {
 	align-items: end;
 }

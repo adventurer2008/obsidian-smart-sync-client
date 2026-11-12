@@ -9,6 +9,7 @@ const languages = {
 };
 const selectionLimit = 1000;
 const title = '翻译所选文字';
+const dictionaryWord = /^[a-z]+(?:['’-][a-z]+)*$/i;
 
 function selectionText(file, text) {
 	return /\.md$/i.test(file?.path ?? '') && text?.trim() && !containsLockedText(text) ? text : '';
@@ -32,6 +33,41 @@ function errorMessage(error) {
 		case 404: return '当前服务暂未开放翻译。';
 		case 429: return '翻译达到用量上限或服务繁忙，请稍后重试。';
 		default: return '翻译失败，请检查网络或稍后重试。';
+	}
+}
+
+function renderDictionary(output, entry, text) {
+	output.empty();
+	const card = output.createDiv({ cls: 'smart-sync-dictionary' });
+	card.createEl('div', { cls: 'smart-sync-dictionary-word', text: entry.word || text.trim() });
+	if (entry.uk || entry.us) {
+		const phonetics = card.createDiv({ cls: 'smart-sync-dictionary-phonetics' });
+		if (entry.uk) phonetics.createEl('span', { text: '英 /' + entry.uk.replace(/^\/|\/$/g, '') + '/' });
+		if (entry.us) phonetics.createEl('span', { text: '美 /' + entry.us.replace(/^\/|\/$/g, '') + '/' });
+	}
+	const groups = new Map();
+	for (const { part, meaning } of entry.definitions) {
+		const group = groups.get(part) ?? [];
+		group.push(meaning);
+		groups.set(part, group);
+	}
+	const definitions = card.createEl('dl', { cls: 'smart-sync-dictionary-definitions' });
+	for (const [part, meanings] of groups) {
+		definitions.createEl('dt', { text: part || '释义' });
+		definitions.createEl('dd', { text: meanings.join('；') });
+	}
+	if (entry.forms?.length) {
+		card.createDiv({ cls: 'smart-sync-dictionary-label', text: '词形' });
+		const forms = card.createDiv({ cls: 'smart-sync-dictionary-forms' });
+		for (const { label, value } of entry.forms) forms.createEl('span', { text: label ? label + ' ' + value : value });
+	}
+	if (entry.examples?.length) {
+		card.createDiv({ cls: 'smart-sync-dictionary-label', text: '例句' });
+		const examples = card.createEl('ol', { cls: 'smart-sync-dictionary-examples' });
+		for (const { source, translation } of entry.examples) {
+			const example = examples.createEl('li', { text: source });
+			if (translation) example.createDiv({ cls: 'smart-sync-dictionary-example-translation', text: translation });
+		}
 	}
 }
 
@@ -60,10 +96,14 @@ function renderTranslation(container, text, request, close) {
 		translation = undefined;
 		copy.hidden = true;
 		retry.hidden = true;
-		output.setText('正在翻译…');
+		output.setText(target.value === 'zh-Hans' && dictionaryWord.test(text.trim()) ? '正在查询…' : '正在翻译…');
 		try {
 			const result = await request(text, target.value, controller.signal);
 			if (controller.signal.aborted) return;
+			if (result.dictionary) {
+				renderDictionary(output, result.dictionary, text);
+				return;
+			}
 			translation = result.translation;
 			output.setText(translation);
 			copy.hidden = false;
@@ -156,8 +196,20 @@ export function registerNoteTranslation(owner) {
 			if (!current()) throw Object.assign(Error('Translation context changed'), { status: 401 });
 			const api = owner.workspaceApi(origin, secret);
 			api.signal = signal;
-			const result = await api.request('POST', 'account/translate', { text, target });
+			const word = text.trim();
+			const lookup = target === 'zh-Hans' && word.length <= 64 && dictionaryWord.test(word);
+			const input = { text, target };
+			let result;
+			try {
+				result = await api.request('POST', 'account/translate', lookup ? { ...input, dictionary: true } : input);
+			} catch (error) {
+				// Older translation servers require exactly two request fields.
+				if (!lookup || error?.status !== 400 || signal.aborted || !current()) throw error;
+				result = await api.request('POST', 'account/translate', input);
+			}
 			if (!current()) throw Object.assign(Error('Translation context changed'), { status: 401 });
+			if (lookup && Array.isArray(result?.dictionary?.definitions) && result.dictionary.definitions.length)
+				return { dictionary: result.dictionary };
 			if (typeof result?.translation !== 'string' || !result.translation.trim() || result.translation.length > 12000)
 				throw Error('Invalid translation response');
 			return result;

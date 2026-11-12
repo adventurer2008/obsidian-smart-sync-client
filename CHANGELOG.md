@@ -1,6 +1,10 @@
 # Source change record
 
 ## CHG-20261112-CN-RECEIVE-START — Keep LAN negotiation off the sync startup path
+## Unreleased — CHG-20261112-CN-DICTIONARY-CARD
+
+Requirement R-CN-SELECTION-TRANSLATION. Show a dictionary card for an English word when looking up its Chinese meaning. Display available British and American IPA, grouped Chinese definitions, forms and bilingual examples as text. The existing sentence translation remains available in the same panel.
+
 ## Unreleased — CHG-20261112-CN-TRANSLATION-POPOVER
 
 Requirement R-CN-SELECTION-TRANSLATION. Follow the user's Saladict selection interaction in the Markdown editor. Show a round translation icon beside the selection, then open an anchored card with the source excerpt and translation after a click. Use the same content order in the existing mobile sheet.

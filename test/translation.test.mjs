@@ -102,6 +102,35 @@ test('desktop selection waits for a click and renders only the translation as pl
 	} finally { dispose(); view.destroy(); }
 });
 
+test('single-word results display a grouped dictionary card without audio controls', async () => {
+	const { owner, requests, dispose } = ownerFixture();
+	const editor = { getSelection: () => 'Access' };
+	try {
+		owner.command.editorCheckCallback(false, editor, { file });
+		assert.deepEqual(requests[0].input, { text: 'Access', target: 'zh-Hans', dictionary: true });
+		requests[0].resolve({ dictionary: {
+			word: 'access', uk: 'ˈækses', us: 'ˈækˌses',
+			definitions: [{ part: 'n.', meaning: '入口' }, { part: 'n.', meaning: '权限' }, { part: 'v.', meaning: '访问' }],
+			forms: [{ label: '过去式', value: 'accessed' }],
+			examples: [{ source: 'Access is limited.', translation: '访问受限。' }],
+		} });
+		await tick();
+		const card = modals.at(-1).contentEl.querySelector('.smart-sync-dictionary');
+		assert.deepEqual([...card.querySelectorAll('dd')].map(row => row.textContent), ['入口；权限', '访问']);
+		for (const value of ['英 /ˈækses/', '美 /ˈækˌses/', '过去式 accessed', 'Access is limited.', '访问受限。'])
+			assert.ok(card.textContent.includes(value));
+		assert.equal(card.querySelector('audio,button'), null);
+		dispose();
+		owner.command.editorCheckCallback(false, editor, { file });
+		requests[1].reject({ status: 400 });
+		await tick();
+		assert.deepEqual(requests[2].input, { text: 'Access', target: 'zh-Hans' });
+		requests[2].resolve({ translation: '访问' });
+		await tick();
+		assert.equal(modals.at(-1).contentEl.querySelector('.smart-sync-translation-output').textContent, '访问');
+	} finally { dispose(); }
+});
+
 test('mobile command/menu preserves the chosen text, supports explicit retry and closes on file change', async () => {
 	Platform.isMobile = true;
 	const { owner, handlers, requests, dispose, addMobileAction } = ownerFixture();
