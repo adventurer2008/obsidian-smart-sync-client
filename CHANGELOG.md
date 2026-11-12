@@ -1,5 +1,9 @@
 # Source change record
 
+## Unreleased — CHG-20261112-NOTEBOOK-NAVIGATOR-MENUS
+
+Requirement: keep the Client file actions available when Notebook Navigator is used to browse notes. Use its optional Menus API for history and restore, whole-note encryption, and the existing synchronized file and folder position actions. Label the position actions with the Obsidian File Explorer name because Notebook Navigator orders its own lists. Localize the label and use position verbs in all Global languages. Multi-file position actions use the selection supplied by Navigator when available. Both editions keep the existing native menu callbacks.
+
 ## Unreleased — CHG-20261112-CN-DICTIONARY-STYLE
 
 Requirement R-CN-SELECTION-TRANSLATION. Give the selection button and card an original robot mascot, teal toolbar and clearer dictionary sections. Use the same design in the mobile sheet. Translation behavior and the text-only dictionary stay the same.
