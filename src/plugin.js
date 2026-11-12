@@ -691,31 +691,35 @@ export default class IndependentSync extends Plugin {
 					window.clearTimeout(this.explorerSortTimer);
 					this.explorerSortTimer = window.setTimeout(() => this.refreshExplorerSorting(), 150);
 				}));
-		// R138 replaces legacy size presets with always / on-note-open.
-		if (workspace.on) this.registerEvent(workspace.on('file-menu', (menu, file) => {
+		const positionTitle = (key, navigator) => navigator ? t('pin.explorerAction', { action: t(key) }) : t(key);
+		const addFileMenu = (menu, file, navigator = false) => {
 			if (!this.canPinEntry(file)) return;
-			menu.addItem(item => item.setTitle(t(this.isNotePinned(file.path) ? 'pin.unpin' : 'pin.pin'))
+			menu.addItem(item => item.setTitle(positionTitle(this.isNotePinned(file.path) ? 'pin.unpin' : 'pin.pin', navigator))
 				.setIcon('pin').onClick(() => { void this.toggleNotePin(file).catch(error => this.notify(failureMessage(error))); }));
-			menu.addItem(item => item.setTitle(t(this.isNoteBottomed(file.path) ? 'pin.unbottom' : 'pin.bottom'))
+			menu.addItem(item => item.setTitle(positionTitle(this.isNoteBottomed(file.path) ? 'pin.unbottom' : 'pin.bottom', navigator))
 				.setIcon('arrow-down-to-line').onClick(() => { void this.setNoteBottoms([file], !this.isNoteBottomed(file.path)).catch(error => this.notify(failureMessage(error))); }));
 			if (file instanceof TFile && file.path.toLowerCase().endsWith('.md'))
 				menu.addItem(item => item.setTitle(t('history.contextMenu')).setIcon('history')
 					.onClick(() => { void this.history(undefined, file.path); }));
-		}));
-		if (workspace.on) this.registerEvent(workspace.on('files-menu', (menu, files) => {
+		};
+		const addFilesMenu = (menu, files, navigator = false) => {
 			const entries = files.filter(file => this.canPinEntry(file));
 			if (!entries.length) return;
 			for (const pinned of [true, false]) {
 				if (!entries.some(file => this.isNotePinned(file.path) !== pinned)) continue;
-				menu.addItem(item => item.setTitle(t(pinned ? 'pin.pin' : 'pin.unpin')).setIcon('pin')
+				menu.addItem(item => item.setTitle(positionTitle(pinned ? 'pin.pin' : 'pin.unpin', navigator)).setIcon('pin')
 					.onClick(() => { void this.setNotePins(entries, pinned).catch(error => this.notify(failureMessage(error))); }));
 			}
 			for (const bottomed of [true, false]) {
 				if (!entries.some(file => this.isNoteBottomed(file.path) !== bottomed)) continue;
-				menu.addItem(item => item.setTitle(t(bottomed ? 'pin.bottom' : 'pin.unbottom')).setIcon('arrow-down-to-line')
+				menu.addItem(item => item.setTitle(positionTitle(bottomed ? 'pin.bottom' : 'pin.unbottom', navigator)).setIcon('arrow-down-to-line')
 					.onClick(() => { void this.setNoteBottoms(entries, bottomed).catch(error => this.notify(failureMessage(error))); }));
 			}
-		}));
+		};
+		if (workspace.on) {
+			this.registerEvent(workspace.on('file-menu', (menu, file) => addFileMenu(menu, file)));
+			this.registerEvent(workspace.on('files-menu', (menu, files) => addFilesMenu(menu, files)));
+		}
 		if (this.app.vault.on) {
 			this.registerEvent(this.app.vault.on('rename', (file, from) => {
 				const { pins } = this.notePinContext();
@@ -780,7 +784,31 @@ export default class IndependentSync extends Plugin {
 			translation = registerNoteTranslation(this);
 		}
 		this.closeTranslation = translation?.close;
-		registerNoteEncryption(this, translation?.addMobileAction);
+		const encryption = registerNoteEncryption(this, translation?.addMobileAction);
+		let navigatorMenus;
+		const refreshNavigatorMenus = () => {
+			if (this.stopped) return;
+			const menus = this.app.plugins?.plugins?.['notebook-navigator']?.api?.menus;
+			if (menus === navigatorMenus) return;
+			this.disposeNavigatorMenus?.();
+			navigatorMenus = menus;
+			const disposeFile = menus?.registerFileMenu?.(context => {
+				if (context.selection?.mode === 'multiple') {
+					addFilesMenu(context, context.selection.files, true);
+					return;
+				}
+				addFileMenu(context, context.file, true);
+				encryption.addFileMenu(context, context.file);
+			});
+			const disposeFolder = menus?.registerFolderMenu?.(context => addFileMenu(context, context.folder, true));
+			this.disposeNavigatorMenus = () => {
+				disposeFile?.();
+				disposeFolder?.();
+			};
+		};
+		refreshNavigatorMenus();
+		workspace.onLayoutReady?.(refreshNavigatorMenus);
+		if (workspace.on) this.registerEvent(workspace.on('layout-change', refreshNavigatorMenus));
 		this.refreshBackgroundTray();
 		if (!Platform.isMobile && windowsStartupSupported(window.require) && this.registerObsidianProtocolHandler) {
 			this.registerObsidianProtocolHandler(`${this.manifest.id}-startup`, params => {
@@ -2647,6 +2675,7 @@ export default class IndependentSync extends Plugin {
 		} catch { this.notify(t('tray.unavailable')); }
 	}
 	onunload() {
+		this.disposeNavigatorMenus?.();
 		this.closeTranslation?.();
 		this.backgroundTray?.dispose();
 		this.backgroundTray = undefined;

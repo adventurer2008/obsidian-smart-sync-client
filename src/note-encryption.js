@@ -93,6 +93,9 @@ export class NoteEncryption {
 		this.volatileDrafts = new Map();
 		this.recoveryDir = `${this.app.vault.configDir}/plugins/${owner.manifest.id}/encrypted-drafts`;
 	}
+	addFileMenu(menu, file) {
+		if (fileIsNote(file)) menu.addItem(item => item.setTitle(t('encryption.encryptNote')).setIcon('lock').onClick(() => { void this.encryptNote(file).catch(failure); }));
+	}
 	active(epoch) { return !this.stopped && epoch === this.epoch && !this.document?.hidden; }
 	async capture(file, editor) {
 		if (!fileIsNote(file)) throw Error(t('encryption.text16'));
@@ -602,9 +605,7 @@ export function registerNoteEncryption(owner, addSelectionAction) {
 			if (!editor.getSelection() || !fileIsNote(info.file)) return;
 			menu.addItem(item => item.setTitle(t('encryption.encryptSelection')).setIcon('lock').onClick(() => { void manager.encryptSelection(editor, info.file).catch(failure); }));
 		}));
-		owner.registerEvent(workspace.on('file-menu', (menu, file) => {
-			if (fileIsNote(file)) menu.addItem(item => item.setTitle(t('encryption.encryptNote')).setIcon('lock').onClick(() => { void manager.encryptNote(file).catch(failure); }));
-		}));
+		owner.registerEvent(workspace.on('file-menu', (menu, file) => manager.addFileMenu(menu, file)));
 		owner.registerEvent(workspace.on('layout-change', () => manager.sweep()));
 	}
 	if (owner.app.vault.on) for (const event of ['rename', 'delete']) owner.registerEvent(owner.app.vault.on(event, () => manager.lockAll()));

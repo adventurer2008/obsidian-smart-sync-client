@@ -1,5 +1,15 @@
 # Cross-platform feature and scenario review
 
+## CHG-20261112-NOTEBOOK-NAVIGATOR-MENUS
+
+Both editions conditionally support Windows, macOS, desktop Linux, Android, iPhone/iOS and iPad/iPadOS through Notebook Navigator's optional file and folder Menus API. A vault without that API uses the existing Obsidian menus. Navigator controls its own ordering. Position commands invoked from either menu update the existing synchronized state for Obsidian File Explorer. Batch commands require an effective multi-file selection from Navigator.
+
+Native acceptance is pending on all six platforms. Desktop retest covers right-click and multiple selection. Android, iPhone and iPad retest covers the touch context menu and label fit, including iPad split view. Windows synthetic coverage exercises late API availability, menu construction for a note, attachment, folder and multiple files, action targeting, duplicate prevention and callback cleanup when either plugin reloads.
+
+Windows Node 26.12.1 reported 383 passed and one skipped. Both regional builds and dependency isolation checks passed. The China community lint reported zero errors and 12 existing warnings.
+
+The integration is vault-local and uses the existing Client handlers. Desktop-only APIs, new background or lock behavior, offline recovery changes, migrations and server changes are out of scope. Older clients keep the native menu and existing data format in mixed-version use. Code rollback removes the Navigator entries. Existing identity, vault, content, key, progress and source-mtime rules continue to apply.
+
 ## CHG-20261112-CN-RECEIVE-START
 ## CHG-20261112-CN-DICTIONARY-STYLE
 

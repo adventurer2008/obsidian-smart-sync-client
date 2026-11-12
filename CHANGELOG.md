@@ -1,5 +1,9 @@
 # Source change record
 
+## Unreleased — CHG-20261112-NOTEBOOK-NAVIGATOR-MENUS
+
+Requirement: keep the Client file actions available when Notebook Navigator is used to browse notes. Use its optional Menus API for history and restore, whole-note encryption, and the existing synchronized file and folder position actions. Label the position actions with the Obsidian File Explorer name because Notebook Navigator orders its own lists. Localize the label and use position verbs in all Global languages. Multi-file position actions use the selection supplied by Navigator when available. Both editions keep the existing native menu callbacks.
+
 ## 1.1.7-alpha.7 — CHG-20261112-CN-TRANSLATION-ALPHA
 
 Requirement R-CN-SELECTION-TRANSLATION. Add selection translation and the English dictionary card to the China Hub Alpha on top of the Alpha.6 client.
