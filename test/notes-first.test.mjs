@@ -20,8 +20,11 @@ function fixture(batch) {
 			assert.equal(entries.findLast(entry => entry.note === note)?.sequence ?? 0, input.expected);
 			const entry = { note, manifest: input.manifest, removed: input.removed, sequence: entries.length + 1 };
 			entries.push(entry);
+			const eventIndex = events.length;
+			events.push(['send']);
 			const info = await inspectNote(keys, workspace, note, input.manifest, address => objects.get(address));
-			events.push(['send', info.path]); return entry;
+			events[eventIndex] = ['send', info.path];
+			return entry;
 		},
 		commitBatch: async inputs => ({ entries: await Promise.all(inputs.map(input => api.commit(input.note, input))) })
 	};

@@ -5682,15 +5682,18 @@ export class IndependentSettings extends PluginSettingTab {
 				...basic.filter((item) => daily.has(item.name) && item.name !== t('daily.attachments')),
 			]),
 			fold(t('layout.advanced'), t('layout.advancedHelp'), [
-				...['recentEnabled', 'noteSearchEnabled', ...(
-					(typeof __SMART_SYNC_CN_TRANSLATION__ === 'undefined' ? edition.edition === 'cn' : __SMART_SYNC_CN_TRANSLATION__)
-						? ['translationEnabled'] : []
-				)].map(key => row(t(`notes.${key}`), setting => setting
+				...['recentEnabled', 'noteSearchEnabled'].map(key => row(t(`notes.${key}`), setting => setting
 					.setDesc(t(`notes.${key}Help`))
 					.addToggle(input => input.setValue(config[key] !== false).onChange(async value => {
 						try { await plugin.setting(key, value); }
 						catch { plugin.notify(t('notes.saveFailed')); this.update(); }
 					})))),
+				...((typeof __SMART_SYNC_CN_TRANSLATION__ === 'undefined' ? edition.edition === 'cn' : __SMART_SYNC_CN_TRANSLATION__)
+					? [row('启用翻译功能', setting => setting.setDesc('选中文字后可查词或翻译。')
+						.addToggle(input => input.setValue(config.translationEnabled !== false).onChange(async value => {
+							try { await plugin.setting('translationEnabled', value); }
+							catch { plugin.notify(t('notes.saveFailed')); this.update(); }
+						})))] : []),
 				...(!Platform.isMobile ? [row(t('tray.enabled'), setting => setting
 					.setDesc(t('tray.help'))
 					.addToggle(input => input.setValue(config.backgroundTray !== false).onChange(async value => {
