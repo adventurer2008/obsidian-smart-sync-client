@@ -130,6 +130,29 @@ test('single-word results display a grouped dictionary card without audio contro
 	} finally { dispose(); }
 });
 
+test('dictionary hits open automatically in display order and can be collapsed', async () => {
+	const { owner, requests, dispose } = ownerFixture();
+	const editor = { getSelection: () => 'Access' };
+	const entry = { word: 'access', definitions: [{ part: 'n.', meaning: '入口' }] };
+	try {
+		owner.command.editorCheckCallback(false, editor, { file });
+		const modal = modals.at(-1).contentEl;
+		assert.equal(modal.querySelector('details[open]'), null);
+		requests[0].resolve({ dictionaries: [
+			{ ...entry, source: 'oxford' }, { ...entry, source: 'cambridge' },
+			{ ...entry, source: 'youdao' }, { ...entry, source: 'bing' }, { source: 'ecdict', definitions: [] },
+		] });
+		await tick();
+		const sections = [...modal.querySelectorAll('details')];
+		assert.deepEqual(sections.map(section => section.querySelector('summary').textContent),
+			['必应词典', '有道词典', '剑桥词典', '牛津词典']);
+		assert.ok(sections.every(section => section.open));
+		sections[0].querySelector('summary').click();
+		assert.equal(sections[0].open, false);
+		assert.equal(sections[1].open, true);
+	} finally { dispose(); }
+});
+
 test('mobile command/menu preserves the chosen text, supports explicit retry and closes on file change', async () => {
 	Platform.isMobile = true;
 	const { owner, handlers, requests, dispose, addMobileAction } = ownerFixture();
@@ -163,4 +186,36 @@ test('mobile command/menu preserves the chosen text, supports explicit retry and
 		assert.deepEqual(requests[2].input, { text: selection, target: 'zh-Hans' });
 		assert.equal(owner.command.editorCheckCallback(true, { getSelection: () => '⟦wujie-lock:v1:locked⟧' }, { file }), false);
 	} finally { dispose(); Platform.isMobile = false; }
+});
+
+test('the local lab can send a phrase and displays the matching offline source', async () => {
+	const { owner, requests, dispose } = ownerFixture();
+	owner.data.settings.origin = 'http://127.0.0.1:39694';
+	try {
+		owner.command.editorCheckCallback(false, { getSelection: () => 'take off' }, { file });
+		assert.deepEqual(requests[0].input, { text: 'take off', target: 'zh-Hans', dictionary: true });
+		requests[0].resolve({ dictionaries: [{
+			source: 'oxford-hk10', word: 'take off', definitions: [{ part: 'phrasal verb', meaning: '起飞' }],
+		}] });
+		await tick();
+		const section = modals.at(-1).contentEl.querySelector('details');
+		assert.ok(section.open);
+		assert.equal(section.querySelector('summary').textContent, '牛津');
+		assert.match(section.textContent, /起飞/);
+	} finally { dispose(); }
+});
+
+test('the hosted China Alpha uses the hosted lookup for phrases and leaves sentences on translation', async () => {
+	const { owner, requests, dispose } = ownerFixture();
+	owner.manifest = { version: '1.1.7-alpha.9' };
+	try {
+		owner.command.editorCheckCallback(false, { getSelection: () => 'take off' }, { file });
+		assert.deepEqual(requests[0].input, { text: 'take off', target: 'zh-Hans', dictionary: 'alpha' });
+		requests[0].resolve({ dictionaries: [{ source: 'oxford-v3', definitions: [{ part: '', meaning: '起飞' }] }] });
+		await tick();
+		assert.equal(modals.at(-1).contentEl.querySelector('summary').textContent, '牛津');
+		const sentence = 'The plane will take off.';
+		owner.command.editorCheckCallback(false, { getSelection: () => sentence }, { file });
+		assert.deepEqual(requests[1].input, { text: sentence, target: 'zh-Hans' });
+	} finally { dispose(); }
 });

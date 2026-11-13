@@ -1,6 +1,7 @@
 import * as ObsidianSdk from 'obsidian';
 import { showTooltip } from '@codemirror/view';
 import { containsLockedText } from './note-crypto.js';
+import { edition } from './edition.js';
 
 const { Modal, Notice, Platform, editorInfoField } = ObsidianSdk;
 const languages = {
@@ -9,6 +10,7 @@ const languages = {
 };
 const selectionLimit = 1000;
 const title = '翻译所选文字';
+const dictionarySelection = /^[a-z]+(?:['’-][a-z]+)*(?: +[a-z]+(?:['’-][a-z]+)*){0,5}$/i;
 const dictionaryWord = /^[a-z]+(?:['’-][a-z]+)*$/i;
 
 function selectionText(file, text) {
@@ -41,15 +43,15 @@ function errorMessage(error) {
 }
 
 function renderDictionary(output, entry, text) {
-	output.empty();
 	const card = output.createDiv({ cls: 'smart-sync-dictionary' });
 	const hero = card.createDiv({ cls: 'smart-sync-dictionary-hero' });
 	hero.createDiv({ cls: 'smart-sync-dictionary-kicker', text: '英汉词典' });
 	hero.createEl('div', { cls: 'smart-sync-dictionary-word', text: entry.word || text.trim() });
-	if (entry.uk || entry.us) {
+	if (entry.uk || entry.us || entry.phonetic) {
 		const phonetics = hero.createDiv({ cls: 'smart-sync-dictionary-phonetics' });
 		if (entry.uk) phonetics.createEl('span', { text: '英 /' + entry.uk.replace(/^\/|\/$/g, '') + '/' });
 		if (entry.us) phonetics.createEl('span', { text: '美 /' + entry.us.replace(/^\/|\/$/g, '') + '/' });
+		if (!entry.uk && !entry.us) phonetics.createEl('span', { text: entry.phonetic });
 	}
 	const groups = new Map();
 	for (const { part, meaning } of entry.definitions) {
@@ -75,6 +77,30 @@ function renderDictionary(output, entry, text) {
 			const example = examples.createEl('li', { text: source });
 			if (translation) example.createDiv({ cls: 'smart-sync-dictionary-example-translation', text: translation });
 		}
+	}
+}
+
+const dictionaryNames = new Map([
+	['oxford-hk10', '牛津'],
+	['bing', '必应词典'], ['youdao', '有道词典'], ['cambridge', '剑桥词典'], ['oxford', '牛津词典'],
+	['ecdict', '自建词库'],
+	['oxford-v3', '牛津'],
+]);
+
+function renderDictionaries(output, entries, text) {
+	output.empty();
+	if (!entries.length) {
+		output.setText('未查到词条。');
+		return;
+	}
+	const bySource = new Map(entries.map(entry => [entry.source, entry]));
+	for (const [source, name] of dictionaryNames) {
+		const entry = bySource.get(source);
+		if (!entry) continue;
+		const section = output.createEl('details', { cls: 'smart-sync-dictionary-source' });
+		section.createEl('summary', { text: name });
+		renderDictionary(section, entry, text);
+		section.open = true;
 	}
 }
 
@@ -108,7 +134,12 @@ function renderTranslation(container, text, request, close) {
 		try {
 			const result = await request(text, target.value, controller.signal);
 			if (controller.signal.aborted) return;
+			if (result.dictionaries) {
+				renderDictionaries(output, result.dictionaries, text);
+				return;
+			}
 			if (result.dictionary) {
+				output.empty();
 				renderDictionary(output, result.dictionary, text);
 				return;
 			}
@@ -201,6 +232,9 @@ export function registerNoteTranslation(owner) {
 		if (!secret) return new Notice('请登录无界同步后使用翻译。');
 		close();
 		const { localId, settings: { origin, workspace: vault } } = owner.data;
+		const localLab = edition.development && /^http:\/\/127\.0\.0\.1(?::\d+)?$/.test(origin);
+		const hostedAlpha = edition.edition === 'cn' && !localLab &&
+			/^\d+\.\d+\.\d+-alpha\.\d+$/.test(owner.manifest?.version);
 		const current = () => !owner.stopped && owner.data.localId === localId &&
 			owner.data.settings.origin === origin && owner.data.settings.workspace === vault && key() === secret;
 		const request = async (text, target, signal) => {
@@ -208,17 +242,24 @@ export function registerNoteTranslation(owner) {
 			const api = owner.workspaceApi(origin, secret);
 			api.signal = signal;
 			const word = text.trim();
-			const lookup = target === 'zh-Hans' && word.length <= 64 && dictionaryWord.test(word);
+			const lookup = target === 'zh-Hans' && word.length <= 64 &&
+				(localLab || hostedAlpha ? dictionarySelection : dictionaryWord).test(word);
 			const input = { text, target };
 			let result;
 			try {
-				result = await api.request('POST', 'account/translate', lookup ? { ...input, dictionary: true } : input);
+				result = await api.request('POST', 'account/translate',
+					lookup ? { ...input, dictionary: hostedAlpha ? 'alpha' : true } : input);
 			} catch (error) {
 				// Older translation servers require exactly two request fields.
 				if (!lookup || error?.status !== 400 || signal.aborted || !current()) throw error;
 				result = await api.request('POST', 'account/translate', input);
 			}
 			if (!current()) throw Object.assign(Error('Translation context changed'), { status: 401 });
+			if (lookup && Array.isArray(result?.dictionaries)) {
+				const dictionaries = result.dictionaries.filter(entry =>
+					dictionaryNames.has(entry?.source) && Array.isArray(entry.definitions) && entry.definitions.length);
+				if (dictionaries.length || !result.dictionaries.length) return { dictionaries };
+			}
 			if (lookup && Array.isArray(result?.dictionary?.definitions) && result.dictionary.definitions.length)
 				return { dictionary: result.dictionary };
 			if (typeof result?.translation !== 'string' || !result.translation.trim() || result.translation.length > 12000)

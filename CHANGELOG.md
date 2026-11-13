@@ -1,5 +1,9 @@
 # Source change record
 
+## 1.1.7-alpha.9 — CHG-20261113-CN-OXFORD-ALPHA
+
+Requirement R-CN-SELECTION-TRANSLATION. Show 牛津 for both hosted dictionary editions, with supplementary online sources and phrase lookup in the China Alpha. Sentences use the existing translation service.
+
 ## 1.1.7-alpha.8 — CHG-20261112-NOTEBOOK-NAVIGATOR-MENUS
 
 Requirement: keep the Client file actions available when Notebook Navigator is used to browse notes. Use its optional Menus API for history and restore, whole-note encryption, and the existing synchronized file and folder position actions. Label the position actions with the Obsidian File Explorer name because Notebook Navigator orders its own lists. Localize the label and use position verbs in all Global languages. Multi-file position actions use the selection supplied by Navigator when available. Both editions keep the existing native menu callbacks.
