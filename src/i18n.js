@@ -927,6 +927,8 @@ export const englishDraft = {
 	'tray.unavailable': 'This host could not create a system tray icon. Windows will close normally.',
 	'notes.noteSearchEnabledHelp': 'Show note search for locally available notes.',
 	'notes.saveFailed': 'Could not save this setting. Try again.',
+	'notes.translationEnabled': 'Enable translation',
+	'notes.translationEnabledHelp': 'Select text to look up a word or translate it.',
 	'sync.waitingStage': 'Still waiting: {stage}. Stop this round; if it remains stuck, save and restart Obsidian.',
 	'sync.stage.connecting': 'Connecting to the sync service',
 	'sync.stage.unlocking': 'Unlocking sync keys',
