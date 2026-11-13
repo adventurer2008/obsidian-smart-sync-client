@@ -5507,8 +5507,9 @@ export class IndependentSettings extends PluginSettingTab {
 					const info = setting.settingEl?.querySelector('.setting-item-info');
 					const update = () => {
 						const value = identity()?.[field];
-						fullValue = value || (!connected && name === 'overview.account' && accountCredential && sameConnection()
-							? t('notebooks.accountSignedIn') : t(fallback));
+						fullValue = value || (!plugin.data.settings.workspace
+							? t(name !== 'overview.account' ? 'sync.notConnected' : plugin.secret('account') ? 'notebooks.accountSignedIn' : 'overview.signedOut')
+							: t(fallback));
 						setting.setDesc(fullValue);
 						if (info) info.title = fullValue;
 					};
