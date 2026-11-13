@@ -684,6 +684,14 @@
 	background: transparent;
 	box-shadow: none;
 }
+.smart-sync-reading-translation {
+	position: fixed;
+	z-index: var(--layer-popover);
+}
+.smart-sync-reading-translation .smart-sync-translation-panel {
+	max-height: var(--reading-translation-height);
+	overflow: auto;
+}
 .smart-sync-translation-tooltip button.smart-sync-translation-trigger {
 	display: grid;
 	place-items: center;

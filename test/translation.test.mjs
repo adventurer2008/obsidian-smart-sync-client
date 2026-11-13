@@ -39,14 +39,16 @@ const file = { path: 'fixture.md', stat: { mtime: 1577836800123 } };
 const tick = () => new Promise(resolve => setImmediate(resolve));
 after(() => { window.close(); assert.deepEqual(errors, []); });
 
-function ownerFixture() {
+function ownerFixture(view) {
 	const handlers = new Map(), requests = [];
+	const cleanups = [];
 	const owner = {
 		app: { workspace: { on: (event, callback) => handlers.set(event, callback) } },
 		data: { localId: 'fixture', settings: { origin: 'https://sync.example.invalid', workspace: 'fixture' } },
 		secret: name => name === 'account' ? 'synthetic-key' : '',
 		addCommand(command) { this.command = command; },
 		registerEvent() {},
+		register(cleanup) { cleanups.push(cleanup); },
 		registerEditorExtension(extension) { this.extension = extension; },
 		workspaceApi(origin, key) {
 			return { request(method, path, input) {
@@ -54,9 +56,66 @@ function ownerFixture() {
 			} };
 		},
 	};
+	if (view) owner.app.workspace.getLeavesOfType = () => [{ view }];
 	const actions = registerNoteTranslation(owner);
-	return { owner, handlers, requests, dispose: actions.close, addMobileAction: actions.addMobileAction, refresh: actions.refresh };
+	return { owner, handlers, requests, dispose: actions.close, cleanups, addMobileAction: actions.addMobileAction, refresh: actions.refresh };
 }
+
+test('reading mode translates only selected note text and closes on settings or view changes', async () => {
+	const containerEl = document.createElement('div');
+	containerEl.innerHTML = '<div class="markdown-preview-view"><p>Access is limited.</p><span class="wujie-encrypted">Private</span></div>';
+	document.body.appendChild(containerEl);
+	let mode = 'preview';
+	const view = { containerEl, file, getMode: () => mode };
+	const { owner, handlers, requests, cleanups, refresh } = ownerFixture(view);
+	const select = (element, end) => {
+		const range = document.createRange();
+		range.setStart(element.firstChild, 0);
+		range.setEnd(element.firstChild, end);
+		document.getSelection().removeAllRanges();
+		document.getSelection().addRange(range);
+		document.dispatchEvent(new window.Event('selectionchange'));
+	};
+	const originalRect = window.Range.prototype.getBoundingClientRect;
+	window.Range.prototype.getBoundingClientRect = () => ({ width: 50, height: 20, top: 60, right: 80, bottom: 80 });
+	const anchor = () => document.querySelector('.smart-sync-reading-translation');
+	const choose = () => anchor().querySelector('button').click();
+	try {
+		select(containerEl.querySelector('p'), 6);
+		assert.equal(requests.length, 0);
+		choose();
+		assert.deepEqual(requests[0].input, { text: 'Access', target: 'zh-Hans', dictionary: true });
+		requests[0].resolve({ translation: '访问' });
+		await tick();
+		assert.equal(anchor().querySelector('.smart-sync-translation-output').textContent, '访问');
+		select(containerEl.querySelector('.wujie-encrypted'), 7);
+		assert.equal(anchor(), null);
+		assert.equal(requests.length, 1);
+		select(containerEl.querySelector('p'), 18);
+		choose();
+		assert.deepEqual(requests[1].input, { text: 'Access is limited.', target: 'zh-Hans' });
+		owner.data.settings.translationEnabled = false;
+		refresh();
+		assert.equal(requests[1].signal.aborted, true);
+		assert.equal(anchor(), null);
+		owner.data.settings.translationEnabled = true;
+		Platform.isMobile = true;
+		select(containerEl.querySelector('p'), 6);
+		choose();
+		assert.equal(anchor(), null);
+		assert.equal(requests[2].input.text, 'Access');
+		handlers.get('file-open')();
+		assert.equal(requests[2].signal.aborted, true);
+		mode = 'source';
+		select(containerEl.querySelector('p'), 6);
+		assert.equal(anchor(), null);
+	} finally {
+		Platform.isMobile = false;
+		cleanups.forEach(cleanup => cleanup());
+		containerEl.remove();
+		window.Range.prototype.getBoundingClientRect = originalRect;
+	}
+});
 
 test('disabling translation closes a pending lookup and hides existing selection controls', async () => {
 	const { owner, handlers, requests, dispose, addMobileAction, refresh } = ownerFixture();

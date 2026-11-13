@@ -204,6 +204,104 @@ function translationTooltip(open, trackControl) {
 	});
 }
 
+function registerReadingTranslation(owner, enabled, open) {
+	const workspace = owner.app.workspace;
+	const documents = new Map();
+	let active;
+	const clear = () => {
+		if (!active) return;
+		const previous = active;
+		active = undefined;
+		previous.close?.();
+		previous.anchor.remove();
+	};
+	const readingSelection = doc => {
+		const selection = doc.getSelection();
+		if (!selection || selection.isCollapsed || selection.rangeCount !== 1) return;
+		const range = selection.getRangeAt(0);
+		const start = range.startContainer;
+		const preview = (start.nodeType === 1 ? start : start.parentElement)?.closest('.markdown-preview-view');
+		if (!preview?.isConnected || preview.closest('.markdown-embed, .wujie-encrypted') || !preview.contains(range.endContainer)) return;
+		const view = workspace.getLeavesOfType('markdown').map(leaf => leaf.view).find(view =>
+			view?.containerEl?.contains(preview) && view.getMode?.() === 'preview');
+		const text = selectionText(view?.file, selection.toString());
+		if (!text || text.length > selectionLimit) return;
+		for (const area of preview.querySelectorAll('.wujie-encrypted, .markdown-embed'))
+			if (range.intersectsNode(area)) return;
+		return { view, file: view.file, preview, text, range };
+	};
+	const update = doc => {
+		if (doc.hidden || !enabled()) { if (active?.doc === doc) clear(); return; }
+		const selection = doc.getSelection();
+		if (active?.doc === doc && active.close && active.anchor.contains(selection?.anchorNode)) return;
+		const selected = readingSelection(doc);
+		if (!selected) { if (active?.doc === doc) clear(); return; }
+		const { range } = selected;
+		if (active?.doc === doc && active.file === selected.file && active.preview === selected.preview &&
+			active.text === selected.text && active.range.compareBoundaryPoints(0, range) === 0 &&
+			active.range.compareBoundaryPoints(2, range) === 0) return;
+		clear();
+		const rect = range.getBoundingClientRect?.();
+		const win = doc.defaultView;
+		if (!rect || !win || (!rect.width && !rect.height) || rect.bottom < 0 || rect.top > win.innerHeight) return;
+		const anchor = doc.createElement('div');
+		anchor.className = 'smart-sync-translation-tooltip smart-sync-reading-translation';
+		const width = Math.min(480, win.innerWidth - 24);
+		anchor.style.left = `${Math.max(12, Math.min(rect.right, win.innerWidth - width - 12))}px`;
+		const below = rect.bottom + 8;
+		const above = win.innerHeight - rect.top + 8;
+		const placeBelow = win.innerHeight - below >= 240 || below < above;
+		anchor.style[placeBelow ? 'top' : 'bottom'] = `${Math.max(8, placeBelow ? below : above)}px`;
+		anchor.style.setProperty('--reading-translation-height', `${Math.max(40, (placeBelow ? win.innerHeight - below : win.innerHeight - above) - 12)}px`);
+		const trigger = anchor.createEl('button', { cls: 'smart-sync-translation-trigger', attr: {
+			type: 'button', 'aria-label': title, title,
+		} });
+		addTranslationMascot(trigger);
+		trigger.setAttribute('aria-expanded', 'false');
+		const candidate = { ...selected, range: range.cloneRange(), doc, anchor };
+		active = candidate;
+		trigger.addEventListener('pointerdown', event => event.preventDefault());
+		trigger.addEventListener('click', () => {
+			if (active !== candidate || !enabled() || !candidate.preview.isConnected ||
+				candidate.view.file !== candidate.file || candidate.view.getMode() !== 'preview') return clear();
+			if (Platform.isMobile) { clear(); open(candidate.text); }
+			else candidate.close = open(candidate.text, anchor, trigger);
+		});
+		doc.body.appendChild(anchor);
+	};
+	const refreshDocuments = () => {
+		const current = new Set(workspace.getLeavesOfType('markdown').map(leaf => leaf.view?.containerEl?.ownerDocument).filter(Boolean));
+		for (const [doc, controller] of documents) if (!current.has(doc)) {
+			if (active?.doc === doc) clear();
+			controller.abort();
+			documents.delete(doc);
+		}
+		for (const doc of current) if (!documents.has(doc)) {
+			const controller = new doc.defaultView.AbortController();
+			documents.set(doc, controller);
+			const options = { signal: controller.signal, capture: true };
+			doc.addEventListener('selectionchange', () => update(doc), options);
+			doc.addEventListener('pointerdown', event => {
+				if (active?.doc === doc && !active.anchor.contains(event.target)) clear();
+			}, options);
+			doc.addEventListener('pointerup', event => { if (!active?.anchor.contains(event.target)) update(doc); }, options);
+			doc.addEventListener('keydown', event => { if (event.key === 'Escape' && active?.doc === doc && !active.close) clear(); }, options);
+			doc.addEventListener('visibilitychange', () => { if (doc.hidden && active?.doc === doc) clear(); }, options);
+			doc.addEventListener('scroll', event => { if (active?.doc === doc && !active.anchor.contains(event.target)) clear(); }, options);
+			doc.defaultView.addEventListener('resize', () => { if (active?.doc === doc) clear(); }, options);
+		}
+	};
+	if (workspace.getLeavesOfType && workspace.on && owner.register) {
+		owner.registerEvent(workspace.on('layout-change', () => { clear(); refreshDocuments(); }));
+		owner.registerEvent(workspace.on('active-leaf-change', () => { clear(); refreshDocuments(); }));
+		owner.registerEvent(workspace.on('window-open', refreshDocuments));
+		owner.registerEvent(workspace.on('window-close', refreshDocuments));
+		owner.register(() => { clear(); for (const controller of documents.values()) controller.abort(); documents.clear(); });
+		workspace.onLayoutReady ? workspace.onLayoutReady(() => { if (!owner.stopped) refreshDocuments(); }) : refreshDocuments();
+	}
+	return clear;
+}
+
 export function registerNoteTranslation(owner) {
 	class TranslationModal extends Modal {
 		constructor(app, text, request, onClose) {
@@ -308,6 +406,8 @@ export function registerNoteTranslation(owner) {
 		if (focusPanel) panel.querySelector('.smart-sync-translation-dismiss')?.focus();
 		return closePanel;
 	};
+	const clearReading = registerReadingTranslation(owner, enabled, open);
+	const closeAll = () => { clearReading(); close(); };
 	owner.addCommand({
 		id: 'translate-selection', name: title,
 		editorCheckCallback(checking, editor, info) {
@@ -324,14 +424,14 @@ export function registerNoteTranslation(owner) {
 			const text = selectionText(info?.file, editor.getSelection());
 			if (text) menu.addItem(item => item.setTitle(title).setIcon('languages').onClick(() => open(text)));
 		}));
-		owner.registerEvent(workspace.on('file-open', close));
+		owner.registerEvent(workspace.on('file-open', closeAll));
 	}
 	if (!Platform.isMobile && editorInfoField) owner.registerEditorExtension?.(translationTooltip(open, trackControl));
 	return {
-		close,
+		close: closeAll,
 		refresh() {
 			const visible = enabled();
-			if (!visible) close();
+			if (!visible) closeAll();
 			for (const control of controls) control.hidden = !visible;
 		},
 		addMobileAction(toolbar, editor, file) {
