@@ -1,5 +1,9 @@
 # Source change record
 
+## Unreleased — CHG-20261113-CN-DICTIONARY-RESPONSE-TIME
+
+Requirement R-CN-SELECTION-TRANSLATION. China Alpha shows local Oxford and Longman entries before online dictionaries finish. Expanding and collapsing a local entry persists when the online results arrive.
+
 ## 1.1.7-alpha.14 — CHG-20261113-CN-LONGMAN-ALPHA
 
 Requirement R-CN-SELECTION-TRANSLATION. Show Longman (朗文) immediately after Oxford when both sources match.

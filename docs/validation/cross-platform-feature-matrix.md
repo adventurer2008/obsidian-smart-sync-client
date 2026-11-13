@@ -1,5 +1,9 @@
 # Cross-platform feature and scenario review
 
+## CHG-20261113-CN-DICTIONARY-RESPONSE-TIME
+
+China Alpha supports the desktop card on Windows, macOS and Linux and the touch sheet on Android, iPhone and iPad when the server supports local lookup. The client uses the existing request on older servers. A Windows synthetic regression checks early rendering and section state. Native acceptance on all six platforms, including narrow touch layouts and iPad Split View, is pending. Closing the card, switching accounts or vaults and changing the target language retain the existing cancellation and scope checks. A failed online lookup can be retried while the local results remain visible. Global has no translation entry. No sync state, note content, key or source mtime writes are involved.
+
 ## CHG-20261113-CN-LONGMAN-ALPHA
 
 The domestic Alpha can show Oxford and Longman in order on Windows, macOS, Linux, Android, iPhone and iPad when connected to an enabled service. Windows synthetic coverage exercises both sections and local HTTP lookup. Native host acceptance remains pending on all six platforms, including touch and iPad Split View. Global has no entry. The lookup uses the existing account scope and cancellation path, with no local dictionary, sync state or source mtime writes.

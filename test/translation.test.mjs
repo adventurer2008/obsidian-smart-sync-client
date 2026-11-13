@@ -346,12 +346,36 @@ test('the hosted China Alpha uses the hosted lookup for phrases and leaves sente
 	owner.manifest = { version: '1.1.7-alpha.9' };
 	try {
 		owner.command.editorCheckCallback(false, { getSelection: () => 'take off' }, { file });
-		assert.deepEqual(requests[0].input, { text: 'take off', target: 'zh-Hans', dictionary: 'alpha' });
-		requests[0].resolve({ dictionaries: [{ source: 'oxford-v3', definitions: [{ part: '', meaning: '起飞' }] }] });
+		assert.deepEqual(requests[0].input, { text: 'take off', target: 'zh-Hans', dictionary: 'alpha-local' });
+		const oxford = { source: 'oxford-hk10', definitions: [{ part: '', meaning: '起飞' }] };
+		const longman = { source: 'longman-5pp', definitions: [{ part: '', meaning: '脱下' }] };
+		requests[0].resolve({ dictionaries: [oxford, longman] });
 		await tick();
-		assert.equal(modals.at(-1).contentEl.querySelector('summary').textContent, '牛津');
+		const output = modals.at(-1).contentEl;
+		const labels = () => [...output.querySelectorAll('summary')].map(section => section.textContent);
+		assert.deepEqual(labels(), ['牛津', '朗文']);
+		assert.deepEqual(requests[1].input, { text: 'take off', target: 'zh-Hans', dictionary: 'alpha' });
+		output.querySelector('details').open = false;
+		requests[1].resolve({ dictionaries: [oxford, longman, { ...oxford, source: 'bing' }] });
+		await tick();
+		assert.deepEqual(labels(), ['牛津', '朗文', '必应词典']);
+		assert.equal(output.querySelector('details').open, false);
 		const sentence = 'The plane will take off.';
 		owner.command.editorCheckCallback(false, { getSelection: () => sentence }, { file });
-		assert.deepEqual(requests[1].input, { text: sentence, target: 'zh-Hans' });
+		assert.deepEqual(requests[2].input, { text: sentence, target: 'zh-Hans' });
+	} finally { dispose(); }
+});
+
+test('the hosted China Alpha falls back to the existing lookup on older servers', async () => {
+	const { owner, requests, dispose } = ownerFixture();
+	owner.manifest = { version: '1.1.7-alpha.14' };
+	try {
+		owner.command.editorCheckCallback(false, { getSelection: () => 'access' }, { file });
+		requests[0].reject({ status: 400 });
+		await tick();
+		assert.deepEqual(requests[1].input, { text: 'access', target: 'zh-Hans', dictionary: 'alpha' });
+		requests[1].resolve({ dictionaries: [{ source: 'oxford-v3', definitions: [{ part: '', meaning: '入口' }] }] });
+		await tick();
+		assert.equal(modals.at(-1).contentEl.querySelector('summary').textContent, '牛津');
 	} finally { dispose(); }
 });

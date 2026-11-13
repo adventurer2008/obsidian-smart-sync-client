@@ -89,6 +89,8 @@ const dictionaryNames = new Map([
 ]);
 
 function renderDictionaries(output, entries, text) {
+	const openBySource = new Map([...output.querySelectorAll('details[data-source]')]
+		.map(section => [section.dataset.source, section.open]));
 	output.empty();
 	if (!entries.length) {
 		output.setText('未查到词条。');
@@ -98,10 +100,10 @@ function renderDictionaries(output, entries, text) {
 	for (const [source, name] of dictionaryNames) {
 		const entry = bySource.get(source);
 		if (!entry) continue;
-		const section = output.createEl('details', { cls: 'smart-sync-dictionary-source' });
+		const section = output.createEl('details', { cls: 'smart-sync-dictionary-source', attr: { 'data-source': source } });
 		section.createEl('summary', { text: name });
 		renderDictionary(section, entry, text);
-		section.open = true;
+		section.open = openBySource.get(source) ?? true;
 	}
 }
 
@@ -132,11 +134,17 @@ function renderTranslation(container, text, request, close) {
 		copy.hidden = true;
 		retry.hidden = true;
 		output.setText(target.value === 'zh-Hans' && dictionaryWord.test(text.trim()) ? '正在查询…' : '正在翻译…');
+		let showedLocal = false;
 		try {
-			const result = await request(text, target.value, controller.signal);
+			const result = await request(text, target.value, controller.signal, entries => {
+				if (controller.signal.aborted || !entries.length) return;
+				showedLocal = true;
+				renderDictionaries(output, entries, text);
+			});
 			if (controller.signal.aborted) return;
 			if (result.dictionaries) {
-				renderDictionaries(output, result.dictionaries, text);
+				if (result.dictionaries.length || !showedLocal)
+					renderDictionaries(output, result.dictionaries, text);
 				return;
 			}
 			if (result.dictionary) {
@@ -149,7 +157,7 @@ function renderTranslation(container, text, request, close) {
 			copy.hidden = false;
 		} catch (error) {
 			if (controller.signal.aborted) return;
-			output.setText(errorMessage(error));
+			if (!showedLocal) output.setText(errorMessage(error));
 			retry.hidden = false;
 		}
 	};
@@ -348,7 +356,7 @@ export function registerNoteTranslation(owner) {
 			/^\d+\.\d+\.\d+-alpha\.\d+$/.test(owner.manifest?.version);
 		const current = () => enabled() && owner.data.localId === localId &&
 			owner.data.settings.origin === origin && owner.data.settings.workspace === vault && key() === secret;
-		const request = async (text, target, signal) => {
+		const request = async (text, target, signal, showLocal) => {
 			if (!current()) throw Object.assign(Error('Translation context changed'), { status: 401 });
 			const api = owner.workspaceApi(origin, secret);
 			api.signal = signal;
@@ -356,6 +364,19 @@ export function registerNoteTranslation(owner) {
 			const lookup = target === 'zh-Hans' && word.length <= 64 &&
 				(localLab || hostedAlpha ? dictionarySelection : dictionaryWord).test(word);
 			const input = { text, target };
+			const knownEntries = entries => entries.filter(entry =>
+				dictionaryNames.has(entry?.source) && Array.isArray(entry.definitions) && entry.definitions.length);
+			if (lookup && hostedAlpha) {
+				try {
+					const local = await api.request('POST', 'account/translate', { ...input, dictionary: 'alpha-local' });
+					if (!signal.aborted && current() && Array.isArray(local?.dictionaries))
+						showLocal(knownEntries(local.dictionaries));
+				} catch (error) {
+					if (error?.status !== 400) throw error;
+				}
+				signal.throwIfAborted();
+				if (!current()) throw Object.assign(Error('Translation context changed'), { status: 401 });
+			}
 			let result;
 			try {
 				result = await api.request('POST', 'account/translate',
@@ -367,8 +388,7 @@ export function registerNoteTranslation(owner) {
 			}
 			if (!current()) throw Object.assign(Error('Translation context changed'), { status: 401 });
 			if (lookup && Array.isArray(result?.dictionaries)) {
-				const dictionaries = result.dictionaries.filter(entry =>
-					dictionaryNames.has(entry?.source) && Array.isArray(entry.definitions) && entry.definitions.length);
+				const dictionaries = knownEntries(result.dictionaries);
 				if (dictionaries.length || !result.dictionaries.length) return { dictionaries };
 			}
 			if (lookup && Array.isArray(result?.dictionary?.definitions) && result.dictionary.definitions.length)
