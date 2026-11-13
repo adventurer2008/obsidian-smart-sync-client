@@ -1,5 +1,9 @@
 # Source change record
 
+## Unreleased — CHG-20261113-OVERVIEW-REOPEN
+
+Keep the last verified account email, notebook name and cloud usage visible when the same connection reopens during a temporary failure. Store the display values in local secret storage and bind them to the service, notebook and credentials. Refresh independently of synchronization, and discard values after authorization denial or a connection change.
+
 ## 1.1.7-alpha.10 — CHG-20261113-CN-TRANSLATION-TOGGLE
 
 Requirement R-CN-SELECTION-TRANSLATION. Add a default-on translation switch after Search in Advanced. Turning it off hides selection translation and dictionary actions and cancels the open lookup.

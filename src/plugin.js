@@ -3137,6 +3137,7 @@ export default class IndependentSync extends Plugin {
 		this.billingHandoffCancel?.();this.billingFallbackWindow?.close();this.preparedBillingEntry=undefined;
 		this.accountEmail = '';
 		this.overviewIdentity = undefined;
+		try { this.app.secretStorage?.setSecret(secretStorageId(this, 'overview-display'), ''); } catch { /* The credential binding still protects the cached values. */ }
 		this.lanPeers?.close();
 		this.lanPeers = undefined;
 		this.data.settings.direction = 'paused';
@@ -5391,15 +5392,27 @@ export class IndependentSettings extends PluginSettingTab {
 			`${plugin.data.settings.origin}|${plugin.data.settings.workspace}|${plugin.data.localId}`;
 		const scopeKey = identityScope();
 		const accountConnected = connected || plugin.accountAuthorized === true;
+		const credentialName = connected ? 'access' : 'account';
+		const credential = plugin.secret(credentialName);
+		const accountCredential = plugin.secret('account');
+		const sameConnection = () => !plugin.stopped && identityScope() === scopeKey &&
+			credential === plugin.secret(credentialName) && accountCredential === plugin.secret('account');
+		const identity = () => sameConnection() && plugin.overviewIdentity?.scope === scopeKey &&
+			plugin.overviewIdentity.credential === credential && plugin.overviewIdentity.accountCredential === accountCredential
+			? plugin.overviewIdentity : undefined;
 		const status = row(t('sections.status'), (setting) => {
-			let disposed = false;
+			const controller = new AbortController();
+			const current = () => !controller.signal.aborted && sameConnection();
 			let phase = plugin.overviewStatusText ?? plugin.status.textContent ?? plugin.status.text ?? t('sections.disconnected');
-			let server = t('overview.spaceUnknown'), local = t('overview.spaceUnknown'), sizeLoading = false, lastDescription;
+			let local = t('overview.spaceUnknown'), loading = false, lastDescription;
+			let cacheBinding;
 			const descriptionEl = setting.descEl ?? setting.settingEl?.querySelector('.setting-item-description');
 			const phaseEl = descriptionEl?.createSpan({ cls: 'smart-sync-status-phase' });
 			const spaceEl = descriptionEl?.createSpan({ cls: 'smart-sync-status-storage' });
 			const update = (text) => {
 				phase = text;
+				const bytes = identity()?.logicalBytes;
+				const server = Number.isSafeInteger(bytes) && bytes >= 0 ? formatStorageSize(bytes) : t('overview.spaceUnknown');
 				const description = connected ? t('overview.statusSpace', { state: phase, server, local }) : phase;
 				if (description !== lastDescription) {
 					if (phaseEl && spaceEl) {
@@ -5410,58 +5423,78 @@ export class IndependentSettings extends PluginSettingTab {
 					lastDescription = description;
 				}
 			};
-			const refreshSizes = async () => {
-				if (disposed || sizeLoading || !connected || identityScope() !== scopeKey) return;
-				sizeLoading = true;
-				local = formatStorageSize(plugin.app.vault.getFiles().reduce((sum, file) => sum + (Number.isFinite(file.stat?.size) ? file.stat.size : 0), 0));
-				try {
-					const api = plugin.api();
-					const usage = await api.request('GET', api.scope('usage?summary=1'));
-					if (disposed || identityScope() !== scopeKey) return;
-					server = Number.isSafeInteger(usage.logicalBytes) && usage.logicalBytes >= 0 ? formatStorageSize(usage.logicalBytes) : t('overview.spaceUnknown');
-				} catch { /* Keep the last successful space sample during an outage. */ }
-				finally { sizeLoading = false; }
-				if (!disposed && identityScope() === scopeKey) update(phase);
+			const publish = fields => {
+				plugin.overviewIdentity = { ...fields, scope: scopeKey, credential, accountCredential };
+				for (const listener of plugin.statusListeners ?? []) listener(phase);
 			};
-			let accountLoading = false;
-			const refreshAccount = async () => {
-				if (!accountConnected || accountLoading || disposed || identityScope() !== scopeKey) return;
-				accountLoading = true;
+			const cachedFields = value => ({
+				email: typeof value?.email === 'string' ? value.email : '',
+				label: typeof value?.label === 'string' ? value.label : '',
+				logicalBytes: Number.isSafeInteger(value?.logicalBytes) && value.logicalBytes >= 0 ? value.logicalBytes : undefined,
+			});
+			const persist = fields => {
+				if (!cacheBinding) return;
 				try {
-					const api = connected ? plugin.api() : plugin.workspaceApi(config.origin,plugin.secret('account'));
-					const credential = plugin.secret(connected ? 'access' : 'account');
-					const current = () => !disposed && identityScope() === scopeKey && credential === plugin.secret(connected ? 'access' : 'account');
-					const publish = fields => {
-						if (!current()) return;
-						plugin.overviewIdentity = { ...(plugin.overviewIdentity?.scope === scopeKey ? plugin.overviewIdentity : {}), scope: scopeKey, ...fields };
-						for (const listener of plugin.statusListeners ?? [])
-							listener(plugin.overviewStatusText ?? plugin.status.textContent ?? plugin.status.text ?? t('sections.disconnected'));
-					};
-					await Promise.all([
-						api.request('GET', 'account').then(account => {
+					const saved = JSON.stringify({ binding: cacheBinding, ...fields });
+					if (plugin.secret('overview-display') !== saved)
+						plugin.app.secretStorage?.setSecret(secretStorageId(plugin, 'overview-display'), saved);
+				} catch { /* The in-memory display remains available. */ }
+			};
+			const refresh = async () => {
+				if (!current() || loading || !accountConnected || !credential) return;
+				loading = true;
+				try {
+					if (connected) local = formatStorageSize(plugin.app.vault.getFiles().reduce((sum, file) => sum + (Number.isFinite(file.stat?.size) ? file.stat.size : 0), 0));
+					if (!cacheBinding && plugin.app.secretStorage) {
+						try {
+							cacheBinding = await fingerprint(new TextEncoder().encode(JSON.stringify([scopeKey, credential, accountCredential])));
 							if (!current()) return;
-							const email = typeof account.email === 'string' ? account.email.trim() : '';
-							plugin.accountEmail = email;
-							publish({ email });
-						}).catch(() => {}),
-						connected ? api.info().then(notebook => publish({ label: typeof notebook.label === 'string' ? notebook.label : '' })).catch(() => {}) : Promise.resolve(),
+							const saved = JSON.parse(plugin.secret('overview-display') || 'null');
+							if (!identity() && saved?.binding === cacheBinding) publish(cachedFields(saved));
+						} catch { /* A missing or unreadable cache must not block live requests. */ }
+					}
+					update(phase);
+					const api = plugin.workspaceApi(config.origin, credential, config.workspace);
+					api.signal = controller.signal;
+					const [account, notebook, usage] = await Promise.allSettled([
+						api.request('GET', 'account'),
+						connected ? api.info() : undefined,
+						connected ? api.request('GET', api.scope('usage?summary=1')) : undefined,
 					]);
-				} catch {
-					/* An unavailable account must not block settings or expose raw errors. */
-				} finally { accountLoading = false; }
+					if (!current()) return;
+					const denied = result => result.status === 'rejected' && [401, 403].includes(result.reason?.status);
+					const previous = identity();
+					const fields = cachedFields(previous);
+					if (denied(account)) {
+						Object.assign(fields, cachedFields(undefined));
+					} else {
+						if (account.status === 'fulfilled') fields.email = cachedFields(account.value).email;
+						if (connected) {
+							if (denied(notebook) || notebook.reason?.status === 404) {
+								fields.label = '';
+								fields.logicalBytes = undefined;
+							} else {
+								if (notebook.status === 'fulfilled') fields.label = cachedFields(notebook.value).label;
+								if (denied(usage) || usage.reason?.status === 404) fields.logicalBytes = undefined;
+								else if (usage.status === 'fulfilled') fields.logicalBytes = cachedFields(usage.value).logicalBytes;
+							}
+						}
+					}
+					if (previous || denied(account) || [account, notebook, usage].some(result => result.status === 'fulfilled' && result.value)) {
+						publish(fields);
+						persist(fields);
+					}
+				} catch { /* The next refresh can recover without affecting synchronization. */ }
+				finally { loading = false; }
 			};
-			void refreshAccount();
-			update(phase);
-			void refreshSizes();
-			const sizeTimer = window.setInterval(() => {
-				void refreshSizes();
-				if (!plugin.overviewIdentity?.email || (connected && !plugin.overviewIdentity?.label)) void refreshAccount();
-			}, 30000);
-			plugin.registerInterval(sizeTimer);
 			plugin.statusListeners ??= new Set();
 			plugin.statusListeners.add(update);
+			update(phase);
+			void refresh();
+			const sizeTimer = window.setInterval(() => { void refresh(); }, 30000);
+			plugin.registerInterval(sizeTimer);
 			return () => {
-				disposed = true;
+				controller.abort();
 				window.clearInterval(sizeTimer);
 				plugin.statusListeners.delete(update);
 			};
@@ -5473,12 +5506,9 @@ export class IndependentSettings extends PluginSettingTab {
 					let fullValue;
 					const info = setting.settingEl?.querySelector('.setting-item-info');
 					const update = () => {
-						const identity = plugin.overviewIdentity;
-						fullValue = !plugin.data.settings.workspace
-								? (name === 'overview.account' && plugin.secret('account') ? (plugin.accountEmail || t('notebooks.accountSignedIn')) : t(name === 'overview.account' ? 'overview.signedOut' : 'sync.notConnected'))
-								: identityScope() === scopeKey && identity?.scope === scopeKey && identity[field]
-									? identity[field]
-									: t(fallback);
+						const value = identity()?.[field];
+						fullValue = value || (!connected && name === 'overview.account' && accountCredential && sameConnection()
+							? t('notebooks.accountSignedIn') : t(fallback));
 						setting.setDesc(fullValue);
 						if (info) info.title = fullValue;
 					};

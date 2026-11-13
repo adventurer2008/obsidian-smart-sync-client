@@ -602,3 +602,7 @@ CHG-20261113-CN-OXFORD-ALPHA: China Alpha adds hosted lookup for English words a
 ## CHG-20261113-CN-TRANSLATION-TOGGLE
 
 The default-on China switch uses the shared settings renderer on Windows, macOS, desktop Linux, Android, iPhone/iOS and iPad/iPadOS. Windows DOM fixtures cover the desktop position, mobile visibility, save failure, immediate action visibility and cancellation. Native Obsidian acceptance is pending on all six platforms, including narrow layouts and touch. The preference is stored per local vault and device. Upgrade defaults existing profiles on, and older builds ignore the new preference. No native APIs, background task, network retry behavior, synchronized setting or data migration is added. The switch does not change note content, source mtime, keys or synchronization state.
+
+## CHG-20261113-OVERVIEW-REOPEN
+
+The overview uses existing Obsidian secret storage and shared settings controls on Windows, macOS, Linux, Android, iPhone and iPad. A synthetic close and reopen with requests offline verifies the cached email, notebook name and cloud usage. Tests verify cancellation on settings disposal, separation from synchronization cancellation and rejection after a credential change or authorization denial. The cache is local to the device and vault. Older builds ignore it. The changes use existing controls and do not add layout breakpoints, touch gestures or background work. Native reopen, device lock, network recovery and mixed-version behavior have not been verified on physical devices.
