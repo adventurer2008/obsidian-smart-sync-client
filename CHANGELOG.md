@@ -1,6 +1,6 @@
 # Source change record
 
-## Unreleased — CHG-20261113-OVERVIEW-REOPEN
+## 1.1.7-alpha.11 — CHG-20261113-OVERVIEW-REOPEN
 
 Keep the last verified account email, notebook name and cloud usage visible when the same connection reopens during a temporary failure. Store the display values in local secret storage and bind them to the service, notebook and credentials. Refresh independently of synchronization, and discard values after authorization denial or a connection change.
 
