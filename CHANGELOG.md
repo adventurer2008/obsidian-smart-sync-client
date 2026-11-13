@@ -1,5 +1,9 @@
 # Source change record
 
+## Unreleased — CHG-20261113-READING-TRANSLATION-MENU
+
+Requirement R-CN-SELECTION-TRANSLATION. Add Translate selected text to the existing Markdown reading context menu when translation is enabled.
+
 ## 1.1.7-alpha.12 — CHG-20261113-READING-TRANSLATION
 
 Requirement R-CN-SELECTION-TRANSLATION. In Markdown reading mode, select text and click the translation button to open the dictionary or translate a sentence. The existing translation setting also controls this entry.

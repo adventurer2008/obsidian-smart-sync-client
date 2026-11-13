@@ -86,8 +86,9 @@ class EncryptionActions extends Modal {
 }
 
 export class NoteEncryption {
-	constructor(owner) {
+	constructor(owner, addReadingAction) {
 		this.owner = owner; this.app = owner.app; this.epoch = 0;
+		this.addReadingAction = addReadingAction;
 		this.prompts = new Set(); this.sessions = new Set(); this.stopped = false;
 		this.pendingWrites = new Set(); this.busyFiles = new Set(); this.locks = new Map(); this.areas = new WeakMap();
 		this.volatileDrafts = new Map();
@@ -137,6 +138,7 @@ export class NoteEncryption {
 		menu.addItem(item => item.setTitle(t('encryption.encryptSelection')).setIcon('lock').onClick(() => {
 			this.closeActions(); void this.encryptReadingSelection(leaf, text, original, file).catch(failure);
 		}));
+		this.addReadingAction?.(menu, { view: leaf.view, preview, range, text, closeMenu: () => this.closeActions() });
 		menu.showAtPosition({ x: event.clientX, y: event.clientY }, this.document);
 	}
 	async encryptReadingSelection(leaf, text, original, file = leaf.view.file) {
@@ -588,8 +590,8 @@ export function encryptionExtension(manager, addSelectionAction) {
 	return [field, protect, mobile];
 }
 
-export function registerNoteEncryption(owner, addSelectionAction) {
-	const manager = new NoteEncryption(owner); owner.noteEncryption = manager;
+export function registerNoteEncryption(owner, addSelectionAction, addReadingAction) {
+	const manager = new NoteEncryption(owner, addReadingAction); owner.noteEncryption = manager;
 	owner.encryptWholeNote = () => manager.encryptNote().catch(failure);
 	owner.encryptSelectedText = () => {
 		const view = owner.app.workspace.getMostRecentLeaf?.()?.view;

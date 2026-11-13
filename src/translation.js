@@ -204,6 +204,11 @@ function translationTooltip(open, trackControl) {
 	});
 }
 
+function protectedReadingSelection(preview, range) {
+	return preview.closest('.markdown-embed, .wujie-encrypted') ||
+		[...preview.querySelectorAll('.wujie-encrypted, .markdown-embed')].some(area => range.intersectsNode(area));
+}
+
 function registerReadingTranslation(owner, enabled, open) {
 	const workspace = owner.app.workspace;
 	const documents = new Map();
@@ -221,13 +226,12 @@ function registerReadingTranslation(owner, enabled, open) {
 		const range = selection.getRangeAt(0);
 		const start = range.startContainer;
 		const preview = (start.nodeType === 1 ? start : start.parentElement)?.closest('.markdown-preview-view');
-		if (!preview?.isConnected || preview.closest('.markdown-embed, .wujie-encrypted') || !preview.contains(range.endContainer)) return;
+		if (!preview?.isConnected || !preview.contains(range.endContainer)) return;
 		const view = workspace.getLeavesOfType('markdown').map(leaf => leaf.view).find(view =>
 			view?.containerEl?.contains(preview) && view.getMode?.() === 'preview');
 		const text = selectionText(view?.file, selection.toString());
 		if (!text || text.length > selectionLimit) return;
-		for (const area of preview.querySelectorAll('.wujie-encrypted, .markdown-embed'))
-			if (range.intersectsNode(area)) return;
+		if (protectedReadingSelection(preview, range)) return;
 		return { view, file: view.file, preview, text, range };
 	};
 	const update = doc => {
@@ -429,6 +433,18 @@ export function registerNoteTranslation(owner) {
 	if (!Platform.isMobile && editorInfoField) owner.registerEditorExtension?.(translationTooltip(open, trackControl));
 	return {
 		close: closeAll,
+		addReadingAction(menu, { view, preview, range, text, closeMenu }) {
+			const file = view.file;
+			const selected = selectionText(file, text);
+			if (!enabled() || view.getMode?.() !== 'preview' || !selected || selected.length > selectionLimit ||
+				protectedReadingSelection(preview, range)) return;
+			menu.addItem(item => item.setTitle(title).setIcon('languages').onClick(() => {
+				closeMenu();
+				if (view.file !== file || view.getMode?.() !== 'preview' || !preview.isConnected) return;
+				clearReading();
+				open(selected);
+			}));
+		},
 		refresh() {
 			const visible = enabled();
 			if (!visible) closeAll();

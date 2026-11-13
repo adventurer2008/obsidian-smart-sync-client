@@ -786,7 +786,7 @@ export default class IndependentSync extends Plugin {
 		}
 		this.closeTranslation = translation?.close;
 		this.refreshTranslation = translation?.refresh;
-		const encryption = registerNoteEncryption(this, translation?.addMobileAction);
+		const encryption = registerNoteEncryption(this, translation?.addMobileAction, translation?.addReadingAction);
 		let navigatorMenus;
 		const refreshNavigatorMenus = () => {
 			if (this.stopped) return;

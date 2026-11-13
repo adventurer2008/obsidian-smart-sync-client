@@ -34,7 +34,8 @@ registerHooks({ resolve(specifier, context, next) {
 	return specifier === 'obsidian' ? { url: new URL('./encryption-dom-sdk.mjs', import.meta.url).href, shortCircuit: true } : next(specifier, context);
 } });
 const { registerNoteTranslation } = await import('../src/translation.js');
-const { Platform, Menu, editorInfoField, modals } = await import('./encryption-dom-sdk.mjs');
+const { NoteEncryption } = await import('../src/note-encryption.js');
+const { Platform, Menu, editorInfoField, menus, modals } = await import('./encryption-dom-sdk.mjs');
 const file = { path: 'fixture.md', stat: { mtime: 1577836800123 } };
 const tick = () => new Promise(resolve => setImmediate(resolve));
 after(() => { window.close(); assert.deepEqual(errors, []); });
@@ -58,8 +59,51 @@ function ownerFixture(view) {
 	};
 	if (view) owner.app.workspace.getLeavesOfType = () => [{ view }];
 	const actions = registerNoteTranslation(owner);
-	return { owner, handlers, requests, dispose: actions.close, cleanups, addMobileAction: actions.addMobileAction, refresh: actions.refresh };
+	return { owner, handlers, requests, dispose: actions.close, cleanups, addMobileAction: actions.addMobileAction,
+		addReadingAction: actions.addReadingAction, refresh: actions.refresh };
 }
+
+test('reading right-click includes translation in the same menu and honors the switch', () => {
+	const containerEl = document.body.createDiv();
+	const preview = containerEl.createDiv({ cls: 'markdown-preview-view' });
+	const paragraph = preview.createEl('p', { text: 'Access is limited.' });
+	const view = { containerEl, file, getMode: () => 'preview', editor: { getValue: () => paragraph.textContent } };
+	const { owner, requests, addReadingAction, cleanups, dispose } = ownerFixture(view);
+	owner.manifest = { id: 'wujie-sync' };
+	owner.app.vault = { configDir: '.fixture' };
+	const manager = new NoteEncryption(owner, addReadingAction);
+	manager.document = document;
+	const range = document.createRange();
+	range.setStart(paragraph.firstChild, 0);
+	range.setEnd(paragraph.firstChild, 6);
+	document.getSelection().addRange(range);
+	const listener = event => manager.readingMenu(event);
+	document.addEventListener('contextmenu', listener, true);
+	const rightClick = () => {
+		paragraph.dispatchEvent(new window.MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+		return menus.at(-1);
+	};
+	try {
+		const menu = rightClick();
+		assert.deepEqual(menu.items.map(item => item.title), ['复制', '加密所选文本', '翻译所选文字']);
+		assert.equal(requests.length, 0);
+		menu.items[2].callback();
+		assert.equal(menu.visible, false);
+		assert.equal(requests[0].input.text, 'Access');
+		owner.data.settings.translationEnabled = false;
+		assert.deepEqual(rightClick().items.map(item => item.title), ['复制', '加密所选文本']);
+		owner.data.settings.translationEnabled = true;
+		preview.classList.add('markdown-embed');
+		assert.deepEqual(rightClick().items.map(item => item.title), ['复制', '加密所选文本']);
+	} finally {
+		manager.closeActions();
+		dispose();
+		cleanups.forEach(cleanup => cleanup());
+		document.removeEventListener('contextmenu', listener, true);
+		document.getSelection().removeAllRanges();
+		containerEl.remove();
+	}
+});
 
 test('reading mode translates only selected note text and closes on settings or view changes', async () => {
 	const containerEl = document.createElement('div');
