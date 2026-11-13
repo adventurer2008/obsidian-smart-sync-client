@@ -82,9 +82,10 @@ function renderDictionary(output, entry, text) {
 
 const dictionaryNames = new Map([
 	['oxford-hk10', '牛津'],
+	['oxford-v3', '牛津'],
+	['longman-5pp', '朗文'],
 	['bing', '必应词典'], ['youdao', '有道词典'], ['cambridge', '剑桥词典'], ['oxford', '牛津词典'],
 	['ecdict', '自建词库'],
-	['oxford-v3', '牛津'],
 ]);
 
 function renderDictionaries(output, entries, text) {

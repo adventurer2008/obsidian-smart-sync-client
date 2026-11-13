@@ -1,5 +1,9 @@
 # Cross-platform feature and scenario review
 
+## CHG-20261113-CN-LONGMAN-ALPHA
+
+The domestic Alpha can show Oxford and Longman in order on Windows, macOS, Linux, Android, iPhone and iPad when connected to an enabled service. Windows synthetic coverage exercises both sections and local HTTP lookup. Native host acceptance remains pending on all six platforms, including touch and iPad Split View. Global has no entry. The lookup uses the existing account scope and cancellation path, with no local dictionary, sync state or source mtime writes.
+
 ## CHG-20261112-NOTEBOOK-NAVIGATOR-MENUS
 
 Both editions conditionally support Windows, macOS, desktop Linux, Android, iPhone/iOS and iPad/iPadOS through Notebook Navigator's optional file and folder Menus API. A vault without that API uses the existing Obsidian menus. Navigator controls its own ordering. Position commands invoked from either menu update the existing synchronized state for Obsidian File Explorer. Batch commands require an effective multi-file selection from Navigator.

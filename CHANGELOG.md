@@ -1,5 +1,9 @@
 # Source change record
 
+## 1.1.7-alpha.14 — CHG-20261113-CN-LONGMAN-ALPHA
+
+Requirement R-CN-SELECTION-TRANSLATION. Show Longman (朗文) immediately after Oxford when both sources match.
+
 ## 1.1.7-alpha.13 — CHG-20261113-READING-TRANSLATION-MENU
 
 Requirement R-CN-SELECTION-TRANSLATION. Add Translate selected text to the existing Markdown reading context menu when translation is enabled.
