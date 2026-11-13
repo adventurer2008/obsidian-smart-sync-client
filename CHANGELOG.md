@@ -1,6 +1,6 @@
 # Source change record
 
-## Unreleased — CHG-20261113-READING-TRANSLATION-MENU
+## 1.1.7-alpha.13 — CHG-20261113-READING-TRANSLATION-MENU
 
 Requirement R-CN-SELECTION-TRANSLATION. Add Translate selected text to the existing Markdown reading context menu when translation is enabled.
 
