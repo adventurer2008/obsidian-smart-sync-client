@@ -55,11 +55,36 @@ function ownerFixture() {
 		},
 	};
 	const actions = registerNoteTranslation(owner);
-	return { owner, handlers, requests, dispose: actions.close, addMobileAction: actions.addMobileAction };
+	return { owner, handlers, requests, dispose: actions.close, addMobileAction: actions.addMobileAction, refresh: actions.refresh };
 }
 
+test('disabling translation closes a pending lookup and hides existing selection controls', async () => {
+	const { owner, handlers, requests, dispose, addMobileAction, refresh } = ownerFixture();
+	const editor = { getSelection: () => 'access' };
+	const toolbar = document.createElement('div');
+	const untrack = addMobileAction(toolbar, editor, file);
+	try {
+		const button = toolbar.querySelector('button');
+		assert.equal(button.hidden, false);
+		assert.equal(owner.command.editorCheckCallback(false, editor, { file }), true);
+		assert.equal(requests.length, 1);
+		owner.data.settings.translationEnabled = false;
+		refresh();
+		assert.equal(requests[0].signal.aborted, true);
+		assert.equal(button.hidden, true);
+		assert.equal(owner.command.editorCheckCallback(false, editor, { file }), false);
+		handlers.get('editor-menu')({ addItem: () => assert.fail('translation menu is disabled') }, editor, { file });
+		button.click();
+		assert.equal(requests.length, 1);
+		owner.data.settings.translationEnabled = true;
+		refresh();
+		assert.equal(button.hidden, false);
+		assert.equal(owner.command.editorCheckCallback(true, editor, { file }), true);
+	} finally { untrack(); dispose(); }
+});
+
 test('desktop selection waits for a click and renders only the translation as plain text', async () => {
-	const { owner, requests, dispose } = ownerFixture();
+	const { owner, requests, dispose, refresh } = ownerFixture();
 	globalThis.encryptionEditorInfo = { file };
 	const text = 'Prefix Translate this. Suffix';
 	const view = new EditorView({ parent: document.body, state: EditorState.create({
@@ -98,6 +123,14 @@ test('desktop selection waits for a click and renders only the translation as pl
 		assert.equal(requests[0].signal.aborted, true);
 		assert.equal(requests[1].signal.aborted, true);
 		assert.equal(view.dom.querySelector('.smart-sync-translation-output'), null);
+		view.dispatch({ selection: { anchor: 7, head: 22 } });
+		const tooltip = view.dom.querySelector('.smart-sync-translation-tooltip');
+		owner.data.settings.translationEnabled = false;
+		refresh();
+		assert.equal(tooltip.hidden, true);
+		owner.data.settings.translationEnabled = true;
+		refresh();
+		assert.equal(tooltip.hidden, false);
 	} finally { dispose(); view.destroy(); }
 });
 

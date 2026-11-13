@@ -565,19 +565,25 @@ export function encryptionExtension(manager, addSelectionAction) {
 		return partial ? [] : transaction;
 	});
 	const mobile = ViewPlugin.define(view => {
-		let toolbar;
+		let toolbar, disposeSelectionAction;
+		const removeToolbar = () => {
+			disposeSelectionAction?.();
+			disposeSelectionAction = undefined;
+			toolbar?.remove();
+			toolbar = undefined;
+		};
 		const update = () => {
 			if (!Platform.isMobile) return;
 			const info = editorInfoField ? view.state.field(editorInfoField, false) : undefined;
-			if (view.state.selection.main.empty || !info?.editor || !fileIsNote(info.file)) { toolbar?.remove(); toolbar = undefined; return; }
+			if (view.state.selection.main.empty || !info?.editor || !fileIsNote(info.file)) { removeToolbar(); return; }
 			if (toolbar) return;
 			toolbar = view.dom.parentElement.createDiv({ cls: 'wujie-encryption-selection-tools' });
 			const action = button(toolbar, t('encryption.encryptSelection'), () => { void manager.encryptSelection(info.editor, info.file).catch(failure); });
 			action.addEventListener('pointerdown', event => event.preventDefault());
-		addSelectionAction?.(toolbar, info.editor, info.file);
+			disposeSelectionAction = addSelectionAction?.(toolbar, info.editor, info.file);
 		};
 		update();
-		return { update, destroy() { toolbar?.remove(); } };
+		return { update, destroy: removeToolbar };
 	});
 	return [field, protect, mobile];
 }

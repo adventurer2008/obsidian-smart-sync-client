@@ -398,6 +398,8 @@ export const messages = {
 	'notes.recentEnabled': '启用最近',
 	'notes.recentEnabledHelp': '入口：左侧栏顶部的时钟标签，或命令面板“无界同步：最近打开的文件”。关闭后停止记录。',
 	'notes.noteSearchEnabled': '启用搜索',
+	'notes.translationEnabled': '启用翻译功能',
+	'notes.translationEnabledHelp': '选中文字后可查词或翻译。',
 	'tray.enabled': '后台运行与托盘',
 	'startup.enabled': '开机后自动运行并最小化到托盘',
 	'startup.help': '默认关闭。登录系统后自动打开当前笔记库并隐藏到托盘，沿用原有同步设置；开启时同时启用后台运行与托盘。普通手动打开不隐藏。',

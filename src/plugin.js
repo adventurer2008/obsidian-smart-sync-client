@@ -319,6 +319,7 @@ class SyncLogView extends ItemView {
 const defaults = () => ({
 	recentEnabled: true,
 	noteSearchEnabled: true,
+	translationEnabled: true,
 	backgroundTray: true,
 	launchAtLogin: false,
 	explorerSorting: { enabled: true, grouping: 'files-first', primary: 'mtime-desc', secondary: 'none', folderPrimary: 'name-asc', folderSecondary: 'none', includeUpdated: true },
@@ -784,6 +785,7 @@ export default class IndependentSync extends Plugin {
 			translation = registerNoteTranslation(this);
 		}
 		this.closeTranslation = translation?.close;
+		this.refreshTranslation = translation?.refresh;
 		const encryption = registerNoteEncryption(this, translation?.addMobileAction);
 		let navigatorMenus;
 		const refreshNavigatorMenus = () => {
@@ -1064,6 +1066,14 @@ export default class IndependentSync extends Plugin {
 			try { await this.saveData(this.data); }
 			catch (error) { this.data.settings[name] = previous; throw error; }
 			await this.refreshNoteTools();
+			return;
+		}
+		if (name === 'translationEnabled') {
+			const previous = this.data.settings.translationEnabled;
+			this.data.settings.translationEnabled = value === true;
+			try { await this.saveData(this.data); }
+			catch (error) { this.data.settings.translationEnabled = previous; throw error; }
+			this.refreshTranslation?.();
 			return;
 		}
 		this.idleRounds = 0;
@@ -5672,7 +5682,10 @@ export class IndependentSettings extends PluginSettingTab {
 				...basic.filter((item) => daily.has(item.name) && item.name !== t('daily.attachments')),
 			]),
 			fold(t('layout.advanced'), t('layout.advancedHelp'), [
-				...['recentEnabled', 'noteSearchEnabled'].map(key => row(t(`notes.${key}`), setting => setting
+				...['recentEnabled', 'noteSearchEnabled', ...(
+					(typeof __SMART_SYNC_CN_TRANSLATION__ === 'undefined' ? edition.edition === 'cn' : __SMART_SYNC_CN_TRANSLATION__)
+						? ['translationEnabled'] : []
+				)].map(key => row(t(`notes.${key}`), setting => setting
 					.setDesc(t(`notes.${key}Help`))
 					.addToggle(input => input.setValue(config[key] !== false).onChange(async value => {
 						try { await plugin.setting(key, value); }

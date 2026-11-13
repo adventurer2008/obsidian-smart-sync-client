@@ -1,5 +1,9 @@
 # Source change record
 
+## 1.1.7-alpha.10 — CHG-20261113-CN-TRANSLATION-TOGGLE
+
+Requirement R-CN-SELECTION-TRANSLATION. Add a default-on translation switch after Search in Advanced. Turning it off hides selection translation and dictionary actions and cancels the open lookup.
+
 ## 1.1.7-alpha.9 — CHG-20261113-CN-OXFORD-ALPHA
 
 Requirement R-CN-SELECTION-TRANSLATION. Show 牛津 for both hosted dictionary editions, with supplementary online sources and phrase lookup in the China Alpha. Sentences use the existing translation service.

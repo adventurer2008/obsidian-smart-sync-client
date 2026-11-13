@@ -674,6 +674,10 @@
 .smart-sync-global-ui .smart-sync-billing .smart-sync-plan-badge { float:none; display:inline-block; max-width:100%; box-sizing:border-box; }
 .smart-sync-global-ui .smart-sync-billing .smart-sync-plan-badge[hidden] { display:none; }
 .smart-sync-global-ui .smart-sync-billing .smart-sync-plan-title { clear:both; }
+.cm-tooltip.smart-sync-translation-tooltip[hidden],
+.wujie-encryption-selection-tools .smart-sync-translation-mobile-trigger[hidden] {
+	display: none;
+}
 .cm-tooltip.smart-sync-translation-tooltip {
 	z-index: var(--layer-popover);
 	border: 0;

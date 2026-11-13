@@ -213,19 +213,41 @@ test('modern host delegates updates to the host without using the legacy rendere
 	tab.update(); assert.equal(updates, 1);
 });
 
-test('background tray follows search in Advanced, defaults on, persists changes and is absent on mobile', async t => {
+test('translation follows search in Advanced and defaults on for desktop and mobile', async t => {
 	const { tab, plugin } = fixture(t);
 	const advanced = tab.getSettingDefinitions().find(group => group.items?.some(item => item.name === '启用搜索'));
 	const searchIndex = advanced.items.findIndex(item => item.name === '启用搜索');
-	assert.equal(advanced.items[searchIndex + 1].name, '后台运行与托盘');
+	assert.deepEqual(advanced.items.slice(searchIndex + 1, searchIndex + 3).map(item => item.name),
+		['启用翻译功能', '后台运行与托盘']);
 	tab.display();
+	const translation = [...tab.containerEl.querySelectorAll('.setting-item')].find(el => el.setting.name === '启用翻译功能');
+	const translationToggle = translation.setting.controls.find(control => control.kind === 'toggle');
+	assert.equal(translationToggle.value, true);
+	await translationToggle.change(false);
+	assert.equal(plugin.data.settings.translationEnabled, false);
 	const row = [...tab.containerEl.querySelectorAll('.setting-item')].find(el => el.setting.name === '后台运行与托盘');
 	const toggle = row.setting.controls.find(control => control.kind === 'toggle');
 	assert.equal(toggle.value, true);
 	await toggle.change(false); assert.equal(plugin.data.settings.backgroundTray, false);
 	Platform.isMobile = true;
-	try { assert.ok(!tab.getSettingDefinitions().some(group => group.items?.some(item => item.name === '后台运行与托盘'))); }
+	try {
+		assert.ok(tab.getSettingDefinitions().some(group => group.items?.some(item => item.name === '启用翻译功能')));
+		assert.ok(!tab.getSettingDefinitions().some(group => group.items?.some(item => item.name === '后台运行与托盘')));
+	}
 	finally { Platform.isMobile = false; }
+});
+
+test('translation preference refreshes controls after saving and restores the value on failure', async () => {
+	let refreshed = 0;
+	const plugin = { data: { settings: { translationEnabled: true } },
+		saveData: async () => { throw Error('Storage full'); }, refreshTranslation() { refreshed++; } };
+	await assert.rejects(IndependentSync.prototype.setting.call(plugin, 'translationEnabled', false));
+	assert.equal(plugin.data.settings.translationEnabled, true);
+	assert.equal(refreshed, 0);
+	plugin.saveData = async () => {};
+	await IndependentSync.prototype.setting.call(plugin, 'translationEnabled', false);
+	assert.equal(plugin.data.settings.translationEnabled, false);
+	assert.equal(refreshed, 1);
 });
 
 test('tray changes persist before runtime changes; failed storage preserves the active state and synchronization stop', async () => {

@@ -176,7 +176,7 @@ function renderTranslation(container, text, request, close) {
 	};
 }
 
-function translationTooltip(open) {
+function translationTooltip(open, trackControl) {
 	return showTooltip.compute(['selection', 'doc'], state => {
 		const { main, ranges } = state.selection;
 		if (ranges.length !== 1 || main.empty || main.to - main.from > selectionLimit) return null;
@@ -189,6 +189,7 @@ function translationTooltip(open) {
 				const doc = view.dom.ownerDocument;
 				const dom = doc.win.createDiv();
 				dom.addClass('smart-sync-translation-tooltip');
+				const untrack = trackControl(dom);
 				const trigger = dom.createEl('button', { cls: 'smart-sync-translation-trigger', attr: {
 					type: 'button', 'aria-label': title, title,
 				} });
@@ -197,7 +198,7 @@ function translationTooltip(open) {
 				let close;
 				trigger.addEventListener('mousedown', event => event.preventDefault());
 				trigger.addEventListener('click', () => { close = open(text, dom, trigger); });
-				return { dom, destroy: () => close?.() };
+				return { dom, destroy() { close?.(); untrack(); } };
 			},
 		};
 	});
@@ -223,10 +224,17 @@ export function registerNoteTranslation(owner) {
 	}
 	const workspace = owner.app.workspace;
 	const key = () => owner.secret('account') || owner.secret('access');
+	const enabled = () => !owner.stopped && owner.data.settings.translationEnabled !== false;
+	const controls = new Set();
+	const trackControl = control => {
+		controls.add(control);
+		control.hidden = !enabled();
+		return () => controls.delete(control);
+	};
 	let closeActive;
 	const close = () => closeActive?.();
 	const open = (text, anchor, trigger) => {
-		if (!text || owner.stopped) return;
+		if (!text || !enabled()) return;
 		if (text.length > selectionLimit) return new Notice('请选中不超过 1000 字符的文字。');
 		const secret = key();
 		if (!secret) return new Notice('请登录无界同步后使用翻译。');
@@ -235,7 +243,7 @@ export function registerNoteTranslation(owner) {
 		const localLab = edition.development && /^http:\/\/127\.0\.0\.1(?::\d+)?$/.test(origin);
 		const hostedAlpha = edition.edition === 'cn' && !localLab &&
 			/^\d+\.\d+\.\d+-alpha\.\d+$/.test(owner.manifest?.version);
-		const current = () => !owner.stopped && owner.data.localId === localId &&
+		const current = () => enabled() && owner.data.localId === localId &&
 			owner.data.settings.origin === origin && owner.data.settings.workspace === vault && key() === secret;
 		const request = async (text, target, signal) => {
 			if (!current()) throw Object.assign(Error('Translation context changed'), { status: 401 });
@@ -303,6 +311,7 @@ export function registerNoteTranslation(owner) {
 	owner.addCommand({
 		id: 'translate-selection', name: title,
 		editorCheckCallback(checking, editor, info) {
+			if (!enabled()) return false;
 			const text = selectionText(info?.file, editor.getSelection());
 			if (!text) return false;
 			if (!checking) open(text);
@@ -311,18 +320,26 @@ export function registerNoteTranslation(owner) {
 	});
 	if (workspace.on) {
 		owner.registerEvent(workspace.on('editor-menu', (menu, editor, info) => {
+			if (!enabled()) return;
 			const text = selectionText(info?.file, editor.getSelection());
 			if (text) menu.addItem(item => item.setTitle(title).setIcon('languages').onClick(() => open(text)));
 		}));
 		owner.registerEvent(workspace.on('file-open', close));
 	}
-	if (!Platform.isMobile && editorInfoField) owner.registerEditorExtension?.(translationTooltip(open));
+	if (!Platform.isMobile && editorInfoField) owner.registerEditorExtension?.(translationTooltip(open, trackControl));
 	return {
 		close,
+		refresh() {
+			const visible = enabled();
+			if (!visible) close();
+			for (const control of controls) control.hidden = !visible;
+		},
 		addMobileAction(toolbar, editor, file) {
 			const trigger = button(toolbar, '翻译');
+			trigger.classList.add('smart-sync-translation-mobile-trigger');
 			trigger.addEventListener('pointerdown', event => event.preventDefault());
 			trigger.addEventListener('click', () => open(selectionText(file, editor.getSelection())));
+			return trackControl(trigger);
 		},
 	};
 }
