@@ -5393,16 +5393,18 @@ export class IndependentSettings extends PluginSettingTab {
 		const scopeKey = identityScope();
 		const accountConnected = connected || plugin.accountAuthorized === true;
 		const credentialName = connected ? 'access' : 'account';
-		const credential = plugin.secret(credentialName);
-		const accountCredential = plugin.secret('account');
-		const sameConnection = () => !plugin.stopped && identityScope() === scopeKey &&
-			credential === plugin.secret(credentialName) && accountCredential === plugin.secret('account');
-		const identity = () => sameConnection() && plugin.overviewIdentity?.scope === scopeKey &&
-			plugin.overviewIdentity.credential === credential && plugin.overviewIdentity.accountCredential === accountCredential
-			? plugin.overviewIdentity : undefined;
+		const sameScope = () => !plugin.stopped && identityScope() === scopeKey;
+		const identity = () => {
+			const value = plugin.overviewIdentity;
+			return sameScope() && value?.scope === scopeKey && value.credential === plugin.secret(credentialName) &&
+				value.accountCredential === plugin.secret('account') ? value : undefined;
+		};
 		const status = row(t('sections.status'), (setting) => {
+			const credential = plugin.secret(credentialName);
+			const accountCredential = plugin.secret('account');
 			const controller = new AbortController();
-			const current = () => !controller.signal.aborted && sameConnection();
+			const current = () => !controller.signal.aborted && sameScope() &&
+				credential === plugin.secret(credentialName) && accountCredential === plugin.secret('account');
 			let phase = plugin.overviewStatusText ?? plugin.status.textContent ?? plugin.status.text ?? t('sections.disconnected');
 			let local = t('overview.spaceUnknown'), loading = false, lastDescription;
 			let cacheBinding;
