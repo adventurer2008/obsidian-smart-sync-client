@@ -1,5 +1,22 @@
 # Cross-platform feature and scenario review
 
+## CHG-20261114-EPUB-READER
+
+| Platform | Support and acceptance |
+| --- | --- |
+| Windows desktop | Conditional support through the shared read-only Obsidian view. In an isolated native Obsidian 1.15.1 vault, verified the two-chapter sample opens, Next displays the second chapter, restarting Obsidian restores that chapter, and the file menu offers the reader. Verified the source SHA-256 and mtime were unchanged after reading and restarting. Native lock, large books and mixed-device operation were not exercised. |
+| macOS desktop | Same shared view. Native opening, keyboard navigation and restoration are unverified; no macOS host was available. |
+| Linux desktop | Same shared view. Native opening, keyboard navigation and restoration are unverified; no Linux Obsidian host was available. |
+| Android | Same view with the file menu or picker and touch-size chapter controls. Physical touch, rotation, foreground/lock and memory behavior are unverified. |
+| iPhone/iOS | Same view and touch controls. Physical narrow-screen, safe areas, foreground/lock and memory behavior are unverified. |
+| iPad/iPadOS | Same view and touch controls. Physical Split View, rotation, keyboard, foreground/lock and restoration are unverified. |
+
+Conditional in both editions on a local, reflowable, DRM-free EPUB 2/3 up to 48 MiB. Chapters and previews have bounded sizes; fixed layout and protected books are unsupported. Scripts, custom styles and external resources are ignored. Reading a downloaded book is offline, needs no account, and never writes to the book. If the book is still remote, use the existing attachment download rules and reopen it. An update to an open local book reloads its current chapter. No desktop-native API or background reading service is required. An already open tab can restore its chapter through Obsidian's local workspace state; scrolling position and cross-device reading progress are unsupported. Native offline/online transitions and upgrade/rollback are unverified.
+
+Windows Node 26.12.1 reported 392 passes and one skip (live Server checkout not configured). The EPUB checks cover spine and table of contents, links and images, inert rendering, locked or malformed books, host extension conflicts, local chapter restoration, and an encrypted attachment receive preserving bytes and mtime. Both regional builds and dependency closure checks passed. China community lint reported zero errors and 13 pre-existing warnings. In 42 Chromium/WebKit stylesheet checks at 280–1280 px and 16–32 px text, chapter controls stay in the pane with at least 44 px height; a narrow WebKit dropdown overflow was corrected. The browser matrix is not physical-device acceptance.
+
+The reader stays bound to the current Obsidian vault. Older Client versions still treat EPUB as a normal attachment and need no migration; a saved reader tab may be inactive if rolling back to a build without the view. No protocol, account, keys, sync checkpoint or source modification time changes. No Hub or Server deployment was performed.
+
 ## CHG-20261113-CN-DICTIONARY-RESPONSE-TIME
 
 China Alpha supports the desktop card on Windows, macOS and Linux and the touch sheet on Android, iPhone and iPad when the server supports local lookup. The client uses the existing request on older servers. A Windows synthetic regression checks early rendering and section state. Native acceptance on all six platforms, including narrow touch layouts and iPad Split View, is pending. Closing the card, switching accounts or vaults and changing the target language retain the existing cancellation and scope checks. A failed online lookup can be retried while the local results remain visible. Global has no translation entry. No sync state, note content, key or source mtime writes are involved.

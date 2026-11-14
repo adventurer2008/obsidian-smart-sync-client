@@ -1,5 +1,9 @@
 # Source change record
 
+## Unreleased — CHG-20261114-EPUB-READER
+
+Requirement: open and read EPUB books directly in Obsidian through the sync plugin. Add a local read-only view with EPUB 2/3 spine navigation, internal links, JPEG/PNG illustrations, and chapter restoration for an open tab. Retain existing attachment filters, encryption and source modification times. Keep the explicit file menu and command available when another reader registers EPUB. No Server or standalone translation plugin change.
+
 ## 1.1.7 — CHG-20261114-CN-117-STABLE
 
 Promote the latest China Hub Alpha.15. Markdown editing and reading support selection translation, with a desktop reading context menu. Oxford and Longman appear before online results. Keep this lookup available on Stable versions. The user confirmed the dictionary authorization covers production.
