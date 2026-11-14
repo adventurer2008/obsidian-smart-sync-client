@@ -4,6 +4,8 @@
 
 Requirement: open and read EPUB books directly in Obsidian through the sync plugin. Add a local read-only view with EPUB 2/3 spine navigation, internal links, JPEG/PNG illustrations, and chapter restoration for an open tab. Retain existing attachment filters, encryption and source modification times. Keep the explicit file menu and command available when another reader registers EPUB. No Server or standalone translation plugin change.
 
+Release target for the EPUB reader in `94818bd` is the next China Hub Alpha, as requested on 2026-11-14. Verify the EPUB workflow on the fixed candidate, confirm the China Alpha entry and the three install-file hashes through Hub, and carry forward the pending native-platform checks in the [cross-platform feature matrix](docs/validation/cross-platform-feature-matrix.md).
+
 ## Unreleased — CHG-20261112-NOTEBOOK-NAVIGATOR-MENUS
 
 Requirement: keep the Client file actions available when Notebook Navigator is used to browse notes. Use its optional Menus API for history and restore, whole-note encryption, and the existing synchronized file and folder position actions. Label the position actions with the Obsidian File Explorer name because Notebook Navigator orders its own lists. Localize the label and use position verbs in all Global languages. Multi-file position actions use the selection supplied by Navigator when available. Both editions keep the existing native menu callbacks.
