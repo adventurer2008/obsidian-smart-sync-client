@@ -34,6 +34,12 @@ Full and incremental synchronization prioritize Markdown notes (`.md`, case inse
 
 Receiving first inspects encrypted metadata in bounded windows, so this improves body-transfer priority rather than guaranteeing shorter total synchronization time. Pending files survive interrupted reordered progress in the existing retry queue. Mobile systems can suspend the application; remaining work continues when the host resumes and synchronization runs again.
 
+## EPUB reading (unreleased)
+
+Open a local `.epub` from the Obsidian file explorer or choose **Read EPUB in the sync plugin** from the file menu or command palette. The explicit action remains available if another plugin owns the EPUB extension.
+
+The offline reader supports DRM-free, reflowable EPUB 2/3 files up to 48 MiB, with chapter navigation, internal links, and embedded JPEG/PNG images. The restored tab remembers the local chapter. Reading position is device-local. EPUB uses the existing attachment rules for syncing the original file. Fixed layouts, book-authored styles, scripts, external resources, annotations, and EPUB translation are outside this reader.
+
 ## Accounts, network and privacy
 
 Synchronization needs an approved account and the matching regional service. Content and paths are encrypted on the client; the service handles account/workspace identifiers, enrollment email, notebook/device labels, timestamps, ciphertext sizes, reported local vault byte totals and measurement times, and opaque identifiers. Keep the encryption passphrase safe; external login does not replace it. China plan prices and purchase notices appear at checkout; renewal is manual and does not enable automatic charges. Avoid running multiple sync providers on the same vault without resolving their interaction.
