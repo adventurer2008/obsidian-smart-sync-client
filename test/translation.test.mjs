@@ -341,9 +341,9 @@ test('the local lab can send a phrase and displays the matching offline source',
 	} finally { dispose(); }
 });
 
-test('the hosted China Alpha uses the hosted lookup for phrases and leaves sentences on translation', async () => {
+for (const version of ['1.1.7-alpha.15', '1.1.7']) test(`the hosted China ${version} uses the hosted lookup for phrases and leaves sentences on translation`, async () => {
 	const { owner, requests, dispose } = ownerFixture();
-	owner.manifest = { version: '1.1.7-alpha.9' };
+	owner.manifest = { version };
 	try {
 		owner.command.editorCheckCallback(false, { getSelection: () => 'take off' }, { file });
 		assert.deepEqual(requests[0].input, { text: 'take off', target: 'zh-Hans', dictionary: 'alpha-local' });

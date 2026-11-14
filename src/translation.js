@@ -352,8 +352,8 @@ export function registerNoteTranslation(owner) {
 		close();
 		const { localId, settings: { origin, workspace: vault } } = owner.data;
 		const localLab = edition.development && /^http:\/\/127\.0\.0\.1(?::\d+)?$/.test(origin);
-		const hostedAlpha = edition.edition === 'cn' && !localLab &&
-			/^\d+\.\d+\.\d+-alpha\.\d+$/.test(owner.manifest?.version);
+		const hostedDictionary = edition.edition === 'cn' && !localLab &&
+			/^\d+\.\d+\.\d+(?:-alpha\.\d+)?$/.test(owner.manifest?.version);
 		const current = () => enabled() && owner.data.localId === localId &&
 			owner.data.settings.origin === origin && owner.data.settings.workspace === vault && key() === secret;
 		const request = async (text, target, signal, showLocal) => {
@@ -362,11 +362,11 @@ export function registerNoteTranslation(owner) {
 			api.signal = signal;
 			const word = text.trim();
 			const lookup = target === 'zh-Hans' && word.length <= 64 &&
-				(localLab || hostedAlpha ? dictionarySelection : dictionaryWord).test(word);
+				(localLab || hostedDictionary ? dictionarySelection : dictionaryWord).test(word);
 			const input = { text, target };
 			const knownEntries = entries => entries.filter(entry =>
 				dictionaryNames.has(entry?.source) && Array.isArray(entry.definitions) && entry.definitions.length);
-			if (lookup && hostedAlpha) {
+			if (lookup && hostedDictionary) {
 				try {
 					const local = await api.request('POST', 'account/translate', { ...input, dictionary: 'alpha-local' });
 					if (!signal.aborted && current() && Array.isArray(local?.dictionaries))
@@ -380,7 +380,7 @@ export function registerNoteTranslation(owner) {
 			let result;
 			try {
 				result = await api.request('POST', 'account/translate',
-					lookup ? { ...input, dictionary: hostedAlpha ? 'alpha' : true } : input);
+					lookup ? { ...input, dictionary: hostedDictionary ? 'alpha' : true } : input);
 			} catch (error) {
 				// Older translation servers require exactly two request fields.
 				if (!lookup || error?.status !== 400 || signal.aborted || !current()) throw error;

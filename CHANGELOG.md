@@ -1,5 +1,9 @@
 # Source change record
 
+## 1.1.7 — CHG-20261114-CN-117-STABLE
+
+Promote the latest China Hub Alpha.15. Markdown editing and reading support selection translation, with a desktop reading context menu. Oxford and Longman appear before online results. Keep this lookup available on Stable versions. The user confirmed the dictionary authorization covers production.
+
 ## Unreleased — CHG-20261113-CN-DICTIONARY-RESPONSE-TIME
 
 Requirement R-CN-SELECTION-TRANSLATION. China Alpha shows local Oxford and Longman entries before online dictionaries finish. Expanding and collapsing a local entry persists when the online results arrive.
