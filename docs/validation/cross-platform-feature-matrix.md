@@ -1,5 +1,22 @@
 # Cross-platform feature and scenario review
 
+## CHG-20261116-LOCAL-NOTE-SEARCH
+
+Both editions conditionally support the same foreground search of Markdown files already available to the current Obsidian vault. The sidebar layout, touch targets, filters and result navigation are unchanged. Title previews can appear before their body snippets. Keep at most four readers, 24 MiB of cached text and 4 MiB of signature bitsets per search view. Notes without a signature, short or unsupported probe terms and potential matches still use the exact matcher; notes above 8 MiB still require title-only search. A first full scan still reads all eligible bodies. Locked markers remain masked at their original offsets and are never decoded for search.
+
+| Platform | Verification for this change |
+| --- | --- |
+| Windows desktop | Synthetic 3,140-note tests and isolated filesystem timing passed in Node. Native Obsidian timings, narrow sidebar and keyboard use are unverified. |
+| macOS desktop | Same shared view; native timings, keyboard and narrow sidebar are unverified without a Mac host. |
+| Linux desktop | Same shared view; native timings, keyboard and narrow sidebar are unverified without a Linux Obsidian host. |
+| Android | Same shared view; physical memory pressure, narrow touch UI and foreground/lock recovery are unverified. |
+| iPhone/iOS | Same shared view; physical memory pressure, narrow touch UI and foreground/lock recovery are unverified. |
+| iPad/iPadOS | Same shared view; physical memory pressure, Split View, touch, keyboard and foreground/lock recovery are unverified. |
+
+Windows Node 26.12.1 compared the prior source and this patch with 3,140 generated files on disk and an Obsidian vault test double. Across three runs per source, median time from starting the search to showing the title `rmc-tech` went from 220 ms to 3 ms, and full cold completion from 224 ms to 184 ms. A second, different absent keyword went from 414 ms and 1,089 body reads to 18 ms and zero body reads. These figures exclude the UI debounce and measure the synthetic fixture, not Obsidian or a user's vault. Regressions verify title-first preview and snippets, Unicode and short-query fallback, hidden encrypted markers, cancellation, edit invalidation and unchanged source mtime. Windows Client tests passed 394, with one optional paired-service test skipped. Both regional builds and dependency checks passed; China community lint reported zero errors and 13 existing warnings.
+
+No desktop native API, network, account or persistent query/index state is needed. Offline/online transitions and mixed versions do not change the search contract. Host suspension can pause a search; closing the view or restarting clears the in-memory cache. Lock, native background and restart behavior are unverified. Upgrades and rollback use the same view IDs and require no data migration. Search does not write notes, encryption keys, sync state or source timestamps.
+
 ## CHG-20261114-EPUB-READER
 
 | Platform | Support and acceptance |

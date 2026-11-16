@@ -3,17 +3,45 @@ import { searchableText } from './note-crypto.js';
 
 const MAX_FILE_BYTES = 8 * 1024 * 1024;
 const CACHE_BYTES = 24 * 1024 * 1024;
+const MAX_SIGNATURES = 4096; // Up to 4 MiB of bitsets outside the text cache.
+const MAX_SIGNATURE_TEXT = 96 * 1024;
 const PAGE_SIZE = 40;
 const yieldToHost = () => new Promise(resolve => window.setTimeout(resolve, 0));
 const literal = text => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+// An absent trigram rules out a match. A present one still needs the exact matcher.
+// Probe only ASCII and uncased Han, including the /iu ASCII folds for Kelvin sign and long s.
+const foldUnit = code => code >= 65 && code <= 90 ? code + 32 : code === 0x212a ? 107 : code === 0x17f ? 115 : code;
+const probeUnit = code => (code >= 32 && code <= 126) || (code >= 0x3400 && code <= 0x4dbf) || (code >= 0x4e00 && code <= 0x9fff);
+const gram = (a, b, c) => (Math.imul(a, 0x9e3779b1) ^ Math.imul(b, 0x85ebca6b) ^ Math.imul(c, 0xc2b2ae35)) >>> 19;
+
+function termProbes(term) {
+	const probes = new Set();
+	for (let i = 2; i < term.length; i++) {
+		const a = foldUnit(term.charCodeAt(i - 2)), b = foldUnit(term.charCodeAt(i - 1)), c = foldUnit(term.charCodeAt(i));
+		if (probeUnit(a) && probeUnit(b) && probeUnit(c)) probes.add(gram(a, b, c));
+	}
+	return [...probes];
+}
+
+function bodySignature(body) {
+	const bits = new Uint32Array(256);
+	let a = foldUnit(body.charCodeAt(0)), b = foldUnit(body.charCodeAt(1));
+	for (let i = 2; i < body.length; i++) {
+		const c = foldUnit(body.charCodeAt(i)), bit = gram(a, b, c);
+		bits[bit >>> 5] |= 1 << (bit & 31);
+		a = b; b = c;
+	}
+	return bits;
+}
 
 export function searchTerms(query) {
 	return [...query.matchAll(/"([^"]+)"|([^\s"]+)/gu)].map(match => match[1] ?? match[2]).slice(0, 32);
 }
 
-export function searchHits(text, terms, limit = 80) {
-	if (!terms.length) return [];
-	const pattern = new RegExp(terms.slice().sort((a, b) => b.length - a.length).map(literal).join('|'), 'giu');
+const hitPattern = terms => new RegExp(terms.slice().sort((a, b) => b.length - a.length).map(literal).join('|'), 'giu');
+
+function hitsWithPattern(text, pattern, limit = 80) {
 	const hits = [];
 	for (const match of text.matchAll(pattern)) {
 		hits.push({ start: match.index, end: match.index + match[0].length });
@@ -22,27 +50,46 @@ export function searchHits(text, terms, limit = 80) {
 	return hits;
 }
 
+export function searchHits(text, terms, limit = 80) {
+	return terms.length ? hitsWithPattern(text, hitPattern(terms), limit) : [];
+}
+
 function inSearchScope(note, filters) {
 	const folder = filters.folder?.replace(/\/$/u, '') ?? '';
 	return !(folder && !(filters.recursive === false ? note.folder === folder : note.path.startsWith(folder + '/')))
 		&& !(filters.tags?.length && !filters.tags.every(tag => note.tags.includes(tag.replace(/^#/u, ''))))
 		&& !(filters.from && note.mtime < filters.from || filters.to && note.mtime > filters.to);
 }
+
 function prepareMatch(query, filters) {
 	const terms = searchTerms(query), patterns = terms.map(term => new RegExp(literal(term), 'iu'));
-	return note => {
-		if (!terms.length || !inSearchScope(note, filters)) return undefined;
-		const titleMatches = patterns.every(pattern => pattern.test(note.title));
-		const target = filters.location === 'title' ? note.title : filters.location === 'body' ? note.body : note.title + '\n' + note.body;
-		if (!patterns.every(pattern => pattern.test(target))) return undefined;
-		return { ...note, rank: note.title.toLowerCase() === terms.join(' ').toLowerCase() ? 0 : titleMatches ? 1 : 2,
-			hits: filters.location === 'title' ? [] : searchHits(note.body, terms) };
+	const exactQuery = terms.join(' ').toLowerCase(), highlights = hitPattern(terms);
+	const bodyOnly = filters.location === 'body', titleOnly = filters.location === 'title';
+	// Preserve literal phrases that span the title/body separator.
+	const combined = !bodyOnly && !titleOnly && terms.some(term => term.includes('\n'));
+	const probes = combined ? [] : terms.map(termProbes);
+	const result = (note, exactTitle, hits, body = note.body) => ({ ...note, body, rank: note.title.toLowerCase() === exactQuery ? 0 : exactTitle ? 1 : 2, hits });
+	return {
+		empty: !terms.length,
+		titleTests: title => patterns.map(pattern => pattern.test(title)),
+		preview: note => result(note, true, []),
+		reject: (bits, title) => probes.some((probesForTerm, i) => (bodyOnly || !title[i]) &&
+			probesForTerm.some(bit => !(bits[bit >>> 5] & (1 << (bit & 31))))),
+		match: (note, title, body = note.body) => {
+			const titleMatches = title.every(Boolean);
+			if (titleOnly) return titleMatches ? result(note, true, []) : undefined;
+			if (combined) {
+				const target = note.title + '\n' + body;
+				if (!patterns.every(pattern => pattern.test(target))) return undefined;
+			} else if (!patterns.every((pattern, i) => (!bodyOnly && title[i]) || pattern.test(body))) return undefined;
+			return result(note, titleMatches, hitsWithPattern(body, highlights), body);
+		},
 	};
 }
-export function matchNote(note, query, filters = {}) { return prepareMatch(query, filters)(note); }
-function sortSearchResults(results, filters) {
-	return results.sort((a, b) => (filters.sort === 'title' ? a.title.localeCompare(b.title, 'zh-CN', { numeric: true })
-		: filters.sort === 'modified' ? b.mtime - a.mtime : a.rank - b.rank || b.mtime - a.mtime) || a.path.localeCompare(b.path));
+
+export function matchNote(note, query, filters = {}) {
+	const matcher = prepareMatch(query, filters);
+	if (!matcher.empty && inSearchScope(note, filters)) return matcher.match(note, matcher.titleTests(note.title));
 }
 
 // Read-only, device-local cache. Never serialize note text, queries or results into plugin data.
@@ -51,69 +98,114 @@ export class NoteSearchIndex {
 		this.app = app;
 		this.readTime = readTime;
 		this.cache = new Map();
+		this.signatures = new Map();
 		this.bytes = 0;
 		this.revision = 0;
 	}
-	clear() { this.cache.clear(); this.bytes = 0; this.revision++; }
+	clear() { this.cache.clear(); this.signatures.clear(); this.bytes = 0; this.revision++; }
+	dropText(path) {
+		const entry = this.cache.get(path);
+		if (entry) { this.bytes -= entry.body.length * 2; this.cache.delete(path); }
+	}
 	invalidate(file, oldPath) {
 		this.revision++;
-		for (const path of [file?.path, oldPath].filter(Boolean)) for (const [cachedPath, entry] of this.cache)
-			if (cachedPath === path || cachedPath.startsWith(path + '/')) { this.bytes -= entry.body.length * 2; this.cache.delete(cachedPath); }
+		for (const path of [file?.path, oldPath].filter(Boolean)) {
+			this.dropText(path);
+			this.signatures.delete(path);
+			if (file?.extension === undefined) {
+				for (const key of this.cache.keys()) if (key.startsWith(path + '/')) this.dropText(key);
+				for (const key of this.signatures.keys()) if (key.startsWith(path + '/')) this.signatures.delete(key);
+			}
+		}
 	}
 	async search(query, filters = {}, cancelled = () => false, progress = () => {}) {
+		const matcher = prepareMatch(query, filters);
+		if (matcher.empty) return { results: [], total: 0, skipped: 0, failed: 0 };
 		const files = this.app.vault.getMarkdownFiles();
-		const revision = this.revision, results = [], match = prepareMatch(query, filters);
-		let skipped = 0, failed = 0, processed = 0, cursor = 0, reported = 0, lastReport = 0;
+		const revision = this.revision, results = new Map(), pending = [];
+		const titleOrder = filters.sort === 'title' ? new Intl.Collator('zh-CN', { numeric: true }) : undefined;
+		const sorted = () => [...results.values()].sort((a, b) => (titleOrder ? titleOrder.compare(a.title, b.title)
+			: filters.sort === 'modified' ? b.mtime - a.mtime : a.rank - b.rank || b.mtime - a.mtime) || a.path.localeCompare(b.path));
+		let skipped = 0, failed = 0, processed = 0, cursor = 0, lastReport = -Infinity;
 		const stale = () => cancelled() || revision !== this.revision;
+		let deadline = performance.now() + 8;
+		const pause = () => {
+			const now = performance.now();
+			if (now < deadline) return;
+			// Yield one worker at a time so other workers can keep using available I/O.
+			deadline = now + 8;
+			return yieldToHost();
+		};
 		const report = () => {
 			if (stale()) return;
-			const now = Date.now();
-			if (processed === files.length || !reported || now - lastReport >= 150) {
-				progress(processed, files.length, { results: sortSearchResults([...results], filters).slice(0, PAGE_SIZE), matches: results.length });
-				reported++; lastReport = now;
+			const now = performance.now();
+			if (processed === files.length || now - lastReport >= 150) {
+				progress(processed, files.length, { results: sorted().slice(0, PAGE_SIZE), matches: results.size });
+				lastReport = now;
 			}
 		};
+
+		// Surface title hits before body I/O, even for the last file in the vault.
+		for (const file of files) {
+			if (stale()) return undefined;
+			try {
+				const metadata = this.app.metadataCache.getFileCache(file);
+				const frontTags = metadata?.frontmatter?.tags;
+				const tags = [...(metadata?.tags ?? []).map(tag => tag.tag), ...(Array.isArray(frontTags) ? frontTags : typeof frontTags === 'string' ? frontTags.split(/[,\s]+/u) : [])]
+					.filter(tag => typeof tag === 'string').map(tag => tag.replace(/^#/u, ''));
+				const note = { path: file.path, title: file.basename, folder: file.parent?.path === '/' ? '' : file.parent?.path ?? '',
+					body: '', mtime: Math.max(this.readTime(file) ?? file.stat.mtime, file.stat.mtime), tags };
+				if (inSearchScope(note, filters)) {
+					const title = matcher.titleTests(note.title);
+					if (filters.location === 'title') {
+						if (title.every(Boolean)) results.set(note.path, matcher.preview(note));
+					} else if (file.stat.size > MAX_FILE_BYTES) skipped++;
+					else {
+						if (filters.location !== 'body' && title.every(Boolean)) results.set(note.path, matcher.preview(note));
+						pending.push({ file, note, title });
+					}
+				}
+			} catch { failed++; }
+			const waiting = pause();
+			if (waiting) await waiting;
+		}
+		processed = files.length - pending.length;
+		if (results.size || !pending.length) report();
+
 		const worker = async () => {
-			while (!stale() && cursor < files.length) {
-				const file = files[cursor++];
+			while (!stale() && cursor < pending.length) {
+				const { file, note, title } = pending[cursor++];
 				try {
-					const metadata = this.app.metadataCache.getFileCache(file);
-					const frontTags = metadata?.frontmatter?.tags;
-					const tags = [...(metadata?.tags ?? []).map(tag => tag.tag), ...(Array.isArray(frontTags) ? frontTags : typeof frontTags === 'string' ? frontTags.split(/[,\s]+/u) : [])]
-						.filter(tag => typeof tag === 'string').map(tag => tag.replace(/^#/u, ''));
-					const note = { path: file.path, title: file.basename, folder: file.parent?.path === '/' ? '' : file.parent?.path ?? '',
-						body: '', mtime: Math.max(this.readTime(file) ?? file.stat.mtime, file.stat.mtime), tags };
-					if (inSearchScope(note, filters)) {
-						if (filters.location !== 'title') {
-							if (file.stat.size > MAX_FILE_BYTES) { skipped++; }
-							else {
-								const stamp = `${file.stat.mtime}:${file.stat.ctime}:${file.stat.size}`;
-								let cached = this.cache.get(file.path);
-								if (cached?.stamp !== stamp) {
-									if (cached) { this.bytes -= cached.body.length * 2; this.cache.delete(file.path); }
-									const body = await this.app.vault.cachedRead(file);
-									if (stale()) return;
-									cached = { stamp, body: searchableText(body) };
-									if (this.bytes + cached.body.length * 2 <= CACHE_BYTES) { this.cache.set(file.path, cached); this.bytes += cached.body.length * 2; }
-								}
-								note.body = cached.body;
-							}
-						}
-						if (filters.location === 'title' || file.stat.size <= MAX_FILE_BYTES) {
-							const result = match(note);
-							if (result) results.push(result);
+					let text = '';
+					const stamp = `${file.stat.mtime}:${file.stat.ctime}:${file.stat.size}`;
+					const cached = this.cache.get(note.path), signature = this.signatures.get(note.path);
+					if (cached?.stamp === stamp) text = cached.body;
+					else if (signature?.stamp !== stamp || !matcher.reject(signature.bits, title)) {
+						this.dropText(note.path);
+						if (signature?.stamp !== stamp) this.signatures.delete(note.path);
+						const body = await this.app.vault.cachedRead(file);
+						if (stale()) return;
+						text = searchableText(body);
+						const bytes = text.length * 2;
+						if (this.bytes + bytes <= CACHE_BYTES) {
+							this.cache.set(note.path, { stamp, body: text }); this.bytes += bytes;
+							this.signatures.delete(note.path);
+						} else if (signature?.stamp !== stamp && this.signatures.size < MAX_SIGNATURES && text.length <= MAX_SIGNATURE_TEXT) {
+							this.signatures.set(note.path, { stamp, bits: bodySignature(text) });
 						}
 					}
-				} catch { failed++; }
+					const result = matcher.match(note, title, text);
+					if (result) results.set(note.path, result);
+				} catch { failed++; results.delete(note.path); }
 				processed++; report();
-				if (processed % 20 === 0) await yieldToHost();
+				const waiting = cursor < pending.length && pause();
+				if (waiting) await waiting;
 			}
 		};
-		await Promise.all(Array.from({ length: Math.min(4, files.length) }, worker));
+		await Promise.all(Array.from({ length: Math.min(4, pending.length) }, worker));
 		if (stale()) return undefined;
-		return { results: sortSearchResults(results, filters), total: files.length, skipped, failed };
+		return { results: sorted(), total: files.length, skipped, failed };
 	}
-
 }
 
 export class RecentFiles {
@@ -329,7 +421,7 @@ export class NoteSearchView extends ItemView {
 			const response = await this.index.search(this.query, filters, cancelled, (done, total, partial) => {
 				if (cancelled()) return;
 				this.status.setText(`已找到 ${partial.matches} 篇 · 搜索中 ${done}/${total}`);
-				const key = JSON.stringify(partial.results.map(result => result.path));
+				const key = JSON.stringify(partial.results.map(result => [result.path, result.hits?.length]));
 				if (key !== previewKey) {
 					previewKey = key; this.resultsEl.empty();
 					for (const result of partial.results) this.renderResult(result);
@@ -384,7 +476,7 @@ export class NoteSearchView extends ItemView {
 			let state = {};
 			if (hit) {
 				const body = await this.owner.app.vault.cachedRead(file);
-				if (searchableText(body) !== result.body) { this.invalidate(); new Notice('笔记已更新，请从最新结果定位。'); return; }
+				if (searchableText(body) !== result.body) { this.invalidate(file); new Notice('笔记已更新，请从最新结果定位。'); return; }
 				const before = body.slice(0, hit.start), line = before.split('\n').length - 1;
 				const ch = hit.start - (before.lastIndexOf('\n') + 1);
 				state = { line, startLoc: { line, ch }, endLoc: { line, ch: ch + hit.end - hit.start } };

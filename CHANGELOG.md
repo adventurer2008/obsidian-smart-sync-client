@@ -1,5 +1,9 @@
 # Source change record
 
+## Unreleased — CHG-20261116-LOCAL-NOTE-SEARCH
+
+Requirement: speed up local Markdown search in a vault with 3,140 notes. Show title matches before reading bodies, yield to the host without pausing every reader, and keep an in-memory trigram filter for notes outside the text cache. Verify possible matches with the existing literal rules, including AND and phrases. Preserve filters, snippets, navigation offsets, encrypted marker masking and source modification times. See the [cross-platform feature matrix](docs/validation/cross-platform-feature-matrix.md) for timing and acceptance boundaries.
+
 ## Unreleased — CHG-20261114-EPUB-READER
 
 Requirement: open and read EPUB books directly in Obsidian through the sync plugin. Add a local read-only view with EPUB 2/3 spine navigation, internal links, JPEG/PNG illustrations, and chapter restoration for an open tab. Retain existing attachment filters, encryption and source modification times. Keep the explicit file menu and command available when another reader registers EPUB. No Server or standalone translation plugin change.

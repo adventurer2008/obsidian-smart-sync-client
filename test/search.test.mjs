@@ -111,8 +111,62 @@ test('cancelling a concurrent search cannot publish late results or populate its
  const held = new Promise(resolve => {release = resolve;});
  f.app.vault.cachedRead = async () => {await held; return '同步';};
  const running = index.search('同步', {}, () => cancelled, () => {reports++;});
+ const reportsBeforeCancel = reports;
  cancelled = true; release();
- assert.equal(await running, undefined); assert.equal(reports, 0); assert.equal(index.cache.size, 0);
+ assert.equal(await running, undefined); assert.equal(reports, reportsBeforeCancel); assert.equal(index.cache.size, 0);
+});
+
+test('a title in the last file appears before body reads, then acquires its snippet', async () => {
+	const f = fixture(), index = new NoteSearchIndex(f.app);
+	f.bodies.set('B.md', '这里也提到了同步');
+	const previews = [];
+	const response = await index.search('同步', {}, () => false, (done, total, partial) => {
+		previews.push({ done, total, reads: f.reads(), first: partial.results[0] });
+	});
+	assert.equal(previews[0].reads, 0);
+	assert.equal(previews[0].first.path, 'B.md');
+	assert.deepEqual(previews[0].first.hits, []);
+	assert.ok(previews[0].done < previews[0].total);
+	assert.deepEqual(response.results.map(row => row.path), ['B.md', 'A.md']);
+	assert.deepEqual(response.results[0].hits, [{ start: 6, end: 8 }]);
+});
+
+test('a 3,140-note vault reuses overflow signatures without hiding exact or edited body matches', async () => {
+	const filler = 'ordinary note text 日常记录\n'.repeat(260);
+	const marker = '⟦wujie-lock:v1:PRIVATEHINT⟧';
+	const files = Array.from({ length: 3140 }, (_, n) => ({ path: n + '.md', basename: n === 3139 ? 'Target' : 'Misc',
+		extension: 'md', stat: { size: Buffer.byteLength(filler), mtime: 100, ctime: 20 } }));
+	const last = files.at(-1);
+	let reads = 0, ending = 'rmc-tech 独特片段 longſK Ω ' + marker;
+	const app = { vault: { getMarkdownFiles: () => files, cachedRead: async file => {
+		reads++;
+		return file === last ? filler + ending : filler;
+	} }, metadataCache: { getFileCache: () => ({}) } };
+	const index = new NoteSearchIndex(app);
+	assert.deepEqual((await index.search('first-query')).results, []);
+	assert.equal(reads, 3140);
+	assert.ok(index.bytes <= 24 * 1024 * 1024);
+	assert.ok(index.signatures.has(last.path));
+
+	reads = 0;
+	assert.deepEqual((await index.search('second-query')).results, []);
+	assert.deepEqual((await index.search('PRIVATEHINT')).results, []);
+	assert.equal(reads, 0, 'an unrelated negative query does not reread the overflow');
+
+	for (const query of ['Target "rmc-tech"', '独特片段', 'LONGSK', 'Ω']) {
+		assert.deepEqual((await index.search(query)).results.map(row => row.path), [last.path], query);
+	}
+	assert.deepEqual((await index.search('Target rmc-tech', { location: 'body' })).results, []);
+	assert.deepEqual((await index.search('"Target\nordinary"')).results.map(row => row.path), [last.path]);
+
+	ending = 'first edit';
+	last.stat.mtime++;
+	assert.deepEqual((await index.search('"first edit"')).results.map(row => row.path), [last.path]);
+	ending = 'second edit';
+	index.invalidate(last); // Vault events also cover preserved or equal mtimes.
+	assert.deepEqual((await index.search('"second edit"')).results.map(row => row.path), [last.path]);
+	index.clear();
+	assert.equal(index.signatures.size, 0);
 });
 
 test('search view shows partial results while scanning and discards late completion after a query change', async () => {

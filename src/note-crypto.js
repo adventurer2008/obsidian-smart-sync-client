@@ -38,10 +38,10 @@ export function lockedMarker(box) {
 	const encoded = encodeBox(box);
 	return box.kind === 'note' ? '```wujie-encrypted\n' + encoded + '\n```\n' : TEXT_PREFIX + encoded + '⟧';
 }
+const lockedMarkerPattern = /⟦wujie-lock:v1:([A-Za-z0-9+/=]+)⟧|```wujie-encrypted\r?\n([A-Za-z0-9+/=]+)\r?\n```(?:\r?\n)?/gu;
 export function lockedRanges(text) {
 	const ranges = [];
-	const pattern = /⟦wujie-lock:v1:([A-Za-z0-9+/=]+)⟧|```wujie-encrypted\r?\n([A-Za-z0-9+/=]+)\r?\n```(?:\r?\n)?/gu;
-	for (const match of text.matchAll(pattern)) {
+	for (const match of text.matchAll(lockedMarkerPattern)) {
 		let box;
 		try { box = decodeBox(match[1] ?? match[2]); } catch { /* Damaged content stays opaque. */ }
 		if (box && box.kind !== (match[1] ? 'text' : 'note')) box = undefined;
@@ -50,7 +50,8 @@ export function lockedRanges(text) {
 	return ranges;
 }
 export function searchableText(text) {
-	return lockedRanges(text).reduceRight((result, range) => result.slice(0, range.from) + ' '.repeat(range.to - range.from) + result.slice(range.to), text);
+	// Search only needs offsets; private or damaged markers need not be decoded to mask them.
+	return text.includes('wujie-') ? text.replace(lockedMarkerPattern, marker => ' '.repeat(marker.length)) : text;
 }
 function passwordBytes(password, creating = false) {
 	if (typeof password !== 'string' || password.length > 1024 || !password.length || creating && password.length < 4)
