@@ -1,6 +1,6 @@
 # Source change record
 
-## Unreleased — CHG-20261114-EPUB-READER
+## China Stable 1.1.8 candidate — CHG-20261114-EPUB-READER
 
 Requirement: open and read EPUB books directly in Obsidian through the sync plugin. Add a local read-only view with EPUB 2/3 spine navigation, internal links, JPEG/PNG illustrations, and chapter restoration for an open tab. Retain existing attachment filters, encryption and source modification times. Keep the explicit file menu and command available when another reader registers EPUB. No Server or standalone translation plugin change.
 
