@@ -4,11 +4,11 @@
 
 Requirement: speed up local Markdown search in a vault with 3,140 notes. Show title matches before reading bodies, yield to the host without pausing every reader, and keep an in-memory trigram filter for notes outside the text cache. Verify possible matches with the existing literal rules, including AND and phrases. Preserve filters, snippets, navigation offsets, encrypted marker masking and source modification times. See the [cross-platform feature matrix](docs/validation/cross-platform-feature-matrix.md) for timing and acceptance boundaries.
 
-## Unreleased — CHG-20261114-EPUB-READER
+## China Stable 1.1.8 — CHG-20261114-EPUB-READER
 
 Requirement: open and read EPUB books directly in Obsidian through the sync plugin. Add a local read-only view with EPUB 2/3 spine navigation, internal links, JPEG/PNG illustrations, and chapter restoration for an open tab. Retain existing attachment filters, encryption and source modification times. Keep the explicit file menu and command available when another reader registers EPUB. No Server or standalone translation plugin change.
 
-Release target for the EPUB reader in `94818bd` is the next China Hub Alpha, as requested on 2026-11-14. Verify the EPUB workflow on the fixed candidate, confirm the China Alpha entry and the three install-file hashes through Hub, and carry forward the pending native-platform checks in the [cross-platform feature matrix](docs/validation/cross-platform-feature-matrix.md).
+The user changed the delivery target to China Stable on 2026-11-19. Hub Stable 1.1.8 ships the EPUB reader from `65e467d46d7eef328092599003e1cccc2fe38a8d`, based on Stable 1.1.7, which incorporates Alpha 1.1.7-alpha.15. Hub downloaded all three installation files and verified their hashes. Windows and WSL tests, the regional source rebuilds, and staging and production probes passed. The Alpha feed still points to 1.1.7-alpha.15. Native acceptance is recorded in the [cross-platform feature matrix](docs/validation/cross-platform-feature-matrix.md).
 
 ## Unreleased — CHG-20261112-NOTEBOOK-NAVIGATOR-MENUS
 
