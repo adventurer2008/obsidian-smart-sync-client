@@ -1,3 +1,7 @@
+# Global Stable 1.1.10 — CHG-20261121-GLOBAL-1110-STABLE
+
+Requirement: deliver the unpublished shared Client features to Global production. Includes local EPUB reading, faster local Markdown search, reduced remote polling during unchanged scans while retaining Markdown priority, Notebook Navigator menus, sidebar restoration, desktop status feedback and language menu ordering. China-only selection translation stays edition-gated. Candidate incorporates the reviewed shared synchronization changes from the canonical public working tree. Physical Global device acceptance remains pending.
+
 # Source change record
 
 ## Unreleased — CHG-20261116-LOCAL-NOTE-SEARCH
