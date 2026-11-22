@@ -262,7 +262,7 @@ export function registerDocxEditor(owner) {
 						if (error?.message !== 'missingImage' || !live()) throw error;
 						try { return await render(false); }
 						catch (failure) {
-							if (failure?.message === 'missingImage') throw Error('preservation');
+							if (failure?.message === 'missingImage') throw Error('preservation', { cause: failure });
 							throw failure;
 						}
 					}
