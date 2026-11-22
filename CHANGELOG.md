@@ -1,5 +1,17 @@
 # Source change record
 
+## China Hub Alpha 1.1.9-alpha.1 — CHG-20261122-CN-COMBINED-ALPHA
+
+Requirement: deliver note and attachment encryption, local Word editing, notes-first synchronization, and the updated translation controls together. Start from China Stable 1.1.8, which already contains the working copy's synchronization polling changes and the latest Alpha's local-first dictionary and reading actions. Keep those behaviors and use the full Oxford dictionary name for both hosted Oxford sources. The server and the Stable channel are outside this Alpha change.
+
+## China Hub Alpha 1.1.9-alpha.1 — CHG-20261122-WORD-EDITING
+
+Requirement: create, open, read, edit and save Word documents inside Obsidian in both editions. Add a folder-menu action and a command to create a standard blank DOCX and open it. Use the filename without its extension as the view title; changing body content does not rename the file. Add a local DOCX editor with explicit save, a source comparison before replacing file bytes, and protection against dropping embedded payloads. Retain existing attachment synchronization and source modification times. Optional document-password protection and inserting arbitrary embedded files are follow-up work. See the [cross-platform feature matrix](docs/validation/cross-platform-feature-matrix.md).
+
+## China Hub Alpha 1.1.9-alpha.1 — CHG-20261122-NOTE-ATTACHMENT-LOCK
+
+Requirement: use the existing whole-note encryption action to protect Markdown and its directly referenced local attachments with one password. Temporary unlock displays images inside the note without restoring standalone files. Shared and missing attachments stop conversion. Permanent decryption restores attachment bytes and source modification times. The attachment workflow is limited to unconnected vaults pending mixed-version sync acceptance. See the [cross-platform feature matrix](docs/validation/cross-platform-feature-matrix.md).
+
 ## China Stable 1.1.8 candidate — CHG-20261114-EPUB-READER
 
 Requirement: open and read EPUB books directly in Obsidian through the sync plugin. Add a local read-only view with EPUB 2/3 spine navigation, internal links, JPEG/PNG illustrations, and chapter restoration for an open tab. Retain existing attachment filters, encryption and source modification times. Keep the explicit file menu and command available when another reader registers EPUB. No Server or standalone translation plugin change.

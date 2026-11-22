@@ -40,6 +40,10 @@ Open a local `.epub` from the Obsidian file explorer or choose **Read EPUB in th
 
 The offline reader supports DRM-free, reflowable EPUB 2/3 files up to 48 MiB, with chapter navigation, internal links, and embedded JPEG/PNG images. The restored tab remembers the local chapter. Reading position is device-local. EPUB uses the existing attachment rules for syncing the original file. Fixed layouts, book-authored styles, scripts, external resources, annotations, and EPUB translation are outside this reader.
 
+### Word documents
+
+From a folder menu or the command palette, choose **Create Word document** and enter its filename. The new `.docx` opens in the local editor. For an existing file, use **Open Word document in the sync plugin**. The tab displays the filename without its extension. Use **Save** before closing the tab. DOCX uses the current attachment rules and requires a local copy to edit. The compressed file limit is 16 MiB. Complex documents may open read-only or report that they cannot be safely saved. Use a compatible external app for legacy `.doc` files and password-protected documents.
+
 ## Accounts, network and privacy
 
 Synchronization needs an approved account and the matching regional service. Content and paths are encrypted on the client; the service handles account/workspace identifiers, enrollment email, notebook/device labels, timestamps, ciphertext sizes, reported local vault byte totals and measurement times, and opaque identifiers. Keep the encryption passphrase safe; external login does not replace it. China plan prices and purchase notices appear at checkout; renewal is manual and does not enable automatic charges. Avoid running multiple sync providers on the same vault without resolving their interaction.

@@ -1,5 +1,35 @@
 # Cross-platform feature and scenario review
 
+## CHG-20261122-WORD-EDITING
+
+Both editions use a local Obsidian file view and an embedded web DOCX editor. Create a blank document from a folder menu or the command palette. The filename without the extension is the tab title. Edit and explicitly save the original DOCX. The current document limit is 16 MiB compressed and 48 MiB expanded. Existing password-protected files and legacy DOC are handled in a compatible external application. Signed or restricted documents open read-only when the package is otherwise supported. If saving would drop a checked embedded payload or reference, the original is retained. Desktop Word fidelity and new arbitrary attachment insertion need dedicated validation. Document-password protection is a follow-up.
+
+| Platform | Support and verification |
+| --- | --- |
+| Windows desktop | Conditional on supported DOCX and Obsidian APIs. Automated package and editor-view checks use generated files and an Obsidian test double. Microsoft Word 16.0 opened the blank and edited fixtures read-only and returned the expected body for both. The fixtures' hashes stayed intact. Native Obsidian, complex layout and Office attachment handling remain unverified. |
+| macOS desktop | Same supported-package scope and local APIs. Native Obsidian, Word, input and window lifecycle are unverified. |
+| Linux desktop | Same supported-package scope and local APIs. Native Obsidian and external editor interoperability are unverified. |
+| Android | Same package scope, with reduced initial zoom and touch-size save button. Physical input, narrow-screen layout, foreground/lock and memory are unverified. |
+| iPhone/iOS | Same scope and layout as Android. Physical WebView input, narrow-screen layouts, foreground/lock and memory are unverified. |
+| iPad/iPadOS | Same mobile implementation. Physical touch, keyboard, multitasking, foreground/lock and memory are unverified. |
+
+The view works with locally available files in the current vault and requires no desktop native API, account, or network connection. A clean read keeps the input bytes and mtime. A changed save produces a new source mtime and uses the existing attachment rules. The synthetic receive test returned the edited DOCX byte-for-byte with that source mtime. A source-content comparison blocks overwriting externally updated bytes observed before save, and Smart Sync waits for a local Word write before starting a sync cycle. Unsaved edits are session-local. The editor toolbar falls back to English for languages absent from the editor library. Suspension, low-memory termination, file-system replacement by another app during the final write, reconnect, mixed-version devices and live upgrade/rollback have not been tested in host apps. Ordinary saved files use standard DOCX, with no migration to roll back. Older clients can transfer the file using their current attachment settings and open it in an external application.
+
+## CHG-20261122-NOTE-ATTACHMENT-LOCK
+
+The existing whole-note action uses Obsidian's Markdown link index and one password. It seals the original paths, timestamps and file checksums in the note, writes and authenticates the ciphertext package before removing live originals, and refuses shared attachments found in other Markdown notes. The current portable host path buffers a package up to 32 MiB and 128 files. It covers indexed local Markdown links and embeds, including properties. Remote links and linked Markdown notes are outside the package. The reversible file operations concern live paths only. Existing backup, trash, snapshot or external copies are outside this operation.
+
+| Platform | Support and verification |
+| --- | --- |
+| Windows desktop | Conditional on an unconnected vault. Isolated filesystem and DOM tests cover ciphertext, wrong passwords, in-memory image URLs, relock, interrupted operations and exact restore. Obsidian 1.15.1 verified the existing file menu, shared attachment blocking, source mtime, removal of original PNG and PDF paths, and closure of a separately opened image. The first native run reached the wrong-password form but the lab script misread its open state, so the remaining native steps require a rerun. |
+| macOS desktop | Same shared implementation in unconnected vaults. Real Obsidian, native file behavior and window lifecycle are unverified. |
+| Linux desktop | Same shared implementation in unconnected vaults. Real Obsidian, native file behavior and window lifecycle are unverified. |
+| Android | Same shared implementation in unconnected vaults. Touch targeting, foreground/background, screen lock, reboot and memory pressure are unverified on physical devices. |
+| iPhone/iOS | Same shared implementation in unconnected vaults. Physical WebView lifecycle, memory pressure, screen lock and narrow touch UI are unverified. |
+| iPad/iPadOS | Same shared implementation in unconnected vaults. Physical Split View, touch, screen lock and memory pressure are unverified. |
+
+The application uses revocable in-memory image URLs and does not write temporary plaintext files. Other attachment types are protected as bytes and can be permanently restored. PDF/Word preview and external opening are outside this lab. The operation uses the current vault and prepares no account keys. The desktop path check refuses linked directories and hard-linked files before removal. Connected workspaces are blocked for attachment conversion and restore because transfer ordering, exclusions and old device behavior still need validation. Network recovery is not needed in the disconnected lab. The new format keeps older plugins from treating the manifest as ordinary decrypted Markdown. Use the new plugin to unlock/restore before reverting. Keep the `.md` and its `.wujie-lock` package together when taking an encrypted backup.
+
 ## CHG-20261114-EPUB-READER
 
 | Platform | Support and acceptance |

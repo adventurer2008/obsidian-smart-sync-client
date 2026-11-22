@@ -205,6 +205,8 @@
 .wujie-encrypted > .wujie-crypto-more { display:none; width:20px; padding:0; justify-content:center; background:transparent; }
 .wujie-encrypted.is-open { background:transparent; border-bottom:1px dotted var(--text-faint); }
 .wujie-decrypted-text { display:inline; white-space:pre-wrap; overflow-wrap:anywhere; font-family:inherit; cursor:pointer; }
+.wujie-decrypted-attachments,.wujie-decrypted-attachment { display:block; margin-block:8px; overflow-wrap:anywhere; }
+.wujie-decrypted-attachment img { display:block; max-width:100%; height:auto; }
 .wujie-encrypted.is-whole-note,.wujie-encrypted.is-editing { display:block; }
 .wujie-encrypted.is-whole-note { margin-block:8px; }
 .wujie-encrypted.is-editing { padding:12px; border:1px solid var(--background-modifier-border); background:var(--background-primary); }
@@ -980,3 +982,28 @@
 	margin-inline: 16px;
 	align-self: start;
 }
+.smart-sync-docx {
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	padding: 0;
+}
+.smart-sync-docx-controls {
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-3);
+	padding: var(--size-4-2) var(--size-4-3);
+}
+.smart-sync-docx-editor {
+	flex: 1;
+	min-height: 0;
+	min-width: 0;
+	overflow: hidden;
+}
+.smart-sync-docx-editor > .docx-editor { height: 100%; }
+.smart-sync-docx-name,
+.smart-sync-docx-name label {
+	display: grid;
+	gap: var(--size-4-2);
+}
+.is-mobile .smart-sync-docx-controls button { min-height: 44px; }

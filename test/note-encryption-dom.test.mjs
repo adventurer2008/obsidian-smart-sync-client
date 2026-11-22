@@ -102,6 +102,69 @@ async function submit() {
 	const prompt = modals.at(-1); prompt.password.value = password; await prompt.run(); assert.equal(prompt.closed, true);
 }
 
+test('one whole-note file action removes the standalone image and only previews an in-memory URL until relock', async () => {
+	const file = { path: 'Private.md', stat: { mtime: 1577836800123 } };
+	const photo = { path: 'image.png', stat: { mtime: 1577836800123, ctime: 1577836800123, size: 4 } };
+	const body = '![[image.png]]\nprivate image note';
+	let disk = body;
+	const files = new Map([[file.path, file], [photo.path, photo]]);
+	const stored = new Map([[photo, Uint8Array.of(1, 2, 3, 4).buffer]]);
+	const vault = {
+		configDir: '.fixture', getMarkdownFiles: () => [file], getAbstractFileByPath: path => files.get(path),
+		adapter: { exists: async path => files.has(path) },
+		read: async () => disk, readBinary: async file => stored.get(file).slice(0),
+		process: async (_file, update) => { disk = update(disk); },
+		async createBinary(path, bytes, options) {
+			const result = { path, stat: { size: bytes.byteLength, ...options } };
+			files.set(path, result); stored.set(result, bytes.slice(0));
+			return result;
+		},
+		async delete(file) { files.delete(file.path); stored.delete(file); },
+	};
+	const manager = new NoteEncryption({ app: { vault, workspace: { getLeavesOfType: () => [] }, metadataCache: {
+		getFileCache: () => ({ embeds: [{ link: 'image.png', original: '![[image.png]]' }] }), getFirstLinkpathDest: path => files.get(path),
+	} }, manifest: { id: 'wujie-sync' } });
+	const activeURLs = new Map();
+	const area = document.body.createDiv();
+	const url = area.ownerDocument.defaultView.URL;
+	url.createObjectURL = blob => { activeURLs.set('blob:fixture', blob); return 'blob:fixture'; };
+	url.revokeObjectURL = value => activeURLs.delete(value);
+	try {
+		let encrypt;
+		manager.addFileMenu({ addItem: callback => callback({ setTitle: () => ({ setIcon: () => ({ onClick: callback => { encrypt = callback; } }) }) }) }, file);
+		encrypt();
+		await new Promise(resolve => setImmediate(resolve));
+		const passwordForm = modals.at(-1);
+		assert.ok(passwordForm.contentEl.textContent.includes('image.png'));
+		passwordForm.confirm.value = password;
+		await submit();
+		assert.equal(files.has(photo.path), false);
+		const [range] = lockedRanges(disk);
+		assert.equal(range.box.kind, 'bundle');
+		manager.renderLock(area, file.path, range.marker, range.box);
+		area.querySelector('button').click();
+		await submit();
+		for (let tries = 0; tries < 20 && !area.querySelector('img'); tries++) await new Promise(resolve => setImmediate(resolve));
+		assert.equal(area.querySelector('img').src, 'blob:fixture');
+		assert.equal(activeURLs.get('blob:fixture').type, 'image/png');
+		assert.equal(files.has(photo.path), false);
+		assert.equal(disk, range.marker);
+		const [session] = manager.sessions;
+		await manager.lock(session);
+		assert.equal(area.querySelector('img'), null);
+		assert.equal(activeURLs.size, 0);
+		assert.equal(files.has(photo.path), false);
+		manager.permanent({ area, path: file.path, marker: range.marker, box: range.box, saved: 0, version: 0 });
+		await submit();
+		assert.equal(disk, body);
+		assert.deepEqual(new Uint8Array(await vault.readBinary(files.get(photo.path))), Uint8Array.of(1, 2, 3, 4));
+		assert.equal(files.get(photo.path).stat.mtime, photo.stat.mtime);
+	} finally {
+		manager.dispose(); area.remove();
+		delete url.createObjectURL; delete url.revokeObjectURL;
+	}
+});
+
 test('real CodeMirror DOM replaces inline and multiline full-note ciphertext with clickable lock controls', async () => {
 	for (const kind of ['text', 'note']) {
 		const value = await fixture(kind);

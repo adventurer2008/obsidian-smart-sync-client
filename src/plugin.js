@@ -9,6 +9,7 @@ import { registerNoteSearch } from './search.js';
 import { registerNoteEncryption } from './note-encryption.js';
 import { registerNoteTranslation } from './translation.js';
 import { registerEpubReader } from './epub-view.js';
+import { registerDocxEditor } from './docx-view.js';
 /* global __SMART_SYNC_CN_TRANSLATION__ -- injected by the regional build. */
 import {
 	ItemView,
@@ -782,6 +783,7 @@ export default class IndependentSync extends Plugin {
 		this.logViews = new Set();
 		registerNoteSearch(this);
 		registerEpubReader(this);
+		registerDocxEditor(this);
 		let translation;
 		if (typeof __SMART_SYNC_CN_TRANSLATION__ === 'undefined' ? edition.edition === 'cn' : __SMART_SYNC_CN_TRANSLATION__) {
 			translation = registerNoteTranslation(this);
@@ -2862,6 +2864,10 @@ export default class IndependentSync extends Plugin {
 		if (this.stopping) return;
 		if (this.connecting) return;
 		if (this.running) return this.running;
+		if (this.docxWrite) {
+			await this.docxWrite.catch(() => {});
+			return this.synchronize(retryRow, approval, automatic);
+		}
 		if (!this.data.settings.workspace) {
 			this.setStatus(t('sync.notConnected'));
 			return;

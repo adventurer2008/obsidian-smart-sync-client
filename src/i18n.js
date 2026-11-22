@@ -1658,6 +1658,16 @@ Object.assign(englishDraft, {
 });
 Object.assign(messages, {
  'encryption.editTooLarge':'超过{limit}，已保留修改前的内容，请缩小范围。',
+ 'encryption.attachmentIndex':"笔记或附件索引尚未更新，请保存并稍后重试。",
+ 'encryption.attachmentMissing':"找不到本地附件「{path}」。请先恢复附件再加密。",
+ 'encryption.attachmentChanged':"附件「{path}」已变更、路径不可用或有同名文件。请检查后重试。",
+ 'encryption.attachmentShared':"附件「{path}」也被「{note}」引用。本次操作已停止。",
+ 'encryption.attachmentLimit':"每篇笔记最多可加密 128 个附件，合计上限为 {limit}。",
+ 'encryption.attachmentPackageMissing':"附件密文包缺失或不完整。请恢复密文包后重试。",
+ 'encryption.attachmentRestoring':"永久解密尚未完成，请再次选择「永久解密」。",
+ 'encryption.attachmentConfirm':"将一起加密 {count} 个附件，并移除原路径上的明文文件。临时解锁只在笔记内预览图片。",
+ 'encryption.attachmentLabOnly':"附件加密目前只适用于未连接同步工作区的库。",
+ 'encryption.attachmentFinish':"笔记已锁定，但有附件尚未移除。请输入密码重试，或选择永久解密恢复。",
  'encryption.recoveredName':'恢复的加密笔记',
  'encryption.invalidContent':'加密内容损坏、格式不支持或密码不正确。原文件未被解密覆盖。',
  'encryption.invalidPassword':'加密密码至少4个字符，最多1024个字符；密码不会上传，也无法代找回。',
@@ -1667,12 +1677,46 @@ Object.assign(messages, {
 });
 Object.assign(englishDraft, {
  'encryption.editTooLarge':'This exceeds {limit}. Your previous content was kept. Reduce the selection and try again.',
+ 'encryption.attachmentIndex':"The note or attachment index is still updating. Save and try again.",
+ 'encryption.attachmentMissing':"Local attachment “{path}” is missing. Restore it before encrypting the note.",
+ 'encryption.attachmentChanged':"Attachment “{path}” changed, has an unsupported path, or is blocked by another file. Check it and try again.",
+ 'encryption.attachmentShared':"“{path}” is also referenced by “{note}”. The operation stopped.",
+ 'encryption.attachmentLimit':"A note can encrypt up to 128 attachments with a combined size of {limit}.",
+ 'encryption.attachmentPackageMissing':"The encrypted attachment package is missing or incomplete. Restore it and try again.",
+ 'encryption.attachmentRestoring':"Permanent decryption was interrupted. Choose permanent decryption again.",
+ 'encryption.attachmentConfirm':"Encrypt {count} attachments and remove their plaintext originals. Temporary unlock previews images inside the note.",
+ 'encryption.attachmentLabOnly':"Attachment encryption is currently available in vaults without a connected sync workspace.",
+ 'encryption.attachmentFinish':"The note is locked, but some plaintext attachments may remain. Unlock again to retry, or choose permanent decryption to restore them.",
  'encryption.recoveredName':'Recovered encrypted note',
  'encryption.invalidContent':'The encrypted content is damaged, unsupported, or the password is incorrect. The original file has not been replaced with decrypted text.',
  'encryption.invalidPassword':'Use a password of 4 to 1024 characters. It is not uploaded and cannot be recovered.',
  'encryption.contentTooLarge':'The content exceeds 2 MB. Select less text and try again. Your original note is unchanged.',
  'encryption.safeWriteUnavailable':'This Obsidian version cannot safely save encrypted changes. Update Obsidian and try again.',
  'encryption.writeContextChanged':'The note changed or the operation ended. Reopen the note and try again.',
+});
+Object.assign(messages, {
+	'docx.new': '新建 Word 文档', 'docx.open': '在同步插件中打开 Word 文档', 'docx.find': '查找 Word 文档',
+	'docx.name': '文件名', 'docx.create': '创建', 'docx.save': '保存', 'docx.loading': '正在打开 Word 文档…',
+	'docx.ready': '可编辑', 'docx.readOnly': '此文档为只读', 'docx.saving': '正在保存…', 'docx.saved': '已保存',
+	'docx.unsaved': '有未保存的修改', 'docx.invalidName': '请输入有效的文件名。', 'docx.exists': '已存在同名文件。',
+	'docx.createFailed': '无法在选中的文件夹创建文档。', 'docx.openFailed': '无法打开此 Word 文档。',
+	'docx.saveFailed': '保存失败。请保留此标签页并重试。', 'docx.large': '此 Word 文档超过编辑器的文件或解压大小限制。',
+	'docx.protected': '此 Word 文档需要在支持打开密码的应用中打开。', 'docx.unsupported': '此 Word 文档包含当前编辑器不支持的内容。',
+	'docx.preservation': '保存会影响文档原有内容。原文件未被覆盖。',
+	'docx.conflict': '原文件已更新或移除。请保留此标签页并复制未保存的内容。',
+	'docx.busy': '正在同步或保存另一个 Word 文档，请稍后重试。',
+});
+Object.assign(englishDraft, {
+	'docx.new': 'Create Word document', 'docx.open': 'Open Word document in the sync plugin', 'docx.find': 'Find Word documents',
+	'docx.name': 'File name', 'docx.create': 'Create', 'docx.save': 'Save', 'docx.loading': 'Opening Word document…',
+	'docx.ready': 'Ready to edit', 'docx.readOnly': 'This document is read-only', 'docx.saving': 'Saving…', 'docx.saved': 'Saved',
+	'docx.unsaved': 'Unsaved changes', 'docx.invalidName': 'Enter a valid file name.', 'docx.exists': 'A file with this name already exists.',
+	'docx.createFailed': 'Could not create the document in the selected folder.', 'docx.openFailed': 'Could not open this Word document.',
+	'docx.saveFailed': 'Could not save. Keep this tab open and try again.', 'docx.large': 'This Word document exceeds the file or unpacked size limit.',
+	'docx.protected': 'Open this Word document in an app that supports document passwords.', 'docx.unsupported': 'This Word document contains content the editor cannot handle.',
+	'docx.preservation': 'Saving would affect existing document content. The original file was kept.',
+	'docx.conflict': 'The file changed or was removed. Keep this tab open and copy your unsaved changes.',
+	'docx.busy': 'Sync or another Word save is in progress. Try again shortly.',
 });
 // Missing translations are a release blocker; physical-device acceptance is separate.
 export const missingEnglishKeys = Object.keys(messages).filter(key => !owns(englishDraft, key));

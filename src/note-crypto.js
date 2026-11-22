@@ -19,7 +19,7 @@ export function containsLockedText(text) {
 }
 export function validateBox(box) {
 	if (!box || Object.keys(box).length !== fields.length || fields.some(key => !Object.hasOwn(box, key)) ||
-		box.v !== 1 || !['text', 'note'].includes(box.kind) || !/^[a-f0-9]{32}$/u.test(box.id) ||
+		!(box.v === 1 && ['text', 'note'].includes(box.kind) || box.v === 2 && box.kind === 'bundle') || !/^[a-f0-9]{32}$/u.test(box.id) ||
 		box.rounds !== NOTE_ROUNDS || typeof box.hint !== 'string' || box.hint.length > 200 ||
 		!Number.isSafeInteger(box.size) || box.size < 0 || box.size > NOTE_LIMIT) throw fault();
 	for (const [key, size] of [['salt', 24], ['wrapIV', 12], ['wrappedKey', 48], ['iv', 12]])
@@ -36,7 +36,7 @@ export function decodeBox(value) {
 }
 export function lockedMarker(box) {
 	const encoded = encodeBox(box);
-	return box.kind === 'note' ? '```wujie-encrypted\n' + encoded + '\n```\n' : TEXT_PREFIX + encoded + '⟧';
+	return box.kind === 'text' ? TEXT_PREFIX + encoded + '⟧' : '```wujie-encrypted\n' + encoded + '\n```\n';
 }
 export function lockedRanges(text) {
 	const ranges = [];
@@ -44,7 +44,7 @@ export function lockedRanges(text) {
 	for (const match of text.matchAll(pattern)) {
 		let box;
 		try { box = decodeBox(match[1] ?? match[2]); } catch { /* Damaged content stays opaque. */ }
-		if (box && box.kind !== (match[1] ? 'text' : 'note')) box = undefined;
+		if (box && (box.kind === 'text') !== Boolean(match[1])) box = undefined;
 		ranges.push({ from: match.index, to: match.index + match[0].length, marker: match[0], box });
 	}
 	return ranges;
@@ -88,14 +88,15 @@ export async function updateLocked(box, key, text) {
 		} finally { packed.fill(0); }
 	} finally { clear.fill(0); }
 }
-export async function createLocked(text, password, hint = '', kind = 'text') {
+export async function createLocked(text, password, hint = '', kind = 'text', prepare) {
 	passwordBytes(password, true).fill(0);
-	if (typeof hint !== 'string' || hint.length > 200 || !['text', 'note'].includes(kind)) throw fault();
+	if (typeof hint !== 'string' || hint.length > 200 || !['text', 'note', 'bundle'].includes(kind)) throw fault();
 	const raw = random(32);
 	try {
-		const box = { v: 1, kind, id: hex(random(16)), rounds: NOTE_ROUNDS, salt: base64(random(24)), hint };
+		const box = { v: kind === 'bundle' ? 2 : 1, kind, id: hex(random(16)), rounds: NOTE_ROUNDS, salt: base64(random(24)), hint };
 		await wrap(raw, password, box);
-		return await updateLocked(box, await importDataKey(raw), text);
+		const key = await importDataKey(raw);
+		return await updateLocked(box, key, prepare ? await prepare(box.id, key) : text);
 	} finally { raw.fill(0); }
 }
 export async function openLocked(box, password) {
