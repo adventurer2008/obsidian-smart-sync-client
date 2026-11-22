@@ -13,6 +13,47 @@ const isDocx = file => file instanceof Obsidian.TFile && /\.docx$/iu.test(file.p
 const knownErrors = new Set(['large', 'protected', 'password', 'unsupported', 'preservation', 'conflict', 'busy', 'openFailed', 'saveFailed']);
 const errorText = (error, fallback) => t(`docx.${knownErrors.has(error?.message) ? error.message : fallback}`);
 
+function fitMobilePages(target, ref) {
+	const host = target.ownerDocument.defaultView;
+	const gutter = 16;
+	let frame, scroller, lastWidth, lastPageWidth;
+	const schedule = () => {
+		if (frame !== undefined) return;
+		frame = host.requestAnimationFrame(() => {
+			frame = undefined;
+			const editor = ref.current;
+			const scroll = target.querySelector('.docx-editor__scroll-container');
+			const pageWidth = target.querySelector('.paged-editor__pages')?.offsetWidth;
+			if (!editor || !scroll || !pageWidth || scroll.clientWidth <= gutter) return;
+			if (scroller !== scroll) {
+				if (scroller) observer?.unobserve(scroller);
+				scroller = scroll;
+				observer?.observe(scroller);
+			}
+			const width = scroller.clientWidth;
+			let zoom = editor.getZoom();
+			if (width !== lastWidth || pageWidth !== lastPageWidth) {
+				lastWidth = width;
+				lastPageWidth = pageWidth;
+				zoom = Math.min(1, (width - gutter) / pageWidth);
+				if (editor.getZoom() !== zoom) editor.setZoom(zoom);
+				scroller.scrollLeft = 0;
+			}
+			// The editor scales the page with a transform, which leaves its layout width unchanged.
+			target.style.setProperty('--smart-sync-docx-canvas-width', `${Math.ceil(zoom * pageWidth) + gutter}px`);
+		});
+	};
+	const observer = host.ResizeObserver && new host.ResizeObserver(schedule);
+	observer?.observe(target);
+	return {
+		schedule,
+		dispose() {
+			observer?.disconnect();
+			if (frame !== undefined) host.cancelAnimationFrame(frame);
+		},
+	};
+}
+
 export function registerDocxEditor(owner) {
 	const { EditableFileView, FuzzySuggestModal, Modal, Notice, Platform, TFolder } = Obsidian;
 	const { vault, workspace } = owner.app;
@@ -218,6 +259,11 @@ export function registerDocxEditor(owner) {
 				const events = new window.AbortController();
 				const session = { file, buffer: base, disk: diskBase, protection, inspection, changes: draft ? 1 : 0, saved: 0, ready: false, events, editor: createRef() };
 				this.session = session;
+				const fit = Platform.isMobile ? fitMobilePages(target, session.editor) : undefined;
+				if (fit) {
+					target.classList.add('smart-sync-docx-fit');
+					events.signal.addEventListener('abort', fit.dispose, { once: true });
+				}
 				const dirty = () => session.changes !== session.saved;
 				const updateSave = () => { save.disabled = !session.ready || inspection.readOnly || Boolean(session.saving || session.protecting) || !dirty(); };
 				const updateProtection = () => protect.setText(t(session.protection ? 'encryption.text36' : 'docx.protect'));
@@ -364,9 +410,10 @@ export function registerDocxEditor(owner) {
 				this.root = createRoot(target);
 				this.root.render(createElement(DocxEditor, {
 					ref: session.editor, documentBuffer: editingBuffer, readOnly: inspection.readOnly, showFileOpen: false, showHelpMenu: false,
-					showOutlineButton: false, disableFindReplaceShortcuts: true, initialZoom: Platform.isMobile ? 0.65 : 1,
+					showOutlineButton: false, disableFindReplaceShortcuts: true,
 					colorMode: this.contentEl.ownerDocument.body.classList.contains('theme-dark') ? 'dark' : 'light',
 					documentName: file.basename, documentNameEditable: false, i18n: locales[locale],
+					onRenderedDomContextReady: fit?.schedule,
 					onEditorViewReady: () => {
 						if (!current()) return;
 						session.ready = true;

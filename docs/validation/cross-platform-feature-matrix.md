@@ -1,5 +1,18 @@
 # Cross-platform feature and scenario review
 
+## CHG-20261122-ANDROID-WORD-VIEWPORT
+
+| Platform | Word viewport and related regression |
+| --- | --- |
+| Windows desktop | Mobile width fitting is inapplicable. Native Obsidian regression for this candidate is unverified. |
+| macOS desktop | Mobile width fitting is inapplicable. Native Obsidian regression for this candidate is unverified. |
+| Linux desktop | Mobile width fitting is inapplicable. Native Obsidian regression for this candidate is unverified. |
+| Android | vivo X Fold6 running Android 17 and Obsidian 1.15.1. At 344 CSS px, portrait and landscape DOCX pages fit without horizontal panning. A PNG selected through the Android picker survived save and reopening with byte-identical image data. Standalone Word password setup preserved mtime, locked the original path, rejected a wrong password and opened byte-identical document data with the correct password while keeping ciphertext on disk. |
+| iPhone/iOS | Conditional support via the mobile Obsidian view. Native viewport, input and document reopening are unverified. |
+| iPad/iPadOS | Conditional support via the mobile Obsidian view. Native touch, keyboard, rotation and split view are unverified. |
+
+The Android regression also verified one unlock button in Live Preview, Reading View and Source Mode. A disconnected vault kept original attachment paths absent during temporary unlock and revoked the image on backgrounding. Permanent note decryption restored the PNG and the original Word bytes and mtime, and the restored Word document reopened with its PNG and text. Physical folding, screen lock and device reboot are unverified in this candidate. No file format, synchronization, account scope or migration change is introduced by width fitting. Offline recovery and mixed versions are outside this UI change. Program rollback restores the previous layout with the same document and encryption formats.
+
 ## CHG-20261122-WORD-PASSWORD-RESPONSIVENESS
 
 Both editions use message-port yields for the fixed Office password derivation workload. The automated regression completes with renderer timers disabled. On Windows Obsidian 1.15.1, a native button click protected the isolated 2,474-byte Word fixture in 329 ms without disabling background timer throttling. Wrong-password rejection and edited-image reopening also passed. Larger files and native macOS, Linux, Android, iPhone and iPad timing remain unverified. File format, attachment sync, key derivation rounds, source mtime, and rollback behavior follow the Word opening password entry below.

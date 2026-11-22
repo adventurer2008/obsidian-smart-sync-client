@@ -1,5 +1,9 @@
 # Source change record
 
+## China Hub Alpha 1.1.9-alpha.3 — CHG-20261122-ANDROID-WORD-VIEWPORT
+
+Requirement: fit portrait and landscape Word pages to the available width on mobile so the document is visible without horizontal panning. Retain the editor zoom controls. Use China Hub Alpha.2 as the baseline, including its single unlock control, Word image persistence and Word opening passwords. See the [cross-platform feature matrix](docs/validation/cross-platform-feature-matrix.md).
+
 ## China Hub Alpha 1.1.9-alpha.2 — CHG-20261122-WORD-PASSWORD-RESPONSIVENESS
 
 Requirement: setting a Word opening password should show the encryption stage and avoid waiting on background renderer timers. Keep the Office key derivation rounds and use message-port yields. Disable password fields during an active submission, then return them to an editable state if the operation fails.

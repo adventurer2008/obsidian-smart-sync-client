@@ -1011,6 +1011,10 @@
 	overflow: hidden;
 }
 .smart-sync-docx-editor > .docx-editor { height: 100%; }
+.smart-sync-docx-fit .docx-editor__scroll-container > div {
+	min-width: var(--smart-sync-docx-canvas-width, 0px) !important;
+}
+.smart-sync-docx-fit .paged-editor { overflow-x: clip; }
 .smart-sync-docx-name,
 .smart-sync-docx-name label {
 	display: grid;
