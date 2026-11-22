@@ -446,7 +446,7 @@ export class NoteEncryption {
 				await this.writeDraft(session, nextBox);
 				try {
 					session.writingMarker = nextMarker;
-					session.restoreInputFocus = Boolean(session.input && session.input.ownerDocument.activeElement === session.input);
+					session.restoreInputFocus = Boolean(session.input && session.input.ownerDocument?.activeElement === session.input);
 					const preserveTime = session.preserveTime === true;
 					session.preserveTime = false;
 					await this.replaceMarker(session, nextMarker, preserveTime);
