@@ -208,6 +208,13 @@
 .wujie-decrypted-attachments,.wujie-decrypted-attachment { display:block; margin-block:8px; overflow-wrap:anywhere; }
 .wujie-decrypted-attachment img { display:block; max-width:100%; height:auto; }
 .wujie-encrypted.is-whole-note,.wujie-encrypted.is-editing { display:block; }
+/* Live Preview can render the same whole-note block through both the Markdown
+   processor and the source widget. Prefer the rendered control when present. */
+.cm-content:has(.wujie-crypto-rendered-lock.is-whole-note) .wujie-crypto-source-lock.is-whole-note:not(.is-open, .is-editing),
+.cm-content:has(.wujie-crypto-source-lock.is-whole-note:is(.is-open, .is-editing)) .wujie-crypto-rendered-lock.is-whole-note {
+	display: none;
+}
+
 .wujie-encrypted.is-whole-note { margin-block:8px; }
 .wujie-encrypted.is-editing { padding:12px; border:1px solid var(--background-modifier-border); background:var(--background-primary); }
 .wujie-encrypted.is-editing > button { margin:8px 8px 0 0; }
@@ -990,10 +997,13 @@
 }
 .smart-sync-docx-controls {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	gap: var(--size-4-3);
 	padding: var(--size-4-2) var(--size-4-3);
 }
+.smart-sync-docx-controls button[hidden] { display: none; }
+.smart-sync-docx-password { max-width: 360px; margin: var(--size-4-4); }
 .smart-sync-docx-editor {
 	flex: 1;
 	min-height: 0;

@@ -70,7 +70,7 @@ test('reading view selection menu preserves copy and encrypts only an exact unam
 });
 const password = 'actual DOM fixture password';
 
-async function fixture(kind = 'text', original = '初始秘密') {
+async function fixture(kind = 'text', original = '初始秘密', { refreshInProcess = true } = {}) {
 	const box = await createLocked(original, password, '公开的提示', kind);
 	let disk = kind === 'text' ? '前文 ' + lockedMarker(box) + ' 后文' : lockedMarker(box);
 	const file = { path: 'Visible title.md', stat: { mtime: 1577836800123 } }, drafts = new Map(), dirs = new Set();
@@ -81,17 +81,28 @@ async function fixture(kind = 'text', original = '初始秘密') {
 		posToOffset: value => value,
 	};
 	const info = { file, editor };
+	const applyViewText = text => view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: text } });
+	const markdownView = {
+		file, editor, getViewData: editor.getValue,
+		setViewData(text) {
+			const previous = editor.getValue();
+			let start = 0, end = 0;
+			while (start < previous.length && previous[start] === text[start]) start++;
+			while (end < Math.min(previous.length, text.length) - start && previous.at(-1 - end) === text.at(-1 - end)) end++;
+			view.dispatch({ changes: { from: start, to: previous.length - end, insert: text.slice(start, text.length - end) } });
+		},
+	};
 	globalThis.encryptionEditorInfo = info;
 	const app = {
 		vault: { configDir: '.fixture', read: async () => disk, getAbstractFileByPath: path => path === file.path ? file : null,
 			process: async (_file, change, options) => {
 				disk = change(disk); file.stat.mtime = options?.mtime ?? Date.now();
-				view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: disk } });
+				if (refreshInProcess) applyViewText(disk);
 				return disk;
 			},
 			adapter: { exists: async path => dirs.has(path) || drafts.has(path), mkdir: async path => dirs.add(path), write: async (path, raw) => drafts.set(path, raw), remove: async path => drafts.delete(path) },
 		},
-		workspace: { getLeavesOfType: () => [{ view: { file, editor } }] },
+		workspace: { getLeavesOfType: () => [{ view: markdownView }] },
 	};
 	const manager = new NoteEncryption({ app, manifest: { id: 'wujie-sync' }, data: {} });
 	const container = document.body.createDiv();
@@ -196,6 +207,69 @@ test('actual DOM auto-save keeps the same decrypted widget/input alive across ho
 		assert.ok(!value.container.textContent.includes('第二版中文'));
 		assert.equal(value.drafts.size, 0);
 	} finally { value.dispose(); await Promise.all(value.manager.pendingWrites); }
+});
+
+test('encrypted autosave refreshes a stale host editor and still refuses new surrounding edits', async () => {
+	const value = await fixture('text', '初始秘密', { refreshInProcess: false });
+	try {
+		value.container.querySelector('.wujie-encrypted button').click();
+		await submit();
+		const [session] = value.manager.sessions;
+		value.manager.editSession(session);
+		const input = session.input;
+		for (const text of ['第一次修改', '第二次修改']) {
+			input.value = text;
+			input.dispatchEvent(new dom.window.Event('input'));
+			await value.manager.queueSave(session);
+			assert.equal(value.view.state.doc.toString(), value.read());
+			assert.equal((await openLocked(lockedRanges(value.read())[0].box, password)).text, text);
+			assert.ok(input.isConnected);
+		}
+		value.view.dispatch({ changes: { from: 0, insert: '外部未保存修改 ' } });
+		input.value = '只留在加密草稿中的修改';
+		input.dispatchEvent(new dom.window.Event('input'));
+		await value.manager.queueSave(session);
+		assert.ok(value.view.state.doc.toString().startsWith('外部未保存修改'));
+		assert.equal((await openLocked(lockedRanges(value.read())[0].box, password)).text, '第二次修改');
+		assert.equal(value.drafts.size, 1);
+	} finally { value.dispose(); await Promise.all(value.manager.pendingWrites); }
+});
+
+test('live-preview code block redraw keeps the same secure textarea through consecutive saves', async () => {
+	const value = await fixture('note');
+	const { manager, file, container } = value;
+	try {
+		manager.app.workspace.getLeavesOfType()[0].view.containerEl = container;
+		const [original] = lockedRanges(value.read());
+		const area = container.createDiv();
+		manager.renderLock(area, file.path, original.marker, original.box);
+		area.querySelector('button').click();
+		await submit();
+		const [session] = manager.sessions;
+		manager.editSession(session);
+		const input = session.input;
+		const { vault } = manager.app;
+		const write = vault.process;
+		vault.process = async (...args) => {
+			const saved = await write(...args);
+			const [range] = lockedRanges(saved);
+			const fresh = document.createElement('div');
+			manager.renderLock(fresh, file.path, range.marker, range.box);
+			area.replaceWith(fresh);
+			return saved;
+		};
+		for (const text of ['第一次预览编辑', '第二次预览编辑', '第三次预览编辑']) {
+			input.value = text;
+			input.dispatchEvent(new dom.window.Event('input'));
+			await manager.queueSave(session);
+			assert.equal((await openLocked(lockedRanges(value.read())[0].box, password)).text, text);
+			assert.equal(session.input, input);
+			assert.ok(input.isConnected);
+		}
+		await manager.lock(session);
+		assert.equal(input.value, '');
+		assert.equal(session.renderObserver, undefined);
+	} finally { value.dispose(); await Promise.all(manager.pendingWrites); }
 });
 
 test('partial ciphertext edits are rejected while deleting a whole encrypted block remains possible', async () => {

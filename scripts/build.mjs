@@ -44,11 +44,13 @@ const result = await build({
 	target: ['es2022', 'safari15.4'],
 	external: ['obsidian', '@codemirror/state', '@codemirror/view'],
 	plugins: [{
-		name: 'docx-browser-sax',
+		name: 'docx-browser-node-api',
 		setup(build) {
-			build.onResolve({ filter: /^stream$/ }, ({ importer }) => {
-				if (importer.replaceAll('\\', '/').endsWith('/node_modules/sax/lib/sax.js'))
-					return { path: resolve('scripts/docx-browser-stream.cjs') };
+			build.onResolve({ filter: /^(?:stream|fs)$/ }, ({ importer, path }) => {
+				const source = importer.replaceAll('\\', '/');
+				if (path === 'stream' && source.endsWith('/node_modules/sax/lib/sax.js') ||
+					path === 'fs' && source.endsWith('/node_modules/cfb/cfb.js'))
+					return { path: resolve('scripts/docx-browser-node-api.cjs') };
 			});
 		},
 	}],

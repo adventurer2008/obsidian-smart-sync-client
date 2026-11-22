@@ -101,6 +101,8 @@ export class NoteEncryption {
 		this.addReadingAction = addReadingAction;
 		this.prompts = new Set(); this.sessions = new Set(); this.stopped = false;
 		this.pendingWrites = new Set(); this.busyFiles = new Set(); this.locks = new Map(); this.areas = new WeakMap();
+		this.viewWrites = new WeakMap();
+		this.widgetViews = new WeakMap();
 		this.volatileDrafts = new Map();
 		this.removingAttachments = new Set();
 		this.recoveryDir = `${this.app.vault.configDir}/plugins/${owner.manifest.id}/encrypted-drafts`;
@@ -393,11 +395,42 @@ export class NoteEncryption {
 		});
 		button(session.area, t('encryption.text44'), () => { void this.finishEditing(session); });
 		button(session.area, t('encryption.text36'), () => this.lock(session));
+		this.watchRenderedEditor(session);
 		input.focus();
+	}
+	watchRenderedEditor(session) {
+		if (session.renderObserver || this.widgetViews.has(session.area)) return;
+		const view = this.app.workspace.getLeavesOfType('markdown').map(leaf => leaf.view)
+			.find(view => view?.file?.path === session.path && view.containerEl?.contains(session.area));
+		if (!view) return;
+		const { ownerDocument } = session.area;
+		const restore = () => {
+			if (session.locked || !session.input || session.area.isConnected || view.file?.path !== session.path) return;
+			const replacements = [...view.containerEl.querySelectorAll('.wujie-encrypted')].filter(area => {
+				if (this.widgetViews.has(area)) return false;
+				const lock = this.areas.get(area);
+				return lock?.path === session.path && (lock.marker === session.writingMarker || lock.marker === session.marker);
+			});
+			if (replacements.length !== 1) return;
+			replacements[0].replaceWith(session.area);
+			if (session.restoreInputFocus && ownerDocument.activeElement === ownerDocument.body && ownerDocument.hasFocus())
+				session.input.focus();
+			session.restoreInputFocus = false;
+		};
+		session.renderObserver = new ownerDocument.defaultView.MutationObserver(restore);
+		session.renderObserver.observe(view.containerEl, { childList: true, subtree: true });
+	}
+	stopWatchingRenderedEditor(session) {
+		session.renderObserver?.disconnect();
+		session.renderObserver = undefined;
+		session.restoreInputFocus = false;
 	}
 	async finishEditing(session) {
 		await this.queueSave(session);
-		if (!session.locked && session.saved === session.version) { session.input.value = ''; session.input = undefined; this.showSession(session); }
+		if (!session.locked && session.saved === session.version) {
+			this.stopWatchingRenderedEditor(session);
+			session.input.value = ''; session.input = undefined; this.showSession(session);
+		}
 	}
 	queueSave(session) {
 		if (session.work) return session.work;
@@ -413,6 +446,7 @@ export class NoteEncryption {
 				await this.writeDraft(session, nextBox);
 				try {
 					session.writingMarker = nextMarker;
+					session.restoreInputFocus = Boolean(session.input && session.input.ownerDocument.activeElement === session.input);
 					const preserveTime = session.preserveTime === true;
 					session.preserveTime = false;
 					await this.replaceMarker(session, nextMarker, preserveTime);
@@ -468,10 +502,21 @@ export class NoteEncryption {
 			if (ranges.length !== 1) throw Error(t('encryption.text56'));
 			const range = ranges[0];
 			const nextText = current.slice(0, range.from) + next + current.slice(range.to);
+			const openViews = () => this.app.workspace.getLeavesOfType('markdown')
+				.map(leaf => leaf.view).filter(view => view?.file === file);
+			const content = view => view.getViewData?.() ?? view.editor?.getValue();
+			const unchanged = () => openViews().every(view => content(view) === current);
 			// An editor containing newer unsaved surrounding text must not be overwritten.
-			for (const leaf of this.app.workspace.getLeavesOfType('markdown'))
-				if (leaf.view?.file === file && leaf.view.editor?.getValue() !== current) throw Error(t('encryption.text57'));
-			await replaceLocked(this.app.vault, file, current, nextText, preserveTime ? file.stat.mtime : undefined, active);
+			if (!unchanged()) throw Error(t('encryption.text57'));
+			this.viewWrites.set(file, { current, next: nextText });
+			try {
+				await replaceLocked(this.app.vault, file, current, nextText, preserveTime ? file.stat.mtime : undefined,
+					() => active() && unchanged());
+				// Obsidian may update the saved baseline before refreshing the live editor.
+				for (const view of openViews()) {
+					if (content(view) === current) view.setViewData?.(nextText, false);
+				}
+			} finally { this.viewWrites.delete(file); }
 			return nextText;
 		});
 		this.locks.set(file, write);
@@ -541,6 +586,7 @@ export class NoteEncryption {
 	clearSession(session, retaining = false) {
 		this.closeActions();
 		session.locked = true;
+		this.stopWatchingRenderedEditor(session);
 		this.clearAttachmentPreviews(session);
 		session.attachmentBytes = undefined;
 		session.manifest = session.work || session.saved !== session.version ? session.manifest : undefined;
@@ -588,7 +634,8 @@ export class NoteEncryption {
 		for (const session of [...this.sessions]) {
 			const open = this.app.workspace.getLeavesOfType('markdown').some(leaf => leaf.view?.file?.path === session.path);
 			const idle = this.owner.data?.encryptionPreferences?.idleMinutes ?? 5;
-			if (!session.area.isConnected || !open || idle > 0 && Date.now() - session.lastUse >= idle * 60_000) this.lock(session);
+			const refreshing = session.writingMarker && session.renderObserver && session.work;
+			if ((!session.area.isConnected && !refreshing) || !open || idle > 0 && Date.now() - session.lastUse >= idle * 60_000) this.lock(session);
 		}
 	}
 	async writeDraft(session, box) {
@@ -667,9 +714,18 @@ class LockWidget extends WidgetType {
 	constructor(manager, marker, box) { super(); Object.assign(this, { manager, marker, box }); }
 	eq(other) { return other.marker === this.marker && other.manager === this.manager; }
 	toDOM(view) {
-		const area = view.dom.ownerDocument.createElement('span');
 		const file = editorInfoField ? view.state.field(editorInfoField, false)?.file : undefined;
+		// CodeMirror can recreate the widget when Obsidian refreshes the saved
+		// marker. Keep the active textarea attached to its own editor and note.
+		for (const session of this.manager.sessions) {
+			if (session.path === file?.path && !session.parentSession && !session.locked &&
+				(session.writingMarker === this.marker || session.marker === this.marker) &&
+				this.manager.widgetViews.get(session.area) === view) return session.area;
+		}
+		const area = view.dom.ownerDocument.createElement('span');
+		this.manager.widgetViews.set(area, view);
 		this.manager.renderLock(area, file?.path, this.marker, this.box);
+		area.addClass('wujie-crypto-source-lock');
 		return area;
 	}
 	updateDOM(area) {
@@ -687,7 +743,9 @@ class LockWidget extends WidgetType {
 	ignoreEvent() { return true; }
 	destroy(area) {
 		const session = this.manager.areas.get(area);
-		if (this.manager.sessions.has(session)) this.manager.lock(session);
+		if (this.manager.sessions.has(session)) queueMicrotask(() => {
+			if (!area.isConnected && this.manager.sessions.has(session)) this.manager.lock(session);
+		});
 	}
 }
 
@@ -702,8 +760,13 @@ export function encryptionExtension(manager, addSelectionAction) {
 	});
 	const protect = EditorState.transactionFilter.of(transaction => {
 		if (!transaction.docChanged) return transaction;
+		const file = editorInfoField ? transaction.startState.field(editorInfoField, false)?.file : undefined;
+		const permitted = file && manager.viewWrites.get(file);
+		const source = transaction.startState.doc.toString();
+		// Obsidian refreshes the view with a minimal diff, which can be inside a marker.
+		if (permitted?.current === source && permitted.next === transaction.newDoc.toString()) return transaction;
 		let partial = false;
-		const ranges = lockedRanges(transaction.startState.doc.toString());
+		const ranges = lockedRanges(source);
 		transaction.changes.iterChangedRanges((from, to) => {
 			if (ranges.some(range => from > range.from && from < range.to || to > range.from && to < range.to)) partial = true;
 		});
@@ -774,6 +837,7 @@ export function registerNoteEncryption(owner, addSelectionAction, addReadingActi
 		let box; try { box = decodeBox(source.trim()); } catch { /* Opaque damaged envelope. */ }
 		const marker = box ? lockedMarker(box) : '';
 		manager.renderLock(el, ctx.sourcePath, marker, box?.kind !== 'text' ? box : undefined);
+		el.addClass('wujie-crypto-rendered-lock');
 	});
 	owner.registerMarkdownPostProcessor?.((el, ctx) => {
 		const doc = el.ownerDocument;

@@ -6,6 +6,8 @@ Copyright (c) 2026 lihy. First-party Client code in new candidates after the exi
 
 Regional builds embed the complete notices for the bundled Apache-2.0 EigenPal DOCX editor (1.9.0), React and their runtime dependencies in the distributed main.js. See scripts/docx-dependencies.mjs for the reviewed package list and package-lock.json for the fixed versions. The build uses the MIT option for PizZip and JSZip and the Apache-2.0 option for DOMPurify. No EigenPal Pro or telemetry package is enabled.
 
+Word opening passwords use the SheetJS CFB container parser, its checksum dependencies and Noble Hashes. Their package licenses are included in the same build notices.
+
 ## node-diff3 3.2.1
 
 Source: https://github.com/bhousel/node-diff3

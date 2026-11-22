@@ -1,5 +1,53 @@
 # Cross-platform feature and scenario review
 
+## CHG-20261122-WORD-PASSWORD-RESPONSIVENESS
+
+Both editions use message-port yields for the fixed Office password derivation workload. The automated regression completes with renderer timers disabled. On Windows Obsidian 1.15.1, a native button click protected the isolated 2,474-byte Word fixture in 329 ms without disabling background timer throttling. Wrong-password rejection and edited-image reopening also passed. Larger files and native macOS, Linux, Android, iPhone and iPad timing remain unverified. File format, attachment sync, key derivation rounds, source mtime, and rollback behavior follow the Word opening password entry below.
+
+On 2026-11-22, the user confirmed that retrying the Word password setup in the updated Windows Obsidian test vault passed.
+
+## CHG-20261122-WORD-OPENING-PASSWORD
+
+Both editions implement the Office Agile AES-256/SHA-512 DOCX opening password. The right-click Encrypt action protects the original path. Decryption and editing run locally with Web Crypto and save only ciphertext for a protected document. The document is locked again on close or via the Lock action. Wrong passwords and authenticated-stream tampering are rejected. Password setup without an edit preserves source mtime. Subsequent edits set a new source mtime. Old unencrypted copies, backups or history entries retain their previous contents. Older plugin versions can still sync the file as an attachment. External Word can open the supported encrypted file.
+
+| Platform | Support and verification |
+| --- | --- |
+| Windows desktop | An isolated native Obsidian 1.15.1 test used the file menu, retained mtime through password setup, rejected a wrong password, and unlocked the later saved document with its original password and image intact. Microsoft Word 16.0 and the installed WPS opened the plugin-encrypted edited DOCX with the same password and showed the edited text and image. The plugin also unlocked a Word-generated Agile DOCX. Automated coverage includes tamper rejection. |
+| macOS desktop | Same shared code and format. Native Obsidian and Word interoperability are unverified. |
+| Linux desktop | Same shared code and format. Native Obsidian and external Word-compatible editor interoperability are unverified. |
+| Android | Same shared code and format. Physical WebView performance, keyboard, background and screen lock are unverified. |
+| iPhone/iOS | Same shared code and format. Physical keyboard, foreground/background, screen lock and memory are unverified. |
+| iPad/iPadOS | Same shared code and format. Physical keyboard, Split View, foreground/background and screen lock are unverified. |
+
+The operation is scoped to the current local file and uses no account password or server. Offline use is supported. The protected version follows normal attachment sync and retains the original path. Remote conflicts use the existing ciphertext compare-and-save guard. Physical mixed-version sync, device restart, disconnect/reconnect and upgrade or rollback were not exercised. Other Office encryption suites and recovery of forgotten document passwords are unsupported.
+
+## CHG-20261122-ENCRYPTED-NOTE-SINGLE-UNLOCK
+
+Both editions use the same view-local styling on Windows, macOS, desktop Linux, Android, iPhone/iOS and iPad/iPadOS. In isolated Windows Obsidian 1.15.1 Live Preview, one encrypted note with a Word attachment displayed one unlock button. The native test unlocked it, saved three consecutive edits, locked it and verified the latest text and attachment manifest after reopening. The other five platforms, narrow touch UI and mobile foreground/background transitions remain unverified. This change is presentational. Network recovery, sync transport, key migration and source modification times do not require a new behavior.
+
+## CHG-20261122-ENCRYPTED-NOTE-EDITOR-REFRESH
+
+Both editions allow the host's exact editor refresh for a verified encrypted Markdown save and retain the secure textarea across a Live Preview redraw in the same view. A conflict with real unsaved edits still preserves the encrypted draft. The fix applies to source views across Windows, macOS, desktop Linux, Android, iPhone/iOS and iPad/iPadOS, and uses the existing Obsidian view and atomic text APIs. Isolated Windows Obsidian 1.15.1 probes reproduced the stale CodeMirror source and the detached Live Preview editor. After the fixes, a note with a Word attachment retained the same connected textarea during three consecutive saves, and the latest text and attachment manifest were present after locking and reopening. Editor regression tests cover consecutive edits, partial direct ciphertext edit rejection, and real unsaved surrounding edits. Non-Windows native hosts, physical mobile keyboards, background/restart, reconnect, mixed versions and live rollback have not been exercised for this change. The ciphertext format, attachment bundle and mtime policy are unchanged.
+
+## CHG-20261122-WORD-IMAGE-SAVE
+
+Both editions use the same local DOCX output validation for Windows, macOS, desktop Linux, Android, iPhone/iOS and iPad/iPadOS. Windows automated editor tests insert a PNG, autosave on window blur, verify the exact image bytes and reopen after a later text edit. On 2026-11-22, the user confirmed that inserting an image into the recovered DOCX, autosaving, closing the document and reopening it passed in the isolated Windows Obsidian 1.15.1 vault. Native acceptance on the other five platforms, physical touch, background suspension and process restart remain unverified for this fix. The repair applies to new saves. An earlier DOCX whose archive lacks the image bytes needs the original image to restore that picture. The save keeps standard DOCX, existing attachment sync, source timestamp handling and the existing conflict check. Offline use does not require a server. Mixed-version writes, recovery after interruption, and native upgrade or rollback were not exercised for this fix.
+
+## CHG-20261122-WORD-AUTOSAVE
+
+Both editions save a dirty Word document after 600 ms without a change and flush on window blur, hidden document, active leaf change, or file view unload. A source-content conflict leaves the original intact and retains the serialized edit in memory for reopening during the current plugin session. A process crash or OS termination can interrupt writes and discard session drafts. A clean view does not write.
+
+| Platform | Support and verification |
+| --- | --- |
+| Windows desktop | Automated host-double coverage for paused edits, window blur, file unload and conflict draft recovery. |
+| macOS desktop | Same supported file view. Native window switching, close and restart are unverified. |
+| Linux desktop | Same supported file view. Native window switching, close and restart are unverified. |
+| Android | Same editor with a visibility flush. Keyboard composition, background, screen lock and restart are unverified on hardware. |
+| iPhone/iOS | Same editor with a visibility flush. Physical WebView suspension, input, screen lock and restart are unverified. |
+| iPad/iPadOS | Same editor with a visibility flush. Physical Split View, input, screen lock and restart are unverified. |
+
+Local autosave can proceed offline. Writes wait or retry when the sync runtime owns the file operation, with the source comparison still required. Mixed-version sync, network recovery and real upgrade or rollback were not exercised. Successful saves remain ordinary DOCX files, and existing vault filters and timestamps still apply. Save or copy a conflicted draft before restarting or changing the plugin version.
+
 ## CHG-20261122-WORD-EDITING
 
 Both editions use a local Obsidian file view and an embedded web DOCX editor. Create a blank document from a folder menu or the command palette. The filename without the extension is the tab title. Edit and explicitly save the original DOCX. The current document limit is 16 MiB compressed and 48 MiB expanded. Existing password-protected files and legacy DOC are handled in a compatible external application. Signed or restricted documents open read-only when the package is otherwise supported. If saving would drop a checked embedded payload or reference, the original is retained. Desktop Word fidelity and new arbitrary attachment insertion need dedicated validation. Document-password protection is a follow-up.

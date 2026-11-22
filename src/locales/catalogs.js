@@ -8444,3 +8444,17 @@ const docxTranslations = {
 for (const [language, labels] of Object.entries(docxTranslations)) {
   docxKeys.forEach((key, index) => { catalogs[language][`docx.${key}`] = labels[index]; });
 }
+
+const docxPasswordLabels = {
+  de: ['Word-Öffnungskennwort festlegen', 'Das Word-Öffnungskennwort ist falsch.', 'Dieses Word-Dokument ist verschlüsselt. Gib das Kennwort zum Öffnen ein.'],
+  fr: ['Définir le mot de passe d’ouverture Word', 'Le mot de passe d’ouverture Word est incorrect.', 'Ce document Word est chiffré. Saisissez le mot de passe d’ouverture.'],
+  es: ['Establecer contraseña de apertura de Word', 'La contraseña de apertura de Word es incorrecta.', 'Este documento de Word está cifrado. Introduce la contraseña de apertura.'],
+  'pt-BR': ['Definir senha de abertura do Word', 'A senha de abertura do Word está incorreta.', 'Este documento do Word está criptografado. Digite a senha de abertura.'],
+  ru: ['Задать пароль для открытия Word', 'Неверный пароль для открытия Word.', 'Этот документ Word зашифрован. Введите пароль для открытия.'],
+  'zh-CN': ['设置 Word 打开密码', 'Word 打开密码不正确。', '此 Word 文档已加密，请输入打开密码。'],
+  'zh-TW': ['設定 Word 開啟密碼', 'Word 開啟密碼不正確。', '此 Word 文件已加密，請輸入開啟密碼。'],
+  ja: ['Word の開くパスワードを設定', 'Word の開くパスワードが正しくありません。', 'この Word 文書は暗号化されています。開くパスワードを入力してください。'],
+  ko: ['Word 열기 암호 설정', 'Word 열기 암호가 올바르지 않습니다.', '이 Word 문서는 암호화되어 있습니다. 열기 암호를 입력하세요.'],
+};
+for (const [language, [protect, password, protectedText]] of Object.entries(docxPasswordLabels))
+  Object.assign(catalogs[language], { 'docx.protect': protect, 'docx.password': password, 'docx.protected': protectedText });

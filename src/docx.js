@@ -78,6 +78,44 @@ export function sameBytes(left, right) {
 	return left.length === right.length && left.every((byte, offset) => byte === right[offset]);
 }
 
+export function checkDocxImages({ xml, zip }) {
+	const origin = 'https://docx.invalid';
+	const contentTypes = xml.get('[Content_Types].xml');
+	const defaults = new Map([...contentTypes.getElementsByTagNameNS(types, 'Default')]
+		.map(node => [node.getAttribute('Extension')?.toLowerCase(), node.getAttribute('ContentType')]));
+	const overrides = new Map([...contentTypes.getElementsByTagNameNS(types, 'Override')]
+		.map(node => [node.getAttribute('PartName'), node.getAttribute('ContentType')]));
+	for (const [path, part] of xml) {
+		if (!path.startsWith('word/') || !path.endsWith('.xml')) continue;
+		const ids = new Set();
+		for (const name of ['blip', 'svgBlip', 'imagedata']) {
+			for (const image of part.getElementsByTagNameNS('*', name)) {
+				const id = image.getAttributeNS(office, 'embed') || image.getAttributeNS(office, 'id');
+				if (id) ids.add(id);
+			}
+		}
+		if (!ids.size) continue;
+		const split = path.lastIndexOf('/') + 1;
+		const rels = xml.get(`${path.slice(0, split)}_rels/${path.slice(split)}.rels`);
+		const byId = new Map([...(rels?.getElementsByTagNameNS(relationships, 'Relationship') ?? [])]
+			.map(node => [node.getAttribute('Id'), node]));
+		for (const id of ids) {
+			const rel = byId.get(id);
+			const target = rel?.getAttribute('Target');
+			if (!target || rel.getAttribute('Type') !== `${office}/image`) throw Error('missingImage');
+			let partName;
+			try {
+				const url = new URL(target, `${origin}/${path}`);
+				if (url.origin !== origin || url.search || url.hash) throw Error('target');
+				partName = decodeURIComponent(url.pathname).slice(1);
+			} catch { throw Error('missingImage'); }
+			const extension = partName.split('.').at(-1).toLowerCase();
+			const format = overrides.get(`/${partName}`) ?? defaults.get(extension);
+			if (!format?.startsWith('image/') || !zip.size(partName)) throw Error('missingImage');
+		}
+	}
+}
+
 // These parts have presentation or payload data that the rich-text editor may not
 // expose. Keep the source available if serialization drops their payload or anchors.
 export function checkDocxRoundTrip(before, after) {

@@ -1,5 +1,29 @@
 # Source change record
 
+## China Hub Alpha 1.1.9-alpha.2 — CHG-20261122-WORD-PASSWORD-RESPONSIVENESS
+
+Requirement: setting a Word opening password should show the encryption stage and avoid waiting on background renderer timers. Keep the Office key derivation rounds and use message-port yields. Disable password fields during an active submission, then return them to an editable state if the operation fails.
+
+## China Hub Alpha 1.1.9-alpha.2 — CHG-20261122-WORD-OPENING-PASSWORD
+
+Requirement: right-click an ordinary Word file and use Encrypt to set an opening password on that file. Open the resulting standard Agile-encrypted DOCX with its password, edit in Obsidian and save the ciphertext back to the same path. Use local, in-memory decryption, an authorized source comparison before writes and an encrypted-only draft when a protected save conflicts. Preserve the document's original modification time on password setup without a body edit. Use the actual edit time on later saves. China and Global share the implementation.
+
+## China Hub Alpha 1.1.9-alpha.2 — CHG-20261122-ENCRYPTED-NOTE-SINGLE-UNLOCK
+
+Requirement: show one unlock control when Obsidian Live Preview renders the same encrypted whole note through its code block renderer and the source editor widget. Prefer the rendered control when both are present and keep the already-open source session visible if the rendered control appears later. Keep the source-only and reading-view controls available.
+
+## China Hub Alpha 1.1.9-alpha.2 — CHG-20261122-ENCRYPTED-NOTE-EDITOR-REFRESH
+
+Requirement: edits to unlocked encrypted Markdown can save repeatedly without showing a false unsaved-source conflict or losing the secure editor on redraw. Refresh open views after the verified ciphertext write. Permit Obsidian's partial editor refresh only when the file, complete previous source and complete replacement match that write. Keep the same secure textarea when Live Preview recreates the encrypted block in the same view. External and unsaved surrounding changes still block overwriting, and the encrypted draft remains available when a save fails.
+
+## China Hub Alpha 1.1.9-alpha.2 — CHG-20261122-WORD-IMAGE-SAVE
+
+Requirement: a Word document remains openable after inserting and autosaving an image. Validate embedded image references, relationship targets, media and content types. Use the full package writer when the selective writer omits a new image. Reject output that still lacks media or fails the existing preservation checks.
+
+## China Hub Alpha 1.1.9-alpha.2 — CHG-20261122-WORD-AUTOSAVE
+
+Requirement: save Word edits automatically and keep them when leaving the window, tab or file. Save after a short idle period and flush pending changes when leaving the editor. Preserve the existing source-content conflict check and keep a session draft when the current bytes cannot be replaced safely.
+
 ## China Hub Alpha 1.1.9-alpha.1 — CHG-20261122-CN-COMBINED-ALPHA
 
 Requirement: deliver note and attachment encryption, local Word editing, notes-first synchronization, and the updated translation controls together. Start from China Stable 1.1.8, which already contains the working copy's synchronization polling changes and the latest Alpha's local-first dictionary and reading actions. Keep those behaviors and use the full Oxford dictionary name for both hosted Oxford sources. The server and the Stable channel are outside this Alpha change.

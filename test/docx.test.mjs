@@ -5,8 +5,10 @@ import test from 'node:test';
 import { setTimeout as delay } from 'node:timers/promises';
 import { strToU8, unzipSync, zipSync } from 'fflate';
 import { JSDOM } from 'jsdom';
+import CFB from 'cfb';
 import { freshSalt, packNote, unlockWorkspace } from '../src/codec.js';
-import { blankDocx, checkDocxRoundTrip, docxName, inspectDocx } from '../src/docx.js';
+import { blankDocx, checkDocxImages, checkDocxRoundTrip, docxName, inspectDocx } from '../src/docx.js';
+import { createDocxProtection, isPasswordDocx, openPasswordDocx } from '../src/docx-password.js';
 import { NotebookSynchronizer, emptyState } from '../src/synchronizer.js';
 
 test('a new DOCX has a portable name, an empty body and no filename inserted into the body', () => {
@@ -35,6 +37,16 @@ test('DOCX validation protects embedded data and refuses remote drawing resource
 		assert.throws(() => inspect(zipSync(files)), /unsupported/u);
 		assert.throws(() => inspect(Uint8Array.of(0xd0, 0xcf, 0x11, 0xe0)), /protected/u);
 	} finally { window.close(); }
+});
+
+test('Word password derivation does not depend on background renderer timers', async () => {
+	const timer = globalThis.setTimeout;
+	globalThis.setTimeout = () => { throw Error('Renderer timers are suspended'); };
+	try {
+		const protection = await createDocxProtection('test password');
+		assert.equal(protection.descriptor.rounds, 100000);
+		assert.equal(protection.key.extractable, false);
+	} finally { globalThis.setTimeout = timer; }
 });
 
 const sdk = `
@@ -72,7 +84,7 @@ async function waitFor(check) {
 	assert.fail('Timed out waiting for the editor');
 }
 
-test('folder menu creates and opens a DOCX, real editor writes changes and preserves externally updated bytes', async t => {
+test('DOCX editor autosaves, preserves images and conflicts, and saves password-protected edits', async t => {
 	const styles = registerHooks({ resolve(specifier, context, next) {
 		return specifier.endsWith('.css') ? { url: 'data:text/javascript,export%20{}', shortCircuit: true } : next(specifier, context);
 	} });
@@ -127,6 +139,7 @@ test('folder menu creates and opens a DOCX, real editor writes changes and prese
 	const folder = Object.assign(new TFolder(), { path: 'Projects' });
 	const leaf = {
 		contentEl: document.body.appendChild(document.createElement('div')),
+		getViewState() { return { state: { file: view.file?.path } }; },
 		async setViewState({ state }) {
 			view.file = vault.getAbstractFileByPath(state.file);
 			await view.onLoadFile(view.file);
@@ -136,23 +149,23 @@ test('folder menu creates and opens a DOCX, real editor writes changes and prese
 		getAbstractFileByPath: path => path === file?.path ? file : path === folder.path ? folder : null,
 		createBinary: async (path, content) => {
 			bytes = content;
-			file = Object.assign(new TFile(), { path, basename: '项目计划', extension: 'docx', stat: { size: bytes.byteLength, mtime: 123 } });
+			file = Object.assign(new TFile(), { path, basename: path.split('/').at(-1).slice(0, -5), extension: 'docx', stat: { size: bytes.byteLength, mtime: 123 } });
 			return file;
 		},
 		readBinary: async () => bytes.slice(0),
-		modifyBinary: async (changed, content) => {
+		modifyBinary: async (changed, content, options) => {
 			assert.equal(changed, file);
 			bytes = content;
-			file.stat = { size: bytes.byteLength, mtime: 456 };
+			file.stat = { size: bytes.byteLength, mtime: options?.mtime ?? 456 };
 			writes++;
 		},
 	};
-	const workspace = { getLeaf: () => leaf, getLeavesOfType: () => [], revealLeaf() {},
+	const workspace = { getLeaf: () => leaf, getLeavesOfType: () => [leaf], revealLeaf() {},
 		on(name, listener) { events.set(name, listener); }, onLayoutReady: callback => callback() };
 	const owner = {
 		app: { document, workspace, vault }, register() {}, registerEvent() {}, addCommand() {},
 		registerExtensions(extensions) { assert.deepEqual(extensions, ['docx']); },
-		registerView(type, factory) { view = factory(leaf); },
+		registerView(type, factory) { leaf.view = view = factory(leaf); },
 	};
 	registerDocxEditor(owner);
 	events.get('file-menu')({ addItem: callback => callback({ setTitle() { return this; }, setIcon() { return this; }, onClick(action) { create = action; } }) }, folder);
@@ -176,7 +189,6 @@ test('folder menu creates and opens a DOCX, real editor writes changes and prese
 	const current = editor.querySelector('p') ?? editor;
 	current.textContent = 'Edited in Obsidian';
 	await waitFor(() => !save.disabled);
-	save.click();
 	await waitFor(() => writes === 1 && save.disabled);
 	const saved = inspectDocx(bytes, window.DOMParser);
 	assert.match(saved.xml.get('word/document.xml').documentElement.textContent, /Edited in Obsidian/u);
@@ -202,12 +214,100 @@ test('folder menu creates and opens a DOCX, real editor writes changes and prese
 	await sync.run();
 	assert.deepEqual(received.slice(0, 3), [file.path, source, 456]);
 
-	(editor.querySelector('p') ?? editor).textContent = 'Unsaved local edit';
+	(editor.querySelector('p') ?? editor).textContent = 'Saved when switching windows';
 	await waitFor(() => !save.disabled);
+	const picture = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jG2kAAAAASUVORK5CYII=';
+	const pm = view.session.editor.current.getEditorRef().getView();
+	const image = pm.state.schema.nodes.image.create({
+		src: `data:image/png;base64,${picture}`, rId: 'rId_img_fixture', width: 24, height: 24, alt: 'Fixture image',
+	});
+	const pictureParagraph = pm.state.schema.nodes.paragraph.create(null, image);
+	pm.dispatch(pm.state.tr.insert(pm.state.doc.content.size, pictureParagraph));
+	window.dispatchEvent(new window.Event('blur'));
+	await Promise.resolve();
+	assert.ok(view.session.saving);
+	await waitFor(() => writes === 2 && save.disabled);
+	const withImage = inspectDocx(bytes, window.DOMParser);
+	const imageFixture = bytes;
+	assert.match(withImage.xml.get('word/document.xml').documentElement.textContent, /switching windows/u);
+	checkDocxImages(withImage);
+	const media = [...withImage.zip.names()].filter(path => /^word\/media\/.*\.png$/u.test(path));
+	assert.equal(media.length, 1);
+	assert.equal(Buffer.from(withImage.zip.read(media[0])).toString('base64'), picture);
+	if (process.env.SMART_SYNC_DOCX_WORD_FIXTURE)
+		await writeFile(process.env.SMART_SYNC_DOCX_WORD_FIXTURE + '-image.docx', new Uint8Array(bytes));
+
+	(editor.querySelector('p') ?? editor).textContent = 'Saved when switching files';
+	view.file = null;
+	await view.onUnloadFile(file);
+	assert.equal(writes, 3);
+	assert.match(inspectDocx(bytes, window.DOMParser).xml.get('word/document.xml').documentElement.textContent, /switching files/u);
+	view.file = file;
+	await view.onLoadFile(file);
+	await waitFor(() => view.session?.ready);
+	const nextEditor = document.querySelector('[contenteditable="true"]');
+	const nextSave = document.querySelector('.smart-sync-docx-controls button');
+	assert.ok(nextEditor.textContent.includes('Saved when switching files'));
+	assert.ok(document.querySelector('img[alt="Fixture image"]'));
+
+	(nextEditor.querySelector('p') ?? nextEditor).textContent = 'Unsaved local edit';
+	await waitFor(() => !nextSave.disabled);
 	bytes = blankDocx();
 	file.stat = { size: bytes.byteLength, mtime: 789 };
-	save.click();
-	await waitFor(() => document.querySelector('[aria-live="polite"]').textContent.includes('原文件'));
-	assert.equal(writes, 1);
+	await view.onUnloadFile(file);
+	assert.equal(writes, 3);
 	assert.equal(file.stat.mtime, 789);
+	await view.onLoadFile(file);
+	await waitFor(() => view.session?.ready);
+	assert.ok(document.querySelector('[contenteditable="true"]').textContent.includes('Unsaved local edit'));
+	await waitFor(() => view.status.textContent.includes('原文件'));
+	assert.equal(writes, 3);
+
+	await view.onUnloadFile(file);
+	const secured = await vault.createBinary('Projects/Password fixture.docx', imageFixture);
+	view.file = secured;
+	await view.onLoadFile(secured);
+	await waitFor(() => view.session?.ready);
+	const menu = new Map();
+	events.get('file-menu')({ addItem: callback => callback({
+		setTitle(title) { this.title = title; return this; }, setIcon() { return this; },
+		onClick(action) { menu.set(this.title, action); },
+	}) }, secured);
+	await menu.get('加密')();
+	const password = 'WordTest9876';
+	const submit = (form, ...values) => {
+		form.querySelectorAll('input').forEach((input, index) => { input.value = values[index]; });
+		form.dispatchEvent(new window.Event('submit', { bubbles: true, cancelable: true }));
+	};
+	submit(document.querySelector('.smart-sync-docx-password'), password, password);
+	await waitFor(() => writes === 4 && view.session.protection);
+	assert.equal(secured.stat.mtime, 123);
+	assert.ok(isPasswordDocx(bytes));
+	assert.deepEqual(new Uint8Array((await openPasswordDocx(bytes, password, window.DOMParser)).clear), new Uint8Array(imageFixture));
+	document.querySelector('.smart-sync-docx-controls button:nth-child(2)').click();
+	await waitFor(() => !view.session && leaf.contentEl.querySelector('.smart-sync-docx-password'));
+	assert.ok(!leaf.contentEl.querySelector('[contenteditable="true"]'));
+	submit(leaf.contentEl.querySelector('.smart-sync-docx-password'), 'wrong password');
+	await waitFor(() => leaf.contentEl.textContent.includes('打开密码不正确'));
+	assert.equal(writes, 4);
+	submit(leaf.contentEl.querySelector('.smart-sync-docx-password'), password);
+	await waitFor(() => view.session?.ready);
+	const protectedEditor = document.querySelector('[contenteditable="true"]');
+	(protectedEditor.querySelector('p') ?? protectedEditor).textContent = 'Edited with the opening password';
+	await waitFor(() => writes === 5 && view.session.saved === view.session.changes);
+	assert.ok(isPasswordDocx(bytes));
+	assert.equal(secured.stat.mtime, 456);
+	const reopened = inspectDocx((await openPasswordDocx(bytes, password, window.DOMParser)).clear, window.DOMParser);
+	checkDocxImages(reopened);
+	assert.ok(reopened.zip.has(media[0]));
+	assert.match(reopened.xml.get('word/document.xml').documentElement.textContent, /with the opening password/u);
+	const tampered = CFB.read(new Uint8Array(bytes), { type: 'array' });
+	CFB.find(tampered, '/EncryptedPackage').content[12] ^= 1;
+	await assert.rejects(openPasswordDocx(Uint8Array.from(CFB.write(tampered, { type: 'array' })).buffer,
+		password, window.DOMParser), /unsupported/u);
+	await view.onUnloadFile(secured);
+	await view.onLoadFile(secured);
+	assert.ok(leaf.contentEl.querySelector('input[type=password]'));
+	if (process.env.SMART_SYNC_DOCX_WORD_FIXTURE)
+		await writeFile(process.env.SMART_SYNC_DOCX_WORD_FIXTURE + '-password.docx', new Uint8Array(bytes));
 });

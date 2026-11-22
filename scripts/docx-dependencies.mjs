@@ -10,6 +10,7 @@ const packages = new Set(`
 @radix-ui/react-use-callback-ref @radix-ui/react-use-controllable-state @radix-ui/react-use-effect-event
 @radix-ui/react-use-layout-effect @radix-ui/react-use-size @radix-ui/react-visually-hidden
 @xmldom/xmldom aria-hidden clsx detect-node-es docxtemplater dompurify get-nonce jszip orderedmap pizzip
+@noble/hashes adler-32 crc-32 cfb
 prosemirror-commands prosemirror-dropcursor prosemirror-history prosemirror-keymap prosemirror-model
 prosemirror-state prosemirror-tables prosemirror-transform prosemirror-view react react-dom react-remove-scroll
 react-remove-scroll-bar react-style-singleton rope-sequence sax scheduler sonner tslib use-callback-ref

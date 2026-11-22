@@ -42,7 +42,9 @@ The offline reader supports DRM-free, reflowable EPUB 2/3 files up to 48 MiB, wi
 
 ### Word documents
 
-From a folder menu or the command palette, choose **Create Word document** and enter its filename. The new `.docx` opens in the local editor. For an existing file, use **Open Word document in the sync plugin**. The tab displays the filename without its extension. Use **Save** before closing the tab. DOCX uses the current attachment rules and requires a local copy to edit. The compressed file limit is 16 MiB. Complex documents may open read-only or report that they cannot be safely saved. Use a compatible external app for legacy `.doc` files and password-protected documents.
+From a folder menu or the command palette, choose **Create Word document** and enter its filename. The new `.docx` opens in the local editor. For an existing file, use **Open Word document in the sync plugin**. The tab displays the filename without its extension. Changes save automatically after a short pause or when leaving the editor. **Save** is also available. DOCX uses the current attachment rules and requires a local copy to edit. The compressed file limit is 16 MiB. Complex documents may open read-only or report that they cannot be safely saved. Use a compatible external app for legacy `.doc` files and unsupported encryption formats.
+
+Choose **Encrypt** from the DOCX file menu to set its Word opening password. Enter the password to open the file and edit it locally. Automatic and manual saves write a password-protected file. Use **Lock** or close the document to require unlocking again. The supported format is Office Agile AES-256/SHA-512. Existing file copies and older history entries retain their previous content.
 
 ## Accounts, network and privacy
 
