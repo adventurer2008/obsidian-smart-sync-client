@@ -163,7 +163,7 @@ test('DOCX editor autosaves, preserves images and conflicts, and saves password-
 	const workspace = { getLeaf: () => leaf, getLeavesOfType: () => [leaf], revealLeaf() {},
 		on(name, listener) { events.set(name, listener); }, onLayoutReady: callback => callback() };
 	const owner = {
-		app: { document, workspace, vault }, register() {}, registerEvent() {}, addCommand() {},
+		app: { document, workspace, vault }, data: { settings: { workspace: 'connected-word-fixture' } }, register() {}, registerEvent() {}, addCommand() {},
 		registerExtensions(extensions) { assert.deepEqual(extensions, ['docx']); },
 		registerView(type, factory) { leaf.view = view = factory(leaf); },
 	};

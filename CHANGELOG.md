@@ -1,5 +1,13 @@
 # Source change record
 
+## China Hub Alpha 1.1.9-alpha.6 — CHG-20261123-CONNECTED-NOTE-ATTACHMENTS
+
+Requirement: support whole-note attachment encryption, drag and drop, paste, selection and password-free autosave in both connected and independent vaults. Write the encrypted attachment bytes and Markdown manifest together in the same note so a synchronized revision is complete even when ordinary attachment downloads are disabled. Legacy attachment packages remain readable when present. Importing another attachment converts the note to the self-contained envelope.
+
+## China Hub Alpha 1.1.9-alpha.6 — CHG-20261123-SECURE-NOTE-QUIET-AUTOSAVE
+
+Requirement: clear the inline save status after encrypted note autosave succeeds. The editor still reports saves in progress and problems that need attention.
+
 ## China Hub Alpha 1.1.9-alpha.5 — CHG-20261123-SECURE-ATTACHMENT-SESSION-WORD-DROP
 
 Requirement: import attachments during unlocked note editing without a second password prompt and test it together with dragging images into Word. Secure attachment imports use the unlocked session and encrypt the new package before replacing the note marker. Word accepts PNG, JPEG and GIF files dropped onto an editable page and stores them inside the DOCX with the existing save and password flow. This release keeps the Notebook Navigator actions for note encryption, opening or protecting a Word file, opening EPUB, and creating Word documents from folders.

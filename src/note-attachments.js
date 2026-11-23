@@ -1,9 +1,7 @@
 import { hex } from './codec.js';
 import { formatStorageSize, t } from './i18n.js';
+import { ATTACHMENT_BYTES as maxBytes, ATTACHMENT_FILES as maxFiles, ATTACHMENT_OVERHEAD as overhead, decodeAttachmentData } from './note-crypto.js';
 
-const maxBytes = 32 * 1024 * 1024;
-const maxFiles = 128;
-const overhead = 28; // 12-byte IV and 16-byte AES-GCM authentication tag
 const imageTypes = new Map([
 	['png', 'image/png'], ['jpg', 'image/jpeg'], ['jpeg', 'image/jpeg'], ['gif', 'image/gif'],
 	['webp', 'image/webp'], ['avif', 'image/avif'], ['bmp', 'image/bmp'],
@@ -91,7 +89,7 @@ async function sealAttachment(bytes, id, key, entry, clear) {
 	bytes.set(new Uint8Array(await crypto.subtle.encrypt(cipherParams(id, entry, iv), key, clear)), entry.offset + iv.length);
 }
 
-export async function stageNoteAttachments(vault, id, key, text, files, verifyPath = async () => {}) {
+export async function stageNoteAttachments(vault, id, key, text, files, verifyPath = async () => {}, { embedded = false } = {}) {
 	const total = files.reduce((size, file) => size + file.stat.size, 0);
 	if (total > maxBytes || files.length > maxFiles) throw error('attachmentLimit', { limit: formatStorageSize(maxBytes) });
 	const bytes = new Uint8Array(total + overhead * files.length);
@@ -110,7 +108,7 @@ export async function stageNoteAttachments(vault, id, key, text, files, verifyPa
 			offset += size + overhead;
 		} finally { clear.fill(0); }
 	}
-	return writeAttachmentPackage(vault, id, key, text, entries, bytes);
+	return writeAttachmentPackage(vault, id, key, text, entries, bytes, embedded);
 }
 
 const foldPath = path => path.normalize('NFC').toLowerCase();
@@ -165,12 +163,13 @@ export async function stageImportedAttachments(vault, id, key, text, notePath, f
 		} finally { clear.fill(0); }
 	}
 	assertActive();
-	return writeAttachmentPackage(vault, id, key, `${text}${text ? '\n\n' : ''}${links.join('\n')}\n`, entries, bytes);
+	return writeAttachmentPackage(vault, id, key, `${text}${text ? '\n\n' : ''}${links.join('\n')}\n`, entries, bytes, true);
 }
 
-async function writeAttachmentPackage(vault, id, key, text, entries, bytes) {
+async function writeAttachmentPackage(vault, id, key, text, entries, bytes, embedded) {
 	const value = JSON.stringify({ text, restoring: false, entries });
 	const manifest = parseAttachmentManifest(value);
+	if (embedded) return { value, manifest, bytes };
 	const file = await vault.createBinary(attachmentPackagePath(id), bytes.buffer);
 	let verified;
 	try {
@@ -182,7 +181,12 @@ async function writeAttachmentPackage(vault, id, key, text, entries, bytes) {
 	return { value, manifest, file, bytes: verified };
 }
 
-export async function readAttachmentPackage(vault, id, manifest) {
+export async function readAttachmentPackage(vault, id, manifest, attachmentData) {
+	if (attachmentData !== undefined) {
+		const bytes = decodeAttachmentData(attachmentData);
+		if (bytes.length !== manifest.size) throw error('invalidContent');
+		return bytes;
+	}
 	const file = vault.getAbstractFileByPath(attachmentPackagePath(id));
 	if (!file?.stat || file.stat.size !== manifest.size) throw error('attachmentPackageMissing');
 	const bytes = new Uint8Array(await vault.readBinary(file));
@@ -199,8 +203,8 @@ export async function decryptAttachment(bytes, id, key, entry) {
 	} catch { throw error('invalidContent'); }
 }
 
-async function verifyNoteAttachments(vault, id, key, manifest) {
-	const bytes = await readAttachmentPackage(vault, id, manifest);
+export async function verifyNoteAttachments(vault, id, key, manifest, attachmentData) {
+	const bytes = await readAttachmentPackage(vault, id, manifest, attachmentData);
 	for (const entry of manifest.entries) {
 		const clear = await decryptAttachment(bytes, id, key, entry);
 		clear.fill(0);
@@ -223,9 +227,9 @@ async function checkOriginal(vault, entry) {
 	return file;
 }
 
-export async function finishAttachmentLock(app, source, id, key, manifest, active, remove) {
+export async function finishAttachmentLock(app, source, id, key, manifest, active, remove, attachmentData) {
 	const { vault } = app;
-	const bytes = await verifyNoteAttachments(vault, id, key, manifest);
+	const bytes = await verifyNoteAttachments(vault, id, key, manifest, attachmentData);
 	if (manifest.restoring) throw error('attachmentRestoring');
 	const existing = [];
 	for (const entry of manifest.entries) if (await checkOriginal(vault, entry)) existing.push(entry);
@@ -239,12 +243,13 @@ export async function finishAttachmentLock(app, source, id, key, manifest, activ
 	return bytes;
 }
 
-export async function restoreNoteAttachments(vault, id, key, manifest, active, verifyPath = async () => {}) {
-	const bytes = await verifyNoteAttachments(vault, id, key, manifest);
+export async function restoreNoteAttachments(vault, id, key, manifest, active, verifyPath = async () => {}, { attachmentData, beforeRestore } = {}) {
+	const bytes = await verifyNoteAttachments(vault, id, key, manifest, attachmentData);
 	for (const entry of manifest.entries) {
 		await verifyPath(entry.path, true);
 		await checkOriginal(vault, entry);
 	}
+	await beforeRestore?.();
 	for (const entry of manifest.entries) {
 		if (await checkOriginal(vault, entry)) continue;
 		const clear = await decryptAttachment(bytes, id, key, entry);

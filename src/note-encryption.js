@@ -6,11 +6,11 @@ import { desktopFiles } from './desktop.js';
 import { createSecureEditor } from './secure-note-editor.js';
 import {
 	createLocked, createAttachmentRevision, openLocked, updateLocked, rewrapLocked, lockedMarker, lockedRanges,
-	decodeBox, encodeBox, replaceLocked, TEXT_PREFIX, containsLockedText, NOTE_LIMIT,
+	decodeBox, encodeBox, replaceLocked, TEXT_PREFIX, containsLockedText, NOTE_LIMIT, NOTE_DRAFT_LIMIT,
 } from './note-crypto.js';
 import {
 	findNoteAttachments, stageNoteAttachments, stageImportedAttachments, parseAttachmentManifest, readAttachmentPackage,
-	finishAttachmentLock, restoreNoteAttachments, decryptAttachment, attachmentPreviewType, attachmentPackagePath,
+	finishAttachmentLock, verifyNoteAttachments, restoreNoteAttachments, decryptAttachment, attachmentPreviewType, attachmentPackagePath,
 } from './note-attachments.js';
 
 const failure = error => new Notice(error instanceof Error ? error.message : t('encryption.text02'));
@@ -188,20 +188,17 @@ export class NoteEncryption {
 				try {
 					await this.verifyAttachmentPath(snapshot.path);
 					const box = await createLocked('', password, hint, 'bundle', async (id, key) => {
-						staged = await stageNoteAttachments(this.app.vault, id, key, original, latest, path => this.verifyAttachmentPath(path));
-						return staged.value;
-					});
+						staged = await stageNoteAttachments(this.app.vault, id, key, original, latest, path => this.verifyAttachmentPath(path), { embedded: true });
+						return staged;
+					}, { embedded: true });
 					const opened = await openLocked(box, password);
 					await this.convert(snapshot, lockedMarker(box), active, async () => {
 						markerWritten = true;
-						await finishAttachmentLock(this.app, snapshot.path, box.id, opened.key, staged.manifest, active, file => this.removeAttachment(file));
+						await finishAttachmentLock(this.app, snapshot.path, box.id, opened.key, staged.manifest, active, file => this.removeAttachment(file), box.attachmentData);
 					});
 				} catch (error) {
-				if (markerWritten && active()) throw Error(`${t('encryption.attachmentFinish')} ${error.message}`, { cause: error });
+					if (markerWritten && active()) throw Error(`${t('encryption.attachmentFinish')} ${error.message}`, { cause: error });
 					throw error;
-				} finally {
-					if (staged && !markerWritten && await this.app.vault.read(snapshot.file) === original)
-						await this.removeAttachment(staged.file);
 				}
 			});
 			const box = await createLocked(original.slice(from, to), password, hint, kind);
@@ -212,15 +209,17 @@ export class NoteEncryption {
 		prompt.attachments = attachments;
 		prompt.open();
 	}
-	attachmentOperation(task) {
-		if (this.owner.data?.settings?.workspace) throw Error(t('encryption.attachmentLabOnly'));
+	async attachmentOperation(task) {
 		if (!Platform.isMobile && this.app.vault.adapter?.getBasePath) {
 			const load = this.document?.defaultView?.require;
 			try { this.desktop ??= desktopFiles(this.app.vault, { load }); }
 			catch { throw Error(t('encryption.safeWriteUnavailable')); }
 			if (!this.desktop) throw Error(t('encryption.safeWriteUnavailable'));
 		}
-		if (this.owner.exclusive) return this.owner.exclusive(task);
+		if (this.owner.exclusive) {
+			if (this.owner.running) await this.owner.running.catch(() => {});
+			return this.owner.exclusive(task);
+		}
 		return task();
 	}
 	async verifyAttachmentPath(path, missing) {
@@ -310,7 +309,7 @@ export class NoteEncryption {
 	closeActions() { const menu = this.actionMenu; this.actionMenu = undefined; if (menu?.hide) menu.hide(); else menu?.close(); }
 	unlock(area, path, marker, box, parentSession) {
 		new PasswordWindow(this, t('encryption.text37'), box, false, async (password, _hint, active) => {
-			const retainWrappingKey = !parentSession && box.kind !== 'text' && !this.owner.data?.settings?.workspace;
+			const retainWrappingKey = !parentSession && box.kind !== 'text';
 			const opened = await openLocked(box, password, { retainWrappingKey });
 			if (!active() || !area.isConnected) return;
 			const file = this.app.vault.getAbstractFileByPath(path);
@@ -320,7 +319,10 @@ export class NoteEncryption {
 			const manifest = box.kind === 'bundle' ? parseAttachmentManifest(opened.text) : undefined;
 			let attachmentBytes;
 			if (manifest) {
-				attachmentBytes = await this.attachmentOperation(() => finishAttachmentLock(this.app, path, box.id, opened.key, manifest, active, file => this.removeAttachment(file)));
+				if (manifest.restoring) throw Error(t('encryption.attachmentRestoring'));
+				attachmentBytes = box.v === 3
+					? await verifyNoteAttachments(this.app.vault, box.id, opened.key, manifest, box.attachmentData)
+					: await this.attachmentOperation(() => finishAttachmentLock(this.app, path, box.id, opened.key, manifest, active, file => this.removeAttachment(file)));
 				if (!active() || !area.isConnected || await this.app.vault.read(file) !== source) throw Error(t('encryption.text39'));
 			}
 			const session = { area, path, parentSession, marker: ranges[0].marker, box, key: opened.key, wrapKey: opened.wrapKey, text: manifest?.text ?? opened.text, manifest, attachmentBytes, epoch: this.epoch, lastUse: Date.now(), version: 0, saved: 0 };
@@ -399,7 +401,7 @@ export class NoteEncryption {
 		session.attachmentArea = undefined;
 	}
 	chooseAttachments(session) {
-		if (session.locked || !session.wrapKey || this.owner.data?.settings?.workspace) return;
+		if (session.locked || !session.wrapKey) return;
 		this.cancelAttachmentPicker?.();
 		const document = session.area.ownerDocument;
 		const picker = document.body.createEl('input', { type: 'file' });
@@ -434,7 +436,7 @@ export class NoteEncryption {
 			session.status?.setText(t('encryption.text43'));
 			return this.importAttachments(session, files, active);
 		}).catch(error => {
-			if (active() && session.saved === session.version) session.status?.setText(t('encryption.text45'));
+			if (active() && session.saved === session.version) session.status?.setText('');
 			throw error;
 		}).finally(() => {
 			session.attachmentWork = undefined;
@@ -458,9 +460,9 @@ export class NoteEncryption {
 			const { manifest, text, wrapKey } = session;
 			if (manifest?.restoring) throw Error(t('encryption.attachmentRestoring'));
 			const prior = manifest && {
-				id: previous.id, key: session.key, manifest, bytes: await readAttachmentPackage(vault, previous.id, manifest),
+				id: previous.id, key: session.key, manifest, bytes: await readAttachmentPackage(vault, previous.id, manifest, previous.attachmentData),
 			};
-			let staged, committed = false;
+			let staged;
 			try {
 				let key;
 				if (!canCommit()) throw Error(t('encryption.writeContextChanged'));
@@ -468,7 +470,7 @@ export class NoteEncryption {
 					key = newKey;
 					staged = await stageImportedAttachments(vault, id, key, text, session.path, files,
 						prior, (path, missing) => this.verifyAttachmentPath(path, missing), canCommit);
-					return staged.value;
+					return staged;
 				});
 				for (const entry of staged.manifest.entries.slice(manifest?.entries.length ?? 0)) {
 					if (vault.getAbstractFileByPath(entry.path) || await vault.adapter.exists(entry.path))
@@ -478,7 +480,6 @@ export class NoteEncryption {
 				session.writingMarker = marker;
 				session.restoreInputFocus = session.editor?.view.hasFocus ?? false;
 				await this.replaceMarker(session, marker, false, canCommit);
-				committed = true;
 				session.box = next; session.marker = marker;
 				for (const other of this.sessions) {
 					if (other !== session && other.path === session.path) void this.lock(other);
@@ -502,12 +503,8 @@ export class NoteEncryption {
 				new Notice(t('encryption.attachmentsSaved'));
 			} finally {
 				session.writingMarker = undefined;
-				if (staged && !committed) {
-					const source = await vault.read(file).catch(() => undefined);
-					if (source === session.marker) await this.removeAttachment(staged.file).catch(failure);
-				}
 			}
-			const oldPackage = manifest && vault.getAbstractFileByPath(attachmentPackagePath(previous.id));
+			const oldPackage = previous.v === 2 && manifest && vault.getAbstractFileByPath(attachmentPackagePath(previous.id));
 			if (oldPackage) await this.removeAttachment(oldPackage).catch(failure);
 		});
 	}
@@ -526,9 +523,8 @@ export class NoteEncryption {
 		session.area.classList?.add('is-open', 'is-editing');
 		session.area.classList?.toggle('is-unified', Boolean(session.unified));
 		const wholeNote = !session.parentSession && session.box.kind !== 'text';
-		const canAttach = wholeNote && Boolean(session.wrapKey) && !this.owner.data?.settings?.workspace;
-		session.area.createDiv({ cls: 'wujie-crypto-edit-hint', text: t(canAttach ? 'encryption.editWithAttachments' :
-			wholeNote ? 'encryption.editConnected' : 'encryption.editTextOnly') });
+		const canAttach = wholeNote && Boolean(session.wrapKey);
+		session.area.createDiv({ cls: 'wujie-crypto-edit-hint', text: t(canAttach ? 'encryption.editWithAttachments' : 'encryption.editTextOnly') });
 		const toolbar = session.area.createDiv({ cls: 'wujie-crypto-formatting' });
 		const editorArea = session.area.createDiv({ cls: 'wujie-crypto-editor' });
 		session.status = session.area.createDiv({ attr: { role: 'status', 'aria-live': 'polite' } });
@@ -547,9 +543,15 @@ export class NoteEncryption {
 			event.preventDefault();
 			event.stopPropagation();
 			if (canAttach) void this.saveAttachments(session, [...files]).catch(failure);
-			else new Notice(t(wholeNote ? 'encryption.editConnected' : 'encryption.editTextOnly'));
+			else new Notice(t('encryption.editTextOnly'));
 		};
 		editorArea.addEventListener('paste', event => importFiles(event, event.clipboardData?.files), true);
+		editorArea.addEventListener('dragover', event => {
+			if (!canAttach || !Array.from(event.dataTransfer?.types ?? []).includes('Files')) return;
+			event.preventDefault();
+			event.stopPropagation();
+			event.dataTransfer.dropEffect = 'copy';
+		}, true);
 		editorArea.addEventListener('drop', event => importFiles(event, event.dataTransfer?.files), true);
 		const formats = [
 			['H2', 'heading', '## ', true], ['B', 'bold', '**'], ['I', 'italic', '*'],
@@ -637,7 +639,7 @@ export class NoteEncryption {
 					session.pendingBox = undefined;
 					session.writingMarker = undefined;
 					await this.removeDraft(session.box.id);
-					if (!session.locked) session.status?.setText(t('encryption.text45'));
+					if (!session.locked) session.status?.setText('');
 				} catch {
 					session.draft = nextBox;
 					if (!session.locked) session.status?.setText(t('encryption.text46'));
@@ -744,24 +746,27 @@ export class NoteEncryption {
 	async restoreAttachmentBundle(session, opened, active) {
 		const manifest = parseAttachmentManifest(opened.text);
 		await this.verifyAttachmentPath(session.path);
-		await readAttachmentPackage(this.app.vault, session.box.id, manifest);
-		if (!manifest.restoring) {
-			const box = await updateLocked(session.box, opened.key, JSON.stringify({ ...manifest, restoring: true }));
-			const marker = lockedMarker(box);
-			session.writingMarker = marker;
-			try {
-				await this.replaceMarker(session, marker, true, active);
-				session.box = box; session.marker = marker;
-			} finally { session.writingMarker = undefined; }
-		}
-		await restoreNoteAttachments(this.app.vault, session.box.id, opened.key, manifest, active, (path, missing) => this.verifyAttachmentPath(path, missing));
+		await restoreNoteAttachments(this.app.vault, session.box.id, opened.key, manifest, active,
+			(path, missing) => this.verifyAttachmentPath(path, missing), {
+				attachmentData: session.box.attachmentData,
+				beforeRestore: async () => {
+					if (manifest.restoring) return;
+					const box = await updateLocked(session.box, opened.key, JSON.stringify({ ...manifest, restoring: true }));
+					const marker = lockedMarker(box);
+					session.writingMarker = marker;
+					try {
+						await this.replaceMarker(session, marker, true, active);
+						session.box = box; session.marker = marker;
+					} finally { session.writingMarker = undefined; }
+				},
+			});
 		const saved = await this.replaceMarker(session, manifest.text, true, active);
 		if (!containsLockedText(saved)) {
 			for (const state of Object.values(this.owner.data?.connections ?? {})) if (state.localEncryption) delete state.localEncryption[session.path];
 			if (this.owner.data) await this.owner.saveData(this.owner.data);
 		}
 		this.clearSession(session);
-		const pack = this.app.vault.getAbstractFileByPath(attachmentPackagePath(session.box.id));
+		const pack = session.box.v === 2 && this.app.vault.getAbstractFileByPath(attachmentPackagePath(session.box.id));
 		if (pack) await this.removeAttachment(pack);
 		new Notice(t('encryption.text61'));
 	}
@@ -837,7 +842,7 @@ export class NoteEncryption {
 	}
 	async recoverDraftEntry(entry, box) {
 		const { vault } = this.app;
-		if (box.kind !== 'bundle') return vault.create(`${t('encryption.recoveredName')}-${box.id}-${Date.now()}.md`, lockedMarker(box));
+		if (box.kind !== 'bundle' || box.v === 3) return vault.create(`${t('encryption.recoveredName')}-${box.id}-${Date.now()}.md`, lockedMarker(box));
 		const file = vault.getAbstractFileByPath(entry.source);
 		if (!fileIsNote(file)) throw Error(t('encryption.writeContextChanged'));
 		const current = await vault.read(file);
@@ -867,7 +872,7 @@ export class NoteEncryption {
 			const row = modal.contentEl.createDiv();
 			button(row, t('encryption.text68'), () => { void (async () => {
 				const raw = await adapter.read(path);
-				if (raw.length > 5 * 1024 * 1024) throw Error(t('encryption.text69'));
+				if (raw.length > NOTE_DRAFT_LIMIT) throw Error(t('encryption.text69'));
 				const entry = JSON.parse(raw), box = decodeBox(encodeBox(entry.box));
 				if (entry.format !== 1) throw Error(t('encryption.text69'));
 				const file = await this.recoverDraftEntry(entry, box);

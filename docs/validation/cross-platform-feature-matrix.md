@@ -1,5 +1,22 @@
 # Cross-platform feature and scenario review
 
+## CHG-20261123-CONNECTED-NOTE-ATTACHMENTS
+
+| Platform | Support and verification |
+| --- | --- |
+| Windows desktop | Connected and independent vaults through the shared Web Crypto and atomic vault write APIs. DOM drag and picker, conversion, restore, and paired isolated service round-trip verified under Windows. Explorer drag on the final candidate remains unverified. |
+| macOS desktop | Same vault support. Finder drag, picker and native preview unverified. |
+| Linux desktop | Same vault support. Native file manager, picker and preview unverified. |
+| Android | Same vault support via the file picker, with drag and paste conditional on the host delivering file events. Touch, narrow-screen, picker background, lock screen and large-file memory behavior unverified on devices. |
+| iPhone/iOS | Same vault support and host event conditions. Native picker, lock screen, memory and preview unverified. |
+| iPad/iPadOS | Same vault support and host event conditions. Native picker, split-view drag, keyboard, lock screen and memory unverified. |
+
+New bundles pass through synchronization as a single ordinary Markdown revision. The paired service test transfers an encrypted envelope larger than the old decoding limit, with ordinary attachments disabled on the receiver, and checks exact note bytes, source modification time, original attachment timestamps, verified payload bytes and preview cleanup. Selection, paste and drag store encrypted copies. Converting a whole note can remove the listed original files after the encrypted note is written. Earlier history or other copies can still contain the old content. The existing aggregate attachment limit is 32 MiB. Encrypted files preserve account and vault isolation, and imports can be prepared offline. The isolated service test does not exercise live multi-device interruption, restart or rollback. Clients through Alpha.5 keep new envelopes opaque and require an update to unlock. Legacy sidecar bundles still require their package on the device and are migrated on the next successful attachment import. Word, EPUB and Notebook Navigator menus continue to use the same entry points in either vault type. Physical acceptance including large envelopes remains pending.
+
+## CHG-20261123-SECURE-NOTE-QUIET-AUTOSAVE
+
+Windows, macOS, desktop Linux, Android, iOS and iPadOS share the encrypted editor status. DOM regression covers clearing it after a successful save and retry, and retaining the failure message until retry succeeds. Physical-device UI rendering remains unverified for this presentation change. Sync, file format, lock and background behavior are outside this change.
+
 ## CHG-20261123-SECURE-ATTACHMENT-SESSION-WORD-DROP
 
 | Platform | Secure attachment import | Word image drop |
