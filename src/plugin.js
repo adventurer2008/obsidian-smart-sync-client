@@ -1969,7 +1969,7 @@ export default class IndependentSync extends Plugin {
 	workspaceApi(origin, ...args) {
 		assertEditionOrigin(origin);
 		const api = new WorkspaceApi(origin, ...args);
-		const china = edition.edition === 'cn' && api.origin === chinaSyncOrigin && args[2] === undefined;
+		const china = edition.edition === 'cn' && api.origin === chinaSyncOrigin && args[2] === undefined && this.data?.localId;
 		if (Platform.isAndroidApp === true && supportsAndroidNativeVersion(this.manifest?.version) && args[2] === undefined) {
 			const binding = JSON.stringify([this.data.localId, api.origin, this.data.settings.workspace]);
 			if (this.androidTransport?.binding !== binding) {
