@@ -1,5 +1,9 @@
 # Source change record
 
+## Unreleased — CHG-20261123-COMMUNITY-119-REVIEW
+
+Requirement: address the runtime script creation present in the 1.1.9 release and bring main.js below the size reported by Community. Build the DOCX ZIP dependency against native browser Promise and timers. Use a tray-sized copy of the same logo for the existing Windows tray icon.
+
 ## Unreleased — CHG-20261123-EMPTY-CONFLICT-DIRECTORY
 
 Requirement: remove empty `Smart Sync conflicts` folders left in the file explorer. After successful sync or removal of a configuration recovery copy, prune empty folders under the known configuration recovery tree using non-recursive directory removal. Preserve unresolved copies, copies kept by choice, and folders containing any files. Continue to exclude this recovery directory from upload and remote replay.

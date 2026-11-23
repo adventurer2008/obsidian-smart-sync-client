@@ -1,5 +1,11 @@
 # Cross-platform feature and scenario review
 
+## CHG-20261123-COMMUNITY-119-REVIEW
+
+The packaged ZIP backend uses Promise and timers on Windows, macOS, desktop Linux, Android, iPhone/iOS and iPad/iPadOS. The DOCX editor test uses the actual browser ZIP backend with the isolated host fixture and exercises drag, save, reopen and password protection. Physical device verification remains pending on all six platforms, including touch/narrow layouts and the Windows system tray icon. The smaller tray image applies only to the Windows system tray. No new sync, storage, account, file format or lifecycle path is introduced.
+
+The 1.1.9 scan reported archive-based self-updates. Existing configuration-path tests prove that desktop and mobile exclude the installed sync plugin identities from configuration code and data writes. Document ZIP operations work with document bytes in memory. Public automated review remains an independent gate for the candidate.
+
 ## CHG-20261123-EMPTY-CONFLICT-DIRECTORY
 
 | Platform | Support | Acceptance |
