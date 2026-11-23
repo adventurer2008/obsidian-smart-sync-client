@@ -2,7 +2,7 @@
 
 ## Smart Word 1.0.1-alpha.1 — CHG-20261124-SMART-WORD-NAME
 
-Requirement: display the standalone Word editor as Smart Word. Keep the existing plugin identity and editor behavior.
+Requirement: publish the standalone Word editor as Smart Word under the `smart-word` plugin ID. Preserve the existing editor and sync coordination behavior.
 
 ## Unreleased — CHG-20261123-COMMUNITY-WORD-SEPARATION
 

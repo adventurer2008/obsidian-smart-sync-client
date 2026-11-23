@@ -2,7 +2,7 @@
 
 ## CHG-20261124-SMART-WORD-NAME
 
-Smart Word changes the companion manifest display name only. Windows, macOS, Linux, Android, iPhone and iPad retain the existing supported host paths and plugin identity. Native update and display-name acceptance remain unverified on all six platforms.
+Smart Word uses the new `smart-word` plugin ID. Existing document formats and Word save coordination are unchanged. Windows, macOS, Linux, Android, iPhone and iPad retain the same supported host paths. A library can use only one editor to handle `.docx` by default. Native installation and display-name acceptance remain unverified on all six platforms. Released sync versions that predate the new ID may require excluding Smart Word in opt-in plugin file synchronization.
 
 ## CHG-20261123-COMMUNITY-WORD-SEPARATION
 
