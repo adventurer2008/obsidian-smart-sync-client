@@ -16,15 +16,20 @@ prosemirror-state prosemirror-tables prosemirror-transform prosemirror-view reac
 react-remove-scroll-bar react-style-singleton rope-sequence sax scheduler sonner tslib use-callback-ref
 use-sidecar w3c-keyname xml-js
 `.trim().split(/\s+/u));
+const secureEditorPackages = new Set([
+	'@codemirror/commands', '@codemirror/language', '@codemirror/streamparser',
+	'@lezer/common', '@lezer/highlight', '@lezer/markdown', 'style-mod',
+]);
 
-export function docxPackage(input) {
+export function bundledEditorPackage(input) {
 	if (input === 'node_modules/pizzip/node_modules/pako/dist/pako.es5.min.js') return 'pizzip/node_modules/pako';
 	const name = /^node_modules\/(@[^/]+\/[^/]+|[^/]+)\//u.exec(input)?.[1];
-	return packages.has(name) && !input.slice('node_modules/'.length).includes('/node_modules/') ? name : undefined;
+	return (packages.has(name) || secureEditorPackages.has(name)) &&
+		!input.slice('node_modules/'.length).includes('/node_modules/') ? name : undefined;
 }
 
-export async function docxLicenseNotices(inputs) {
-	const names = [...new Set(inputs.map(docxPackage).filter(Boolean))].sort();
+export async function editorLicenseNotices(inputs) {
+	const names = [...new Set(inputs.map(bundledEditorPackage).filter(Boolean))].sort();
 	const files = [];
 	const notices = [];
 	for (const name of names) {
@@ -35,7 +40,7 @@ export async function docxLicenseNotices(inputs) {
 		const entries = (await readdir(directory)).filter(file => /^(?:licen[sc]e|notice|copying)(?:\.|$)/iu.test(file)).sort();
 		const paths = entries.map(file => `${directory}/${file}`);
 		if (name === 'react-remove-scroll-bar') paths.push('scripts/docx-scroll-bar-license.txt');
-		if (!paths.length) throw Error(`Missing license for DOCX dependency ${name}`);
+		if (!paths.length) throw Error(`Missing license for editor dependency ${name}`);
 		files.push(...paths);
 		notices.push(`${name} ${version} (${license})\n` + (await Promise.all(paths.map(path => readFile(path, 'utf8')))).join('\n'));
 	}

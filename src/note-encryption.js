@@ -3,6 +3,7 @@ import { StateField, EditorState } from '@codemirror/state';
 import { Decoration, EditorView, WidgetType, ViewPlugin } from '@codemirror/view';
 import { formatStorageSize, t } from './i18n.js';
 import { desktopFiles } from './desktop.js';
+import { createSecureEditor } from './secure-note-editor.js';
 import {
 	createLocked, openLocked, updateLocked, rewrapLocked, lockedMarker, lockedRanges,
 	decodeBox, encodeBox, replaceLocked, TEXT_PREFIX, containsLockedText, NOTE_LIMIT,
@@ -354,7 +355,7 @@ export class NoteEncryption {
 		area.oncontextmenu = more;
 	}
 	async showAttachments(session) {
-		const area = session.area.createSpan({ cls: 'wujie-decrypted-attachments' });
+		const area = session.attachmentArea = session.area.createSpan({ cls: 'wujie-decrypted-attachments' });
 		const urls = session.urls = new Set();
 		const window = area.ownerDocument.defaultView;
 		for (const entry of session.manifest.entries) {
@@ -377,6 +378,8 @@ export class NoteEncryption {
 		const url = session.area.ownerDocument.defaultView?.URL;
 		for (const value of session.urls ?? []) url?.revokeObjectURL(value);
 		session.urls = undefined;
+		session.attachmentArea?.remove();
+		session.attachmentArea = undefined;
 	}
 	chooseAttachments(session) {
 		if (session.locked || this.owner.data?.settings?.workspace) return;
@@ -453,8 +456,11 @@ export class NoteEncryption {
 				if (!session.locked) {
 					session.key = key; session.manifest = staged.manifest; session.attachmentBytes = staged.bytes;
 					session.text = staged.manifest.text;
-					if (session.input) session.input.value = session.text;
-					else this.showSession(session);
+					if (session.editor) {
+						session.editor.replace(session.text);
+						this.clearAttachmentPreviews(session);
+						void this.showAttachments(session);
+					} else this.showSession(session);
 					session.status?.setText(t('encryption.attachmentsSaved'));
 				} else this.refreshLockedSession(session);
 				new Notice(t('encryption.attachmentsSaved'));
@@ -481,20 +487,43 @@ export class NoteEncryption {
 		const canAttach = wholeNote && !this.owner.data?.settings?.workspace;
 		session.area.createDiv({ text: t(canAttach ? 'encryption.editWithAttachments' :
 			wholeNote ? 'encryption.editConnected' : 'encryption.editTextOnly') });
-		if (canAttach) button(session.area, t('encryption.addAttachments'), () => this.chooseAttachments(session));
-		const input = session.area.createEl('textarea', { cls: 'wujie-crypto-editor', attr: { 'aria-label': t('encryption.text42'), maxlength: String(NOTE_LIMIT), spellcheck: 'false', autocomplete: 'off', autocorrect: 'off', autocapitalize: 'off' } });
-		input.value = session.text; session.input = input;
+		const toolbar = session.area.createDiv({ cls: 'wujie-crypto-formatting' });
+		const editorArea = session.area.createDiv({ cls: 'wujie-crypto-editor' });
 		session.status = session.area.createDiv({ attr: { role: 'status', 'aria-live': 'polite' } });
-		input.addEventListener('input', () => {
-			if (session.locked) return;
-			if (new TextEncoder().encode(input.value).length > NOTE_LIMIT) { input.value = session.text; session.status.setText(t('encryption.editTooLarge', { limit: formatStorageSize(NOTE_LIMIT) })); return; }
-			session.text = input.value; session.version++; session.lastUse = Date.now();
-			session.status.setText(t('encryption.text43')); this.queueSave(session);
+		const editor = session.editor = createSecureEditor(editorArea, session.text, {
+			label: t('encryption.text42'),
+			onLimit: () => session.status.setText(t('encryption.editTooLarge', { limit: formatStorageSize(NOTE_LIMIT) })),
+			onChange: text => {
+				if (session.locked) return;
+				session.text = text; session.version++; session.lastUse = Date.now();
+				session.status.setText(t('encryption.text43')); this.queueSave(session);
+			},
 		});
+		const importFiles = (event, files) => {
+			if (!files?.length) return;
+			event.preventDefault();
+			event.stopPropagation();
+			if (canAttach) void this.promptAttachmentImport(session, [...files]).catch(failure);
+			else new Notice(t(wholeNote ? 'encryption.editConnected' : 'encryption.editTextOnly'));
+		};
+		editorArea.addEventListener('paste', event => importFiles(event, event.clipboardData?.files), true);
+		editorArea.addEventListener('drop', event => importFiles(event, event.dataTransfer?.files), true);
+		const formats = [
+			['H2', 'heading', '## ', true], ['B', 'bold', '**'], ['I', 'italic', '*'],
+			['•', 'list', '- ', true], ['❝', 'quote', '> ', true], ['</>', 'code', '`'],
+		];
+		for (const [symbol, name, marker, lines] of formats) {
+			const action = button(toolbar, symbol, () => editor.format(marker, lines));
+			action.title = t(`encryption.format.${name}`);
+			action.setAttribute('aria-label', action.title);
+			action.addEventListener('mousedown', event => event.preventDefault());
+		}
+		if (canAttach) button(toolbar, t('encryption.addAttachments'), () => this.chooseAttachments(session));
 		button(session.area, t('encryption.text44'), () => { void this.finishEditing(session); });
 		button(session.area, t('encryption.text36'), () => this.lock(session));
+		if (session.manifest) void this.showAttachments(session);
 		this.watchRenderedEditor(session);
-		input.focus();
+		editor.view.focus();
 	}
 	watchRenderedEditor(session) {
 		if (session.renderObserver || this.widgetViews.has(session.area)) return;
@@ -503,7 +532,7 @@ export class NoteEncryption {
 		if (!view) return;
 		const { ownerDocument } = session.area;
 		const restore = () => {
-			if (session.locked || !session.input || session.area.isConnected || view.file?.path !== session.path) return;
+			if (session.locked || !session.editor || session.area.isConnected || view.file?.path !== session.path) return;
 			const replacements = [...view.containerEl.querySelectorAll('.wujie-encrypted')].filter(area => {
 				if (this.widgetViews.has(area)) return false;
 				const lock = this.areas.get(area);
@@ -512,7 +541,7 @@ export class NoteEncryption {
 			if (replacements.length !== 1) return;
 			replacements[0].replaceWith(session.area);
 			if (session.restoreInputFocus && ownerDocument.activeElement === ownerDocument.body && ownerDocument.hasFocus())
-				session.input.focus();
+				session.editor.view.focus();
 			session.restoreInputFocus = false;
 		};
 		session.renderObserver = new ownerDocument.defaultView.MutationObserver(restore);
@@ -527,7 +556,10 @@ export class NoteEncryption {
 		await this.queueSave(session);
 		if (!session.locked && session.saved === session.version) {
 			this.stopWatchingRenderedEditor(session);
-			session.input.value = ''; session.input = undefined; this.showSession(session);
+			session.editor?.destroy();
+			session.editor = undefined;
+			this.clearAttachmentPreviews(session);
+			this.showSession(session);
 		}
 	}
 	queueSave(session) {
@@ -544,7 +576,7 @@ export class NoteEncryption {
 				await this.writeDraft(session, nextBox);
 				try {
 					session.writingMarker = nextMarker;
-					session.restoreInputFocus = Boolean(session.input && session.input.ownerDocument?.activeElement === session.input);
+					session.restoreInputFocus = session.editor?.view.hasFocus ?? false;
 					const preserveTime = session.preserveTime === true;
 					session.preserveTime = false;
 					await this.replaceMarker(session, nextMarker, preserveTime);
@@ -688,7 +720,8 @@ export class NoteEncryption {
 		this.clearAttachmentPreviews(session);
 		session.attachmentBytes = undefined;
 		session.manifest = session.work || session.saved !== session.version ? session.manifest : undefined;
-		if (session.input) session.input.value = '';
+		session.editor?.destroy();
+		session.editor = undefined;
 		session.area.empty(); this.sessions.delete(session);
 		if (!retaining && !session.work && !session.failed) { session.text = ''; session.key = undefined; }
 	}
@@ -814,7 +847,7 @@ class LockWidget extends WidgetType {
 	toDOM(view) {
 		const file = editorInfoField ? view.state.field(editorInfoField, false)?.file : undefined;
 		// CodeMirror can recreate the widget when Obsidian refreshes the saved
-		// marker. Keep the active textarea attached to its own editor and note.
+		// marker. Keep the active secure editor attached to its own note.
 		for (const session of this.manager.sessions) {
 			if (session.path === file?.path && !session.parentSession && !session.locked &&
 				(session.writingMarker === this.marker || session.marker === this.marker) &&

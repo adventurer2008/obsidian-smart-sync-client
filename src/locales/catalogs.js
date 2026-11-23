@@ -8519,3 +8519,18 @@ const secureAttachmentKeys = ['editWithAttachments', 'editTextOnly', 'editConnec
   'importAttachments', 'importConfirm', 'attachmentsSaved'];
 for (const [language, labels] of Object.entries(secureAttachmentLabels))
   secureAttachmentKeys.forEach((key, index) => { catalogs[language][`encryption.${key}`] = labels[index]; });
+
+const secureFormattingLabels = {
+  'zh-CN': ['二级标题', '加粗', '斜体', '无序列表', '引用', '行内代码'],
+  'zh-TW': ['二級標題', '粗體', '斜體', '項目符號清單', '引用', '行內程式碼'],
+  ja: ['見出し 2', '太字', '斜体', '箇条書き', '引用', 'インラインコード'],
+  ko: ['제목 2', '굵게', '기울임꼴', '글머리 기호 목록', '인용', '인라인 코드'],
+  de: ['Überschrift 2', 'Fett', 'Kursiv', 'Aufzählung', 'Zitat', 'Code im Text'],
+  fr: ['Titre de niveau 2', 'Gras', 'Italique', 'Liste à puces', 'Citation', 'Code en ligne'],
+  es: ['Encabezado de nivel 2', 'Negrita', 'Cursiva', 'Lista con viñetas', 'Cita', 'Código en línea'],
+  'pt-BR': ['Título de nível 2', 'Negrito', 'Itálico', 'Lista com marcadores', 'Citação', 'Código em linha'],
+  ru: ['Заголовок уровня 2', 'Полужирный', 'Курсив', 'Маркированный список', 'Цитата', 'Встроенный код'],
+};
+const secureFormattingKeys = ['heading', 'bold', 'italic', 'list', 'quote', 'code'];
+for (const [language, labels] of Object.entries(secureFormattingLabels))
+  secureFormattingKeys.forEach((key, index) => { catalogs[language][`encryption.format.${key}`] = labels[index]; });

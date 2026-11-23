@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import { docxPackage } from './docx-dependencies.mjs';
+import { bundledEditorPackage } from './docx-dependencies.mjs';
 
 const selected = process.argv[2];
 if (selected && !['cn', 'global'].includes(selected)) throw Error('Unknown edition');
@@ -31,6 +31,7 @@ const expected = [
 	'src/note-attachments.js',
 	'src/note-crypto.js',
 	'src/note-encryption.js',
+	'src/secure-note-editor.js',
 	'src/pairing.js',
 	'src/recovery.js',
 	'src/synchronizer.js',
@@ -48,7 +49,7 @@ if (selected) expected.push('<define:__SMART_SYNC_EDITION__>');
 // esbuild records the guarded China module and may retain its host imports in Global.
 expected.push('src/translation.js');
 expected.sort();
-const actual = Object.keys(metadata.inputs).filter(input => !docxPackage(input)).sort();
+const actual = Object.keys(metadata.inputs).filter(input => !bundledEditorPackage(input)).sort();
 if (JSON.stringify(actual) !== JSON.stringify(expected))
 	throw new Error(`Unexpected source dependency: ${actual.join(', ')}`);
 const imports = Object.values(metadata.outputs).flatMap((output) => output.imports);

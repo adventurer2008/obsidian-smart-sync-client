@@ -4,7 +4,7 @@ import { loadEdition } from './edition-config.mjs';
 import { createHash } from 'node:crypto';
 import { resolve } from 'node:path';
 import { parse } from 'rrweb-cssom';
-import { docxLicenseNotices } from './docx-dependencies.mjs';
+import { editorLicenseNotices } from './docx-dependencies.mjs';
 
 const args = process.argv.slice(2);
 if (args.length > 1 || args.some(value => !['--edition=cn', '--edition=global', '--all'].includes(value))) throw Error('Use --edition=cn, --edition=global or --all');
@@ -66,11 +66,11 @@ const result = await build({
 	write: false,
 	banner: { js: `/* Smart Sync protocol 2 test candidate.\n${license}\n${dependencyNotices}\n*/` },
 });
-const docxLicenses = await docxLicenseNotices(Object.keys(result.metafile.inputs));
+const editorLicenses = await editorLicenseNotices(Object.keys(result.metafile.inputs));
 const mainPath = `${output}/main.js`;
 const bundledScript = result.outputFiles.find(file => file.path.endsWith('main.js')).text;
 const bundledStyles = result.outputFiles.find(file => file.path.endsWith('main.css'))?.text ?? '';
-await writeFile(mainPath, '/* Bundled DOCX dependency licenses\n' + docxLicenses.text.replaceAll('*/', '* /') + '\n*/\n' + bundledScript);
+await writeFile(mainPath, '/* Bundled editor dependency licenses\n' + editorLicenses.text.replaceAll('*/', '* /') + '\n*/\n' + bundledScript);
 await writeFile(`${output}/dependency-map.json`, JSON.stringify(result.metafile, null, 2));
 if (config) {
  const manifest = JSON.parse(await readFile('manifest.json', 'utf8'));
@@ -84,7 +84,7 @@ if (config) {
  const sha = bytes => createHash('sha256').update(bytes).digest('hex');
  const inputs = {};
  const paths = [...Object.keys(result.metafile.inputs).filter(path => path !== '<define:__SMART_SYNC_EDITION__>'), 'scripts/build.mjs', 'scripts/edition-config.mjs', `editions/${selected}.json`, 'manifest.json', 'package.json', 'package-lock.json', 'styles.css', 'assets/boundless-sync.png', 'LICENSE', 'THIRD-PARTY-NOTICES.md'];
- for (const path of [...new Set([...paths, docxStylesPath, 'scripts/docx-dependencies.mjs', ...docxLicenses.files])].sort()) inputs[path] = sha(await readFile(path));
+ for (const path of [...new Set([...paths, docxStylesPath, 'scripts/docx-dependencies.mjs', ...editorLicenses.files])].sort()) inputs[path] = sha(await readFile(path));
  const files = {};
  for (const part of ['main.js', 'manifest.json', 'styles.css']) files[part] = sha(await readFile(`${output}/${part}`));
  const receipt = { format: 'smart-sync-build-1', edition: selected, inputs, files };

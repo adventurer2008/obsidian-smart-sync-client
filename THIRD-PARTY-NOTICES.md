@@ -8,6 +8,8 @@ Regional builds embed the complete notices for the bundled Apache-2.0 EigenPal D
 
 Word opening passwords use the SheetJS CFB container parser, its checksum dependencies and Noble Hashes. Their package licenses are included in the same build notices.
 
+Secure Markdown editing uses the CodeMirror editor interfaces provided by Obsidian and bundles MIT-licensed CodeMirror editing commands, the Lezer Markdown parser, and their runtime dependencies. Their complete package notices are embedded in the distributed `main.js`.
+
 ## node-diff3 3.2.1
 
 Source: https://github.com/bhousel/node-diff3

@@ -1,5 +1,9 @@
 # Source change record
 
+## Unreleased — CHG-20261123-SECURE-NOTE-LIVE-PREVIEW
+
+Requirement: edit encrypted Markdown with formatting visible in place. The secure editor shows common Markdown styles while editing, provides formatting buttons and undo, and keeps the existing encrypted attachment import available. It keeps its Markdown document and edit history in the unlocked session and clears them on lock. Only the existing ciphertext write path writes to the vault.
+
 ## China Hub Alpha 1.1.9-alpha.4 — CHG-20261123-SECURE-EDIT-ATTACHMENTS
 
 Requirement: add files directly inside secure editing without permanently decrypting the note first. Import encrypted copies after confirming the note password. Keep existing packaged attachments and show accurate scope for whole notes, text selections and connected vaults. Notebook Navigator now shares the Word and EPUB file actions and the new Word folder action.

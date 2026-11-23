@@ -32,6 +32,8 @@ const { NoteEncryption, encryptionExtension } = await import('../src/note-encryp
 const { editorInfoField, modals, menus, Platform } = await import('./encryption-dom-sdk.mjs');
 const { EditorState } = await import('@codemirror/state');
 const { EditorView } = await import('@codemirror/view');
+const edit = (view, text) => view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: text } });
+const contents = view => view.state.doc.toString();
 after(() => { dom.window.close(); assert.deepEqual(domErrors, [], 'DOM/CodeMirror asynchronous errors must not be ignored'); });
 
 test('reading view selection menu preserves copy and encrypts only an exact unambiguous source range', async () => {
@@ -187,7 +189,7 @@ test('one whole-note file action removes the standalone image and only previews 
 		assert.notEqual(updated.box.id, range.box.id);
 		assert.equal(files.has('file name.pdf'), false);
 		assert.equal(files.has(`wujie-locked-${range.box.id}.wujie-lock`), false);
-		assert.ok(session.input.value.includes('[file name.pdf](<./file%20name.pdf>)'));
+		assert.ok(contents(session.editor.view).includes('[file name.pdf](<./file%20name.pdf>)'));
 		assert.ok(!disk.includes('file name.pdf') && !disk.includes('private PDF bytes'));
 		await manager.lock(session);
 		assert.equal(area.querySelector('img'), null);
@@ -254,7 +256,7 @@ test('the first secure attachment can be saved after the picker backgrounds and 
 		await new Promise(resolve => setImmediate(resolve));
 		assert.equal(modals.at(-1).titleText, '加密保存附件');
 		await submit();
-		assert.equal(value.container.querySelector('textarea'), null);
+		assert.equal(value.container.querySelector('.wujie-crypto-editor'), null);
 		const [range] = lockedRanges(value.read());
 		assert.equal(range.box.kind, 'bundle');
 		assert.equal(packages.size, 1);
@@ -266,22 +268,50 @@ test('the first secure attachment can be saved after the picker backgrounds and 
 	} finally { value.dispose(); await Promise.all(value.manager.pendingWrites); }
 });
 
-test('actual DOM auto-save keeps the same decrypted widget/input alive across host editor reloads and locks the updated ciphertext', async () => {
+test('actual DOM auto-save keeps the same secure editor alive across host reloads and locks updated ciphertext', async () => {
 	const value = await fixture();
 	try {
 		value.container.querySelector('.wujie-encrypted button').click(); await submit();
 		const session = [...value.manager.sessions][0]; value.manager.editSession(session);
-		const input = session.input; input.value = '第一版修改'; input.dispatchEvent(new dom.window.Event('input'));
+		const editor = session.editor.view;
+		edit(editor, '第一版修改');
 		await value.manager.queueSave(session);
-		assert.ok(input.isConnected, 'host reload must not replace the active secure editor');
+		assert.ok(editor.dom.isConnected, 'host reload must not replace the active secure editor');
 		assert.equal(session.locked, undefined);
-		input.value = '第二版中文👩‍💻'; input.dispatchEvent(new dom.window.Event('input')); await value.manager.queueSave(session);
-		assert.equal(session.input, input);
+		edit(editor, '第二版中文👩‍💻'); await value.manager.queueSave(session);
+		assert.equal(session.editor.view, editor);
 		assert.equal((await openLocked(lockedRanges(value.read())[0].box, password)).text, '第二版中文👩‍💻');
 		await value.manager.lock(session);
-		assert.equal(input.value, ''); assert.equal(session.key, undefined);
+		assert.equal(contents(editor), ''); assert.equal(session.key, undefined);
+		assert.equal(editor.dom.isConnected, false);
 		assert.ok(!value.container.textContent.includes('第二版中文'));
 		assert.equal(value.drafts.size, 0);
+	} finally { value.dispose(); await Promise.all(value.manager.pendingWrites); }
+});
+
+test('secure live preview renders formatting in place, keeps Markdown on save and treats HTML as text', async () => {
+	const value = await fixture('note', '# 标题\n\n粗体内容\n\n- 列表项\n\n<img src="https://example.test/private.png">\n\n结尾');
+	try {
+		value.container.querySelector('.wujie-encrypted button').click(); await submit();
+		const [session] = value.manager.sessions;
+		value.manager.editSession(session);
+		const view = session.editor.view;
+		const selection = contents(view).indexOf('粗体内容');
+		view.dispatch({ selection: { anchor: selection, head: selection + '粗体内容'.length } });
+		session.area.querySelector('button[aria-label="加粗"]').click();
+		view.dispatch({ selection: { anchor: view.state.doc.length } });
+		assert.equal(view.dom.querySelector('.wujie-editor-h1').textContent, '标题');
+		assert.equal(view.dom.querySelector('strong').textContent, '粗体内容');
+		assert.ok(view.dom.textContent.includes('• 列表项'));
+		assert.ok(view.dom.textContent.includes('<img src="https://example.test/private.png">'));
+		assert.equal(view.dom.querySelectorAll('img[src]').length, 0);
+		await value.manager.queueSave(session);
+		const plain = (await openLocked(lockedRanges(value.read())[0].box, password)).text;
+		assert.ok(plain.includes('**粗体内容**'));
+		assert.ok(!value.read().includes('粗体内容'));
+		await value.manager.lock(session);
+		assert.equal(contents(view), '');
+		assert.ok(!value.container.textContent.includes('粗体内容'));
 	} finally { value.dispose(); await Promise.all(value.manager.pendingWrites); }
 });
 
@@ -292,18 +322,16 @@ test('encrypted autosave refreshes a stale host editor and still refuses new sur
 		await submit();
 		const [session] = value.manager.sessions;
 		value.manager.editSession(session);
-		const input = session.input;
+		const editor = session.editor.view;
 		for (const text of ['第一次修改', '第二次修改']) {
-			input.value = text;
-			input.dispatchEvent(new dom.window.Event('input'));
+			edit(editor, text);
 			await value.manager.queueSave(session);
 			assert.equal(value.view.state.doc.toString(), value.read());
 			assert.equal((await openLocked(lockedRanges(value.read())[0].box, password)).text, text);
-			assert.ok(input.isConnected);
+			assert.ok(editor.dom.isConnected);
 		}
 		value.view.dispatch({ changes: { from: 0, insert: '外部未保存修改 ' } });
-		input.value = '只留在加密草稿中的修改';
-		input.dispatchEvent(new dom.window.Event('input'));
+		edit(editor, '只留在加密草稿中的修改');
 		await value.manager.queueSave(session);
 		assert.ok(value.view.state.doc.toString().startsWith('外部未保存修改'));
 		assert.equal((await openLocked(lockedRanges(value.read())[0].box, password)).text, '第二次修改');
@@ -311,7 +339,7 @@ test('encrypted autosave refreshes a stale host editor and still refuses new sur
 	} finally { value.dispose(); await Promise.all(value.manager.pendingWrites); }
 });
 
-test('live-preview code block redraw keeps the same secure textarea through consecutive saves', async () => {
+test('live-preview code block redraw keeps the same secure editor through consecutive saves', async () => {
 	const value = await fixture('note');
 	const { manager, file, container } = value;
 	try {
@@ -323,7 +351,7 @@ test('live-preview code block redraw keeps the same secure textarea through cons
 		await submit();
 		const [session] = manager.sessions;
 		manager.editSession(session);
-		const input = session.input;
+		const editor = session.editor.view;
 		const { vault } = manager.app;
 		const write = vault.process;
 		vault.process = async (...args) => {
@@ -335,15 +363,14 @@ test('live-preview code block redraw keeps the same secure textarea through cons
 			return saved;
 		};
 		for (const text of ['第一次预览编辑', '第二次预览编辑', '第三次预览编辑']) {
-			input.value = text;
-			input.dispatchEvent(new dom.window.Event('input'));
+			edit(editor, text);
 			await manager.queueSave(session);
 			assert.equal((await openLocked(lockedRanges(value.read())[0].box, password)).text, text);
-			assert.equal(session.input, input);
-			assert.ok(input.isConnected);
+			assert.equal(session.editor.view, editor);
+			assert.ok(editor.dom.isConnected);
 		}
 		await manager.lock(session);
-		assert.equal(input.value, '');
+		assert.equal(contents(editor), '');
 		assert.equal(session.renderObserver, undefined);
 	} finally { value.dispose(); await Promise.all(manager.pendingWrites); }
 });
@@ -383,7 +410,7 @@ test('an unwritable ciphertext journal reports failure and a successful retry cl
 		const session = [...value.manager.sessions][0]; value.manager.editSession(session);
 		const adapter = value.manager.app.vault.adapter, originalWrite = adapter.write, original = value.read();
 		adapter.write = async () => { throw Error('synthetic disk full'); };
-		session.input.value = '需要重试的秘密'; session.input.dispatchEvent(new dom.window.Event('input'));
+		edit(session.editor.view, '需要重试的秘密');
 		await value.manager.queueSave(session);
 		assert.equal(value.read(), original); assert.equal(session.failed, true);
 		assert.equal(value.manager.volatileDrafts.size, 1);
@@ -458,10 +485,10 @@ test('nested encrypted blocks unlock separately and inner edits survive outer en
 		innerArea.querySelector('button').click(); await submit();
 		const nested = [...value.manager.sessions].find(session => session.parentSession === outer); assert.ok(nested);
 		assert.equal(nested.text, '内层原文');
-		value.manager.editSession(nested); nested.input.value = '内层新内容'; nested.input.dispatchEvent(new dom.window.Event('input'));
+		value.manager.editSession(nested); edit(nested.editor.view, '内层新内容');
 		await value.manager.editSession(outer);
 		assert.equal(nested.key, undefined, 'outer editing must flush and lock nested editors first');
-		assert.equal((await openLocked(lockedRanges(outer.input.value)[0].box, password)).text, '内层新内容');
+		assert.equal((await openLocked(lockedRanges(contents(outer.editor.view))[0].box, password)).text, '内层新内容');
 		await value.manager.lock(outer);
 		assert.equal(value.manager.sessions.size, 0); assert.equal(outer.key, undefined); assert.equal(nested.key, undefined);
 		const outerText = (await openLocked(lockedRanges(value.read())[0].box, password)).text;

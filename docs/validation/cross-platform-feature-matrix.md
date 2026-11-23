@@ -1,5 +1,18 @@
 # Cross-platform feature and scenario review
 
+## CHG-20261123-SECURE-NOTE-LIVE-PREVIEW
+
+| Platform | Support and verification |
+| --- | --- |
+| Windows desktop | Conditional on the Obsidian CodeMirror host and Web Crypto. Isolated Obsidian 1.15.1 verified in-place headings and bold, autosave, lock and encrypted attachment import from a simulated paste. DOM regression also covers host redraw and inert HTML. Physical clipboard and drag interactions remain unverified. |
+| macOS desktop | Same host requirements. Native input, clipboard and window lifecycle unverified. |
+| Linux desktop | Same host requirements. Native input, clipboard and window lifecycle unverified. |
+| Android | Same host requirements with wrapped touch controls. Physical touch, IME, picker and background behavior unverified. |
+| iPhone/iOS | Same host requirements with wrapped touch controls. Physical touch, IME, picker and background behavior unverified. |
+| iPad/iPadOS | Same host requirements with wrapped touch controls. Physical touch, keyboard, split view and picker behavior unverified. |
+
+Markdown stays in the secure editor session. Formatting decorations are local, raw HTML stays textual, and paths in typed Markdown are never fetched by the editor. Existing encrypted image previews use temporary blob URLs. Attachment selection, paste and drop use the import workflow for disconnected vaults. No new sync, account, format or recovery migration. Existing encrypted notes and attachments are readable after a program rollback. Offline editing uses the existing local autosave. Native background, screen lock and restart still require device-specific acceptance.
+
 ## CHG-20261123-SECURE-EDIT-ATTACHMENTS
 
 | Platform | Support and validation |
