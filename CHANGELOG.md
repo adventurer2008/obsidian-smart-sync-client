@@ -1,5 +1,9 @@
 # Source change record
 
+## Smart Word 1.0.1 — CHG-20261124-SMART-WORD-STABLE
+
+Requirement: promote the verified Smart Word Alpha editor to Stable. The existing Word format, editor behavior, plugin ID and minimum host version stay the same.
+
 ## Smart Word 1.0.1-alpha.1 — CHG-20261124-SMART-WORD-NAME
 
 Requirement: publish the standalone Word editor as Smart Word under the `smart-word` plugin ID. Preserve the existing editor and sync coordination behavior.
