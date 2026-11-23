@@ -235,6 +235,12 @@
 .wujie-crypto-editor .wujie-editor-quote { border-inline-start:3px solid var(--blockquote-border-color, var(--interactive-accent)); padding-inline-start:8px; }
 .wujie-crypto-editor :is(.wujie-editor-code, code) { font-family:var(--font-monospace); background:var(--code-background, var(--background-secondary)); }
 .wujie-crypto-editor .wujie-editor-marker { color:var(--text-muted); }
+.wujie-crypto-edit-hint { color:var(--text-muted); font-size:var(--font-ui-small); }
+.wujie-encrypted.is-unified.is-editing .wujie-crypto-editor { border:0; }
+.wujie-encrypted.is-unified.is-editing .wujie-crypto-editor > .cm-editor { max-height:none; }
+.wujie-encrypted.is-unified.is-editing .wujie-crypto-editor > .cm-editor .cm-scroller { overflow:visible; }
+.wujie-encrypted.is-unified.is-editing .wujie-crypto-editor > .cm-editor .cm-content { padding-inline:0; }
+.wujie-crypto-editor .wujie-editor-image { display:inline-block; max-width:100%; height:auto; vertical-align:middle; }
 .wujie-encryption-selection-tools { display:flex; justify-content:flex-end; padding:8px; flex-shrink:0; }
 .is-mobile .wujie-encrypted > button,.is-mobile .wujie-crypto-form button,.is-mobile .wujie-encryption-selection-tools button { min-height:44px; }
 .is-mobile .wujie-encrypted > .wujie-crypto-more { display:inline-flex; width:44px; }

@@ -118,7 +118,7 @@ async function submit() {
 test('one whole-note file action removes the standalone image and only previews an in-memory URL until relock', async () => {
 	const file = { path: 'Private.md', stat: { mtime: 1577836800123 } };
 	const photo = { path: 'image.png', stat: { mtime: 1577836800123, ctime: 1577836800123, size: 4 } };
-	const body = '![[image.png]]\nprivate image note';
+	const body = 'before ![[image.png|200]] after\nprivate image note';
 	let disk = body;
 	const files = new Map([[file.path, file], [photo.path, photo]]);
 	const stored = new Map([[photo, Uint8Array.of(1, 2, 3, 4).buffer]]);
@@ -135,7 +135,7 @@ test('one whole-note file action removes the standalone image and only previews 
 		async delete(file) { files.delete(file.path); stored.delete(file); },
 	};
 	const manager = new NoteEncryption({ app: { vault, workspace: { getLeavesOfType: () => [] }, metadataCache: {
-		getFileCache: () => ({ embeds: [{ link: 'image.png', original: '![[image.png]]' }] }), getFirstLinkpathDest: path => files.get(path),
+		getFileCache: () => ({ embeds: [{ link: 'image.png|200', original: '![[image.png|200]]' }] }), getFirstLinkpathDest: path => files.get(path),
 	} }, manifest: { id: 'wujie-sync' } });
 	const activeURLs = new Map();
 	const area = document.body.createDiv();
@@ -157,18 +157,26 @@ test('one whole-note file action removes the standalone image and only previews 
 		manager.renderLock(area, file.path, range.marker, range.box);
 		area.querySelector('button').click();
 		await submit();
-		for (let tries = 0; tries < 20 && !area.querySelector('img'); tries++) await new Promise(resolve => setImmediate(resolve));
-		assert.equal(area.querySelector('img').src, 'blob:fixture');
+		for (let tries = 0; tries < 20 && !area.querySelector('.wujie-editor-image'); tries++) await new Promise(resolve => setImmediate(resolve));
+		const inlineImage = area.querySelector('.wujie-editor-image');
+		assert.equal(inlineImage?.src, 'blob:fixture');
+		assert.equal(inlineImage?.width, 200);
+		assert.equal(inlineImage?.closest('.cm-line')?.textContent, 'before  after');
+		assert.equal(area.querySelectorAll('.wujie-decrypted-attachments').length, 0);
 		assert.equal(activeURLs.get('blob:fixture').type, 'image/png');
 		assert.equal(files.has(photo.path), false);
 		assert.equal(disk, range.marker);
 		const [session] = manager.sessions;
+		const sameEditor = session.editor.view;
+		await manager.finishEditing(session);
+		assert.equal(session.editor.view, sameEditor);
 		manager.editSession(session);
 		[...area.querySelectorAll('button')].find(el => el.textContent === '添加附件').click();
 		const picker = document.querySelector('input[type=file]');
 		assert.ok(picker.multiple);
 		const pdf = new File(['private PDF bytes'], 'file name.pdf', { lastModified: photo.stat.mtime });
-		Object.defineProperty(picker, 'files', { value: [pdf] });
+		const addedImage = new File([Uint8Array.of(5, 6, 7)], 'new image.png', { lastModified: photo.stat.mtime });
+		Object.defineProperty(picker, 'files', { value: [pdf, addedImage] });
 		picker.dispatchEvent(new dom.window.Event('change'));
 		await new Promise(resolve => setImmediate(resolve));
 		const addForm = modals.at(-1);
@@ -190,9 +198,13 @@ test('one whole-note file action removes the standalone image and only previews 
 		assert.equal(files.has('file name.pdf'), false);
 		assert.equal(files.has(`wujie-locked-${range.box.id}.wujie-lock`), false);
 		assert.ok(contents(session.editor.view).includes('[file name.pdf](<./file%20name.pdf>)'));
+		for (let tries = 0; tries < 20 && !area.querySelector('.wujie-editor-image[alt="new image.png"]'); tries++)
+			await new Promise(resolve => setImmediate(resolve));
+		assert.ok(area.querySelector('.wujie-editor-image[alt="new image.png"]')?.closest('.cm-line'));
+		assert.equal(files.has('new image.png'), false);
 		assert.ok(!disk.includes('file name.pdf') && !disk.includes('private PDF bytes'));
 		await manager.lock(session);
-		assert.equal(area.querySelector('img'), null);
+		assert.equal(area.querySelectorAll('.wujie-editor-image').length, 0);
 		assert.equal(activeURLs.size, 0);
 		assert.equal(files.has(photo.path), false);
 		manager.permanent({ area, path: file.path, marker: updated.marker, box: updated.box, saved: 0, version: 0 });
@@ -202,6 +214,7 @@ test('one whole-note file action removes the standalone image and only previews 
 		assert.equal(files.get(photo.path).stat.mtime, photo.stat.mtime);
 		assert.equal(new TextDecoder().decode(await vault.readBinary(files.get('file name.pdf'))), 'private PDF bytes');
 		assert.equal(files.get('file name.pdf').stat.mtime, pdf.lastModified);
+		assert.deepEqual(new Uint8Array(await vault.readBinary(files.get('new image.png'))), Uint8Array.of(5, 6, 7));
 		assert.equal(await pdf.text(), 'private PDF bytes');
 	} finally {
 		manager.dispose(); area.remove();

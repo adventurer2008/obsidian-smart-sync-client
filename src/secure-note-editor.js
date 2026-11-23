@@ -1,11 +1,24 @@
-import { EditorSelection, EditorState, StateField, Transaction } from '@codemirror/state';
+import { EditorSelection, EditorState, StateEffect, StateField, Transaction } from '@codemirror/state';
 import { Decoration, EditorView, ViewPlugin, WidgetType, keymap } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { TreeFragment } from '@lezer/common';
 import { parser, Strikethrough, TaskList } from '@lezer/markdown';
 import { NOTE_LIMIT } from './note-crypto.js';
 
-const markdown = parser.configure([Strikethrough, TaskList]);
+const wikiImage = '![' + '[';
+const markdown = parser.configure([Strikethrough, TaskList, {
+	defineNodes: ['WikiImage'],
+	parseInline: [{
+		name: 'WikiImage',
+		before: 'Image',
+		parse(cx, next, pos) {
+			if (next !== 33 || cx.slice(pos, pos + 3) !== wikiImage) return -1;
+			const end = cx.slice(pos + 3, Math.min(cx.end, pos + 2051)).search(/[\r\n\]]/u);
+			if (end < 1 || cx.slice(pos + 3 + end, pos + 5 + end) !== ']]') return -1;
+			return cx.addElement(cx.elt('WikiImage', pos, pos + end + 5));
+		},
+	}],
+}]);
 const parsed = StateField.define({
 	create: state => markdown.parse(state.doc.toString()),
 	update(tree, transaction) {
@@ -26,6 +39,65 @@ const quoteStyle = Decoration.line({ class: 'wujie-editor-quote' });
 const codeStyle = Decoration.line({ class: 'wujie-editor-code' });
 const markerStyle = Decoration.mark({ class: 'wujie-editor-marker' });
 const hidden = Decoration.replace({});
+const setAttachments = StateEffect.define();
+const attachments = StateField.define({
+	create: () => new Map(),
+	update(value, transaction) {
+		for (const effect of transaction.effects) if (effect.is(setAttachments)) value = effect.value;
+		return value;
+	},
+});
+
+class InlineImage extends WidgetType {
+	constructor(attachment, width) { super(); this.attachment = attachment; this.width = width; }
+	eq(other) { return this.attachment.url === other.attachment.url && this.width === other.width; }
+	toDOM(view) {
+		const image = view.dom.ownerDocument.createElement('img');
+		image.className = 'wujie-editor-image';
+		image.alt = this.attachment.path;
+		image.draggable = false;
+		if (this.width) image.width = this.width;
+		image.addEventListener('load', () => view.requestMeasure(), { once: true });
+		image.src = this.attachment.url;
+		return image;
+	}
+}
+
+function imageReference(doc, node) {
+	if (node.name === 'WikiImage') {
+		const [target, size] = doc.sliceString(node.from + 3, node.to - 2).split('|');
+		return { target, width: /^\d{1,4}(?:x\d{1,4})?$/u.test(size ?? '') ? Number(size.split('x')[0]) : undefined };
+	}
+	const url = node.getChild('URL');
+	return url && { target: doc.sliceString(url.from, url.to).replace(/^<|>$/gu, '') };
+}
+
+function attachmentLookup(images, path) {
+	const lookup = new Map();
+	const add = (reference, image) => {
+		if (lookup.has(reference) && lookup.get(reference) !== image) lookup.set(reference, undefined);
+		else lookup.set(reference, image);
+	};
+	const folder = path.slice(0, path.lastIndexOf('/') + 1);
+	for (const image of images) {
+		add(image.path, image);
+		add(image.path.slice(image.path.lastIndexOf('/') + 1), image);
+		if (image.path.startsWith(folder)) add('./' + image.path.slice(folder.length), image);
+	}
+	// A complete vault path takes precedence over an ambiguous filename alias.
+	for (const image of images) lookup.set(image.path, image);
+	return lookup;
+}
+
+function previewImage(doc, node, lookup) {
+	const ref = imageReference(doc, node);
+	if (!ref?.target) return;
+	let target;
+	try { target = node.name === 'WikiImage' ? ref.target.trim() : decodeURIComponent(ref.target); }
+	catch { return; }
+	const image = lookup.get(target);
+	return image?.url && Decoration.replace({ widget: new InlineImage(image, ref.width) }).range(node.from, node.to);
+}
 const bullet = Decoration.replace({ widget: new class extends WidgetType {
 	toDOM(view) {
 		const span = view.dom.ownerDocument.createElement('span');
@@ -36,6 +108,7 @@ const bullet = Decoration.replace({ widget: new class extends WidgetType {
 
 function previewDecorations(view) {
 	const { doc, selection } = view.state;
+	const images = view.state.field(attachments);
 	const { from, to } = view.viewport;
 	const decorations = [], lineStyles = new Set();
 	const isActive = node => selection.ranges.some(range => range.from <= node.to && range.to >= node.from);
@@ -49,6 +122,14 @@ function previewDecorations(view) {
 	};
 	view.state.field(parsed).iterate({ from, to, enter(ref) {
 		const { name, node } = ref;
+		if (name === 'Image' || name === 'WikiImage') {
+			const selectionOnImage = view.hasFocus && isActive(node);
+			if (!selectionOnImage && doc.lineAt(node.from).to >= node.to) {
+				const decoration = previewImage(doc, node, images);
+				if (decoration) decorations.push(decoration);
+			}
+			return false;
+		}
 		const heading = /^ATXHeading([1-6])$/u.exec(name);
 		if (heading) line(node.from, Decoration.line({ class: `wujie-editor-h${heading[1]}` }));
 		if (name === 'QuoteMark') line(node.from, quoteStyle);
@@ -81,7 +162,8 @@ function previewDecorations(view) {
 const livePreview = ViewPlugin.fromClass(class {
 	constructor(view) { this.decorations = previewDecorations(view); }
 	update(update) {
-		if (update.docChanged || update.selectionSet || update.viewportChanged)
+		if (update.docChanged || update.selectionSet || update.viewportChanged || update.focusChanged ||
+			update.startState.field(attachments) !== update.state.field(attachments))
 			this.decorations = previewDecorations(update.view);
 	}
 }, { decorations: plugin => plugin.decorations });
@@ -114,13 +196,13 @@ function toggleLines(view, prefix) {
 	view.focus();
 }
 
-export function createSecureEditor(parent, text, { label, onChange, onLimit }) {
+export function createSecureEditor(parent, text, { label, path, onChange, onLimit }) {
 	let replacing = false;
 	const view = new EditorView({
 		parent,
 		root: parent.getRootNode(),
 		state: EditorState.create({ doc: text, extensions: [
-			parsed, livePreview, EditorView.lineWrapping, history(),
+			parsed, attachments, livePreview, EditorView.lineWrapping, history(),
 			keymap.of([
 				{ key: 'Mod-b', run: editor => toggleInline(editor, '**') },
 				{ key: 'Mod-i', run: editor => toggleInline(editor, '*') },
@@ -141,6 +223,7 @@ export function createSecureEditor(parent, text, { label, onChange, onLimit }) {
 	});
 	return {
 		view,
+		setImages(images) { view.dispatch({ effects: setAttachments.of(attachmentLookup(images, path)) }); },
 		format(marker, lines) { if (lines) toggleLines(view, marker); else toggleInline(view, marker); },
 		replace(text) {
 			const before = view.state.doc.toString();

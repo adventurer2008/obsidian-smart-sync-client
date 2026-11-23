@@ -16,7 +16,7 @@ import {
 const failure = error => new Notice(error instanceof Error ? error.message : t('encryption.text02'));
 const button = (area, text, callback) => {
 	const el = area.createEl('button', { text, attr: { type: 'button' } });
-	el.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); callback(); });
+	el.addEventListener('click', event => { event.preventDefault(); event.stopPropagation(); callback(event); });
 	return el;
 };
 const fileIsNote = file => typeof file?.path === 'string' && file.path.toLowerCase().endsWith('.md');
@@ -279,7 +279,7 @@ export class NoteEncryption {
 	renderLock(area, path, marker, box, parentSession) {
 		this.areas.set(area, { path, marker, box, parentSession });
 		area.addClass('wujie-encrypted');
-		area.classList?.toggle('is-open', false); area.classList?.toggle('is-editing', false);
+		area.classList?.remove('is-open', 'is-editing', 'is-unified');
 		const whole = box && box.kind !== 'text';
 		area.classList?.toggle('is-whole-note', Boolean(whole));
 		button(area, whole ? t('encryption.text31') : box ? t('encryption.text32') : t('encryption.text33'), () => {
@@ -300,7 +300,8 @@ export class NoteEncryption {
 		this.closeActions();
 		const unlocked = this.sessions.has(session) && !session.locked;
 		const actions = unlocked ? [
-			[t('encryption.text35'), 'pencil', () => this.editSession(session)], [t('encryption.text36'), 'lock', () => this.lock(session)],
+			...(!session.editor ? [[t('encryption.text35'), 'pencil', () => this.editSession(session)]] : []),
+			[t('encryption.text36'), 'lock', () => this.lock(session)],
 		] : [[t('encryption.text37'), 'unlock', () => this.unlock(session.area, session.path, session.marker, session.box, session.parentSession)]];
 		actions.push([t('encryption.text38'), 'key-round', () => this.changePassword(session)], [t('encryption.text09'), 'unlock', () => this.permanent(session)]);
 		if (Platform.isMobile) { const modal = new EncryptionActions(this, actions); this.actionMenu = modal; modal.open(); return; }
@@ -327,7 +328,9 @@ export class NoteEncryption {
 			const session = { area, path, parentSession, marker: ranges[0].marker, box, key: opened.key, text: manifest?.text ?? opened.text, manifest, attachmentBytes, epoch: this.epoch, lastUse: Date.now(), version: 0, saved: 0 };
 			this.areas.set(area, session);
 			this.sessions.add(session);
-			this.showSession(session);
+			session.unified = !parentSession && box.kind !== 'text' && !lockedRanges(session.text).length;
+			if (session.unified) this.editSession(session, false);
+			else this.showSession(session);
 		}).open();
 	}
 	showSession(session) {
@@ -357,22 +360,38 @@ export class NoteEncryption {
 	async showAttachments(session) {
 		const area = session.attachmentArea = session.area.createSpan({ cls: 'wujie-decrypted-attachments' });
 		const urls = session.urls = new Set();
-		const window = area.ownerDocument.defaultView;
 		for (const entry of session.manifest.entries) {
 			const item = area.createSpan({ cls: 'wujie-decrypted-attachment' });
 			item.createSpan({ text: entry.path });
-			const type = attachmentPreviewType(entry.path);
-			if (!type || !window?.URL?.createObjectURL) continue;
-			try {
-				const clear = await decryptAttachment(session.attachmentBytes, session.box.id, session.key, entry);
-				try {
-					if (session.locked || session.urls !== urls || !item.isConnected) return;
-					const url = window.URL.createObjectURL(new window.Blob([clear], { type }));
-					urls.add(url);
-					item.createEl('img', { attr: { src: url, alt: entry.path, draggable: 'false', loading: 'lazy' } });
-				} finally { clear.fill(0); }
-			} catch (error) { if (!session.locked) failure(error); }
+			const url = await this.attachmentImage(session, entry, urls);
+			if (url && session.urls === urls)
+				item.createEl('img', { attr: { src: url, alt: entry.path, draggable: 'false', loading: 'lazy' } });
 		}
+	}
+	async attachmentImage(session, entry, urls) {
+		const window = session.area.ownerDocument.defaultView;
+		const type = attachmentPreviewType(entry.path);
+		if (!type || session.urls !== urls || session.locked || !window?.URL?.createObjectURL) return;
+		try {
+			const clear = await decryptAttachment(session.attachmentBytes, session.box.id, session.key, entry);
+			try {
+				if (session.urls !== urls || session.locked || !session.area.isConnected) return;
+				const url = window.URL.createObjectURL(new window.Blob([clear], { type }));
+				urls.add(url);
+				return url;
+			} finally { clear.fill(0); }
+		} catch (error) {
+			if (!session.locked && session.urls === urls) failure(error);
+		}
+	}
+	async showInlineAttachments(session) {
+		const editor = session.editor, urls = session.urls = new Set(), images = [];
+		for (const entry of session.manifest.entries) {
+			const url = await this.attachmentImage(session, entry, urls);
+			if (session.urls !== urls || session.locked) return;
+			if (url) images.push({ path: entry.path, url });
+		}
+		if (session.editor === editor) editor.setImages(images);
 	}
 	clearAttachmentPreviews(session) {
 		const url = session.area.ownerDocument.defaultView?.URL;
@@ -459,7 +478,7 @@ export class NoteEncryption {
 					if (session.editor) {
 						session.editor.replace(session.text);
 						this.clearAttachmentPreviews(session);
-						void this.showAttachments(session);
+						void this.showInlineAttachments(session);
 					} else this.showSession(session);
 					session.status?.setText(t('encryption.attachmentsSaved'));
 				} else this.refreshLockedSession(session);
@@ -475,23 +494,30 @@ export class NoteEncryption {
 			if (oldPackage) await this.removeAttachment(oldPackage).catch(failure);
 		});
 	}
-	editSession(session) {
+	editSession(session, focus = true) {
 		if (session.locked) return;
+		if (session.editor) {
+			if (focus) session.editor.view.focus();
+			return;
+		}
 		if ([...this.sessions].some(child => child.parentSession === session))
 			return this.flushChildren(session).then(() => this.editSession(session)).catch(failure);
 		this.clearAttachmentPreviews(session);
 		session.lastUse = Date.now(); session.area.empty();
 		session.area.oncontextmenu = null;
-		session.area.classList?.toggle('is-editing', true);
+		session.area.onpointerdown = session.area.onkeydown = () => { session.lastUse = Date.now(); };
+		session.area.classList?.add('is-open', 'is-editing');
+		session.area.classList?.toggle('is-unified', Boolean(session.unified));
 		const wholeNote = !session.parentSession && session.box.kind !== 'text';
 		const canAttach = wholeNote && !this.owner.data?.settings?.workspace;
-		session.area.createDiv({ text: t(canAttach ? 'encryption.editWithAttachments' :
+		session.area.createDiv({ cls: 'wujie-crypto-edit-hint', text: t(canAttach ? 'encryption.editWithAttachments' :
 			wholeNote ? 'encryption.editConnected' : 'encryption.editTextOnly') });
 		const toolbar = session.area.createDiv({ cls: 'wujie-crypto-formatting' });
 		const editorArea = session.area.createDiv({ cls: 'wujie-crypto-editor' });
 		session.status = session.area.createDiv({ attr: { role: 'status', 'aria-live': 'polite' } });
 		const editor = session.editor = createSecureEditor(editorArea, session.text, {
 			label: t('encryption.text42'),
+			path: session.path,
 			onLimit: () => session.status.setText(t('encryption.editTooLarge', { limit: formatStorageSize(NOTE_LIMIT) })),
 			onChange: text => {
 				if (session.locked) return;
@@ -519,11 +545,15 @@ export class NoteEncryption {
 			action.addEventListener('mousedown', event => event.preventDefault());
 		}
 		if (canAttach) button(toolbar, t('encryption.addAttachments'), () => this.chooseAttachments(session));
+		if (session.unified) {
+			const more = button(toolbar, '⋯', event => this.openActions(session, event));
+			more.setAttribute('aria-label', t('encryption.text34'));
+		}
 		button(session.area, t('encryption.text44'), () => { void this.finishEditing(session); });
 		button(session.area, t('encryption.text36'), () => this.lock(session));
-		if (session.manifest) void this.showAttachments(session);
+		if (session.manifest) void this.showInlineAttachments(session);
 		this.watchRenderedEditor(session);
-		editor.view.focus();
+		if (focus) editor.view.focus();
 	}
 	watchRenderedEditor(session) {
 		if (session.renderObserver || this.widgetViews.has(session.area)) return;
@@ -555,6 +585,10 @@ export class NoteEncryption {
 	async finishEditing(session) {
 		await this.queueSave(session);
 		if (!session.locked && session.saved === session.version) {
+			if (session.unified) {
+				session.editor?.view.contentDOM.blur();
+				return;
+			}
 			this.stopWatchingRenderedEditor(session);
 			session.editor?.destroy();
 			session.editor = undefined;

@@ -1,5 +1,18 @@
 # Cross-platform feature and scenario review
 
+## CHG-20261123-SECURE-NOTE-INLINE-PREVIEW
+
+| Platform | Support and verification |
+| --- | --- |
+| Windows desktop | Conditional on the existing Obsidian editor and Blob URL capability. DOM checks exercise automatic editing on unlock, Markdown and wiki image positions, imported images, completion without a renderer swap, and cleanup on lock. |
+| macOS desktop | Same conditions. Native layout and input are unverified. |
+| Linux desktop | Same conditions. Native layout and input are unverified. |
+| Android | Same conditions. Native scrolling, touch caret placement, input and screen lock are unverified. |
+| iPhone/iOS | Same conditions. Native scrolling, touch caret placement and screen lock are unverified. |
+| iPad/iPadOS | Same conditions. Native scrolling, split view, touch and keyboard input are unverified. |
+
+Only images already in the opened note's encrypted package receive live image previews. Image links never load remote URL content. Multiple references share a session-local Blob URL, and locking revokes the URLs and removes the editor. A whole note with separately encrypted segments retains its existing nested unlock view. Attachment format, encrypted autosave, workspace restrictions, sync, source mtime semantics and rollback compatibility are unchanged.
+
 ## CHG-20261123-SECURE-NOTE-LIVE-PREVIEW
 
 | Platform | Support and verification |

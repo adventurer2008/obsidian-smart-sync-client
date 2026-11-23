@@ -1,5 +1,9 @@
 # Source change record
 
+## Unreleased — CHG-20261123-SECURE-NOTE-INLINE-PREVIEW
+
+Requirement: edit a whole encrypted note directly in its unlocked view and show encrypted images where they are embedded. Use one document surface from unlock through autosave and completion. Place referenced images at their Markdown or wiki embed position using session-local Blob URLs. Preserve nested lock controls where a note contains separately encrypted segments.
+
 ## Unreleased — CHG-20261123-SECURE-NOTE-LIVE-PREVIEW
 
 Requirement: edit encrypted Markdown with formatting visible in place. The secure editor shows common Markdown styles while editing, provides formatting buttons and undo, and keeps the existing encrypted attachment import available. It keeps its Markdown document and edit history in the unlocked session and clears them on lock. Only the existing ciphertext write path writes to the vault.
