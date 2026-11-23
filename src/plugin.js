@@ -58,7 +58,7 @@ import {
 	pairingFault,
 } from './pairing.js';
 import { decryptRecovery, encryptRecovery } from './recovery.js';
-import { routedFetch } from './routing.js';
+import { chinaAuthority, chinaIdentityTimeout, chinaSyncFetch, chinaSyncOrigin, routedFetch } from './routing.js';
 import { sampleVaultSize, LanPeers, intersectDirection, bindLanTransfers, localNoteProvider, receivePeerNote } from './peers.js';
 import { ReceiveCache } from './resume.js';
 import { desktopFiles } from './desktop.js';
@@ -1969,6 +1969,7 @@ export default class IndependentSync extends Plugin {
 	workspaceApi(origin, ...args) {
 		assertEditionOrigin(origin);
 		const api = new WorkspaceApi(origin, ...args);
+		const china = edition.edition === 'cn' && api.origin === chinaSyncOrigin && args[2] === undefined;
 		if (Platform.isAndroidApp === true && supportsAndroidNativeVersion(this.manifest?.version) && args[2] === undefined) {
 			const binding = JSON.stringify([this.data.localId, api.origin, this.data.settings.workspace]);
 			if (this.androidTransport?.binding !== binding) {
@@ -1982,6 +1983,33 @@ export default class IndependentSync extends Plugin {
 				}) };
 			}
 			api.fetcher = this.androidTransport.fetcher;
+		}
+		if (china) {
+			const primary = api.fetcher;
+			const localId = this.data.localId;
+			const binding = JSON.stringify([localId, this.data.settings.workspace, this.androidTransport?.binding]);
+			if (this.chinaTransport?.binding !== binding) {
+				const transports = new Map([[chinaSyncOrigin, primary]]);
+				const getPin = () => this.data[`authority:${chinaSyncOrigin}`];
+				this.chinaTransport = { binding, fetcher: chinaSyncFetch({
+					fetchFor: target => {
+						if (!transports.has(target)) transports.set(target, androidFallback({
+							android: Platform.isAndroidApp === true && supportsAndroidNativeVersion(this.manifest?.version),
+							origin: target, audience: chinaSyncOrigin, requestUrl: ObsidianSdk.requestUrl,
+							getPin: () => getPin() ?? chinaAuthority,
+						}));
+						return transports.get(target);
+					},
+					getPin,
+					getPreferred: () => this.data.chinaSyncPreferredOrigin,
+					savePreferred: async preferred => {
+						if (this.data.localId !== localId || this.chinaTransport?.binding !== binding || this.stopped) return;
+						this.data.chinaSyncPreferredOrigin = preferred;
+						await this.saveData(this.data);
+					},
+				}) };
+			}
+			api.fetcher = this.chinaTransport.fetcher;
 		}
 		return api;
 	}
@@ -2084,6 +2112,7 @@ export default class IndependentSync extends Plugin {
 			signal: api.signal,
 			lan: this.data.settings.lan,
 			fetcher: api.fetcher,
+			identityTimeout: edition.edition === 'cn' && api.origin === chinaSyncOrigin ? chinaIdentityTimeout : undefined,
 			pinned: this.data[pinId],
 			savePin: async (key) => {
 				this.data[pinId] = key;

@@ -1,5 +1,9 @@
 # Source change record
 
+## Unreleased — CHG-20261123-EMPTY-CONFLICT-DIRECTORY
+
+Requirement: remove empty `Smart Sync conflicts` folders left in the file explorer. After successful sync or removal of a configuration recovery copy, prune empty folders under the known configuration recovery tree using non-recursive directory removal. Preserve unresolved copies, copies kept by choice, and folders containing any files. Continue to exclude this recovery directory from upload and remote replay.
+
 ## China Hub Alpha 1.1.9-alpha.6 — CHG-20261123-CONNECTED-NOTE-ATTACHMENTS
 
 Requirement: support whole-note attachment encryption, drag and drop, paste, selection and password-free autosave in both connected and independent vaults. Write the encrypted attachment bytes and Markdown manifest together in the same note so a synchronized revision is complete even when ordinary attachment downloads are disabled. Legacy attachment packages remain readable when present. Importing another attachment converts the note to the self-contained envelope.

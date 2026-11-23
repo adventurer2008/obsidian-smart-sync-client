@@ -1,5 +1,18 @@
 # Cross-platform feature and scenario review
 
+## CHG-20261123-CN-ORIGIN-FAILOVER
+
+| Platform | Support and verification |
+| --- | --- |
+| Windows desktop | HTTPS fallback is implemented. Synthetic signed-identity, timeout, remembered endpoint and ambiguous-write regressions are covered. Native Obsidian and office network acceptance are pending. |
+| macOS desktop | Same HTTPS and persistent plugin data requirements. Native host, suspend and wake unverified. |
+| Linux desktop | Same HTTPS and persistent plugin data requirements. Native desktop acceptance unverified. |
+| Android | Conditional on Obsidian WebView or guarded native HTTPS support. The companion transport tests use a synthetic Android host. Physical background, lock and recovery unverified. |
+| iPhone/iOS | Conditional on WebKit HTTPS and existing plugin data support. Physical background, lock and recovery unverified. |
+| iPad/iPadOS | Conditional on WebKit HTTPS and existing plugin data support. Physical split view, lock and recovery unverified. |
+
+There is no new UI. The endpoint preference is local and the logical account, notebook, encryption and synchronization scopes use the canonical origin. Existing versions still use the canonical endpoint, and rollback requires no data migration. Physical mixed-version and interrupted content/source-mtime acceptance are pending.
+
 ## CHG-20261123-CONNECTED-NOTE-ATTACHMENTS
 
 | Platform | Support and verification |
