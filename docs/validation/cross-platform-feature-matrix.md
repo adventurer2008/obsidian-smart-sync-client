@@ -1,5 +1,18 @@
 # Cross-platform feature and scenario review
 
+## CHG-20261123-SECURE-EDIT-ATTACHMENTS
+
+| Platform | Support and validation |
+| --- | --- |
+| Windows desktop | Conditional on a disconnected vault and Obsidian file selection. Filesystem and DOM regression exercise import, ciphertext, and restore. Native chooser and Navigator right-click remain unverified for this candidate. |
+| macOS desktop | Same conditions. Native chooser and Navigator right-click are unverified. |
+| Linux desktop | Same conditions. Native chooser and Navigator right-click are unverified. |
+| Android | Same conditions. Synthetic testing exercises lock and picker return; native picker and Navigator long press remain unverified. |
+| iPhone/iOS | Same conditions. Native picker, suspend and Navigator long press are unverified. |
+| iPad/iPadOS | Same conditions. Native picker, split view and Navigator long press are unverified. |
+
+A system-picked file is imported as an encrypted copy. The picked original stays in place. Markdown files are treated as notes and excluded from this import. A verified immutable replacement package is written before switching the encrypted note marker. Interruption before the switch preserves the former note and package. An interrupted process can leave an unused ciphertext package. The existing bundle format and password remain usable by Alpha.3. Existing attachments retain their bytes and times on restore, and a new body revision records its actual edit time. Connected vaults and mixed-version attachment synchronization remain outside this feature. Offline use requires a locally readable file. Notebook Navigator requires its file and folder Menus API; the built-in Obsidian menu remains available. There is no account, server or sync format migration.
+
 ## CHG-20261122-ANDROID-WORD-VIEWPORT
 
 | Platform | Word viewport and related regression |

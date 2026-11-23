@@ -8,7 +8,7 @@ import {
 	decodeBox, encodeBox, replaceLocked, TEXT_PREFIX, containsLockedText, NOTE_LIMIT,
 } from './note-crypto.js';
 import {
-	findNoteAttachments, stageNoteAttachments, parseAttachmentManifest, readAttachmentPackage,
+	findNoteAttachments, stageNoteAttachments, stageImportedAttachments, parseAttachmentManifest, readAttachmentPackage,
 	finishAttachmentLock, restoreNoteAttachments, decryptAttachment, attachmentPreviewType, attachmentPackagePath,
 } from './note-attachments.js';
 
@@ -52,6 +52,7 @@ class PasswordWindow extends Modal {
 			});
 		}
 		if (this.titleText === t('encryption.text09')) this.contentEl.createEl('p', { text: t('encryption.text10') });
+		if (this.importedFiles) this.contentEl.createEl('p', { text: t('encryption.importConfirm', { count: this.importedFiles.length }) });
 		this.status = this.contentEl.createDiv({ attr: { role: 'status', 'aria-live': 'polite' } });
 		this.submitButton = button(this.contentEl, this.creating ? t('encryption.text11') : this.titleText, () => { void this.run(); });
 		button(this.contentEl, t('encryption.text12'), () => this.close());
@@ -61,6 +62,7 @@ class PasswordWindow extends Modal {
 		if (this.busy || this.closed) return;
 		if (this.creating && this.password.value !== this.confirm.value) { this.status.setText(t('encryption.text13')); return; }
 		this.busy = true; this.submitButton.disabled = true;
+		if (this.importedFiles) this.status.setText(t('encryption.text43'));
 		const epoch = this.manager.epoch;
 		try {
 			await this.submit(this.password.value, this.hint?.value ?? '', () => !this.closed && this.manager.active(epoch));
@@ -77,6 +79,7 @@ class PasswordWindow extends Modal {
 		if (this.password) this.password.value = '';
 		if (this.confirm) this.confirm.value = '';
 		this.submit = undefined;
+		this.importedFiles = undefined;
 		this.contentEl.empty();
 		this.manager.prompts.delete(this);
 	}
@@ -375,6 +378,97 @@ export class NoteEncryption {
 		for (const value of session.urls ?? []) url?.revokeObjectURL(value);
 		session.urls = undefined;
 	}
+	chooseAttachments(session) {
+		if (session.locked || this.owner.data?.settings?.workspace) return;
+		this.cancelAttachmentPicker?.();
+		const document = session.area.ownerDocument;
+		const picker = document.body.createEl('input', { type: 'file' });
+		picker.multiple = true;
+		picker.hidden = true;
+		const dispose = () => {
+			document.removeEventListener('visibilitychange', selected);
+			picker.remove();
+			if (this.cancelAttachmentPicker === dispose) this.cancelAttachmentPicker = undefined;
+		};
+		const selected = () => {
+			if (document.hidden) return;
+			const files = [...picker.files ?? []];
+			dispose();
+			if (files.length) void this.promptAttachmentImport(session, files).catch(failure);
+		};
+		this.cancelAttachmentPicker = dispose;
+		picker.addEventListener('cancel', dispose, { once: true });
+		picker.addEventListener('change', () => {
+			if (document.hidden) document.addEventListener('visibilitychange', selected);
+			else selected();
+		}, { once: true });
+		picker.click();
+	}
+	async promptAttachmentImport(session, files) {
+		await (session.locked ? session.lockWork : this.queueSave(session));
+		if (this.stopped || !session.area.isConnected || session.saved !== session.version || !this.active(this.epoch)) return;
+		const prompt = new PasswordWindow(this, t('encryption.importAttachments'), session.box, false,
+			(password, _hint, active) => this.importAttachments(session, files, password, active));
+		prompt.importedFiles = files;
+		prompt.open();
+	}
+	async importAttachments(session, files, password, active) {
+		if (session.parentSession || session.box.kind === 'text') throw Error(t('encryption.writeContextChanged'));
+		await this.attachmentOperation(async () => {
+			const { vault } = this.app;
+			const file = vault.getAbstractFileByPath(session.path);
+			const previous = session.box;
+			const revision = session.version;
+			const canCommit = () => active() && session.box === previous && session.version === revision && session.saved === revision;
+			if (!fileIsNote(file) || !canCommit() || await vault.read(file) !== session.marker)
+				throw Error(t('encryption.writeContextChanged'));
+			await this.verifyAttachmentPath(session.path);
+			const opened = await openLocked(previous, password);
+			const manifest = previous.kind === 'bundle' ? parseAttachmentManifest(opened.text) : undefined;
+			if (manifest?.restoring) throw Error(t('encryption.attachmentRestoring'));
+			const prior = manifest && {
+				id: previous.id, key: opened.key, manifest, bytes: await readAttachmentPackage(vault, previous.id, manifest),
+			};
+			let staged, committed = false;
+			try {
+				let key;
+				const next = await createLocked('', password, previous.hint, 'bundle', async (id, newKey) => {
+					key = newKey;
+					staged = await stageImportedAttachments(vault, id, key, manifest?.text ?? opened.text, session.path, files,
+						prior, (path, missing) => this.verifyAttachmentPath(path, missing), canCommit);
+					return staged.value;
+				});
+				for (const entry of staged.manifest.entries.slice(manifest?.entries.length ?? 0)) {
+					if (vault.getAbstractFileByPath(entry.path) || await vault.adapter.exists(entry.path))
+						throw Error(t('encryption.attachmentChanged', { path: entry.path }));
+				}
+				const marker = lockedMarker(next);
+				session.writingMarker = marker;
+				await this.replaceMarker(session, marker, false, canCommit);
+				committed = true;
+				session.box = next; session.marker = marker;
+				for (const other of this.sessions) {
+					if (other !== session && other.path === session.path) void this.lock(other);
+				}
+				if (!session.locked) {
+					session.key = key; session.manifest = staged.manifest; session.attachmentBytes = staged.bytes;
+					session.text = staged.manifest.text;
+					if (session.input) session.input.value = session.text;
+					else this.showSession(session);
+					session.status?.setText(t('encryption.attachmentsSaved'));
+				} else this.refreshLockedSession(session);
+				new Notice(t('encryption.attachmentsSaved'));
+			} finally {
+				session.writingMarker = undefined;
+				if (staged && !committed) {
+					const source = await vault.read(file).catch(() => undefined);
+					if (source === session.marker) await this.removeAttachment(staged.file).catch(failure);
+				}
+			}
+			const oldPackage = manifest && vault.getAbstractFileByPath(attachmentPackagePath(previous.id));
+			if (oldPackage) await this.removeAttachment(oldPackage).catch(failure);
+		});
+	}
 	editSession(session) {
 		if (session.locked) return;
 		if ([...this.sessions].some(child => child.parentSession === session))
@@ -383,7 +477,11 @@ export class NoteEncryption {
 		session.lastUse = Date.now(); session.area.empty();
 		session.area.oncontextmenu = null;
 		session.area.classList?.toggle('is-editing', true);
-		session.area.createDiv({ text: t('encryption.text41') });
+		const wholeNote = !session.parentSession && session.box.kind !== 'text';
+		const canAttach = wholeNote && !this.owner.data?.settings?.workspace;
+		session.area.createDiv({ text: t(canAttach ? 'encryption.editWithAttachments' :
+			wholeNote ? 'encryption.editConnected' : 'encryption.editTextOnly') });
+		if (canAttach) button(session.area, t('encryption.addAttachments'), () => this.chooseAttachments(session));
 		const input = session.area.createEl('textarea', { cls: 'wujie-crypto-editor', attr: { 'aria-label': t('encryption.text42'), maxlength: String(NOTE_LIMIT), spellcheck: 'false', autocomplete: 'off', autocorrect: 'off', autocapitalize: 'off' } });
 		input.value = session.text; session.input = input;
 		session.status = session.area.createDiv({ attr: { role: 'status', 'aria-live': 'polite' } });
@@ -707,7 +805,7 @@ export class NoteEncryption {
 		})().catch(failure); });
 		modal.open();
 	}
-	dispose() { this.lockAll(); this.stopped = true; }
+	dispose() { this.cancelAttachmentPicker?.(); this.lockAll(); this.stopped = true; }
 }
 
 class LockWidget extends WidgetType {
@@ -730,6 +828,7 @@ class LockWidget extends WidgetType {
 	}
 	updateDOM(area) {
 		const current = this.manager.areas.get(area);
+		if (current?.writingMarker === this.marker && this.manager.sessions.has(current) && !current.locked) return true;
 		if (current?.box?.id !== this.box?.id) return false;
 		if (this.manager.sessions.has(current) && !current.locked) {
 			if (current.marker === this.marker || current.writingMarker === this.marker) return true;

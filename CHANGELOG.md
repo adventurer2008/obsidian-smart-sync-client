@@ -1,5 +1,9 @@
 # Source change record
 
+## China Hub Alpha 1.1.9-alpha.4 — CHG-20261123-SECURE-EDIT-ATTACHMENTS
+
+Requirement: add files directly inside secure editing without permanently decrypting the note first. Import encrypted copies after confirming the note password. Keep existing packaged attachments and show accurate scope for whole notes, text selections and connected vaults. Notebook Navigator now shares the Word and EPUB file actions and the new Word folder action.
+
 ## China Hub Alpha 1.1.9-alpha.3 — CHG-20261122-ANDROID-WORD-VIEWPORT
 
 Requirement: fit portrait and landscape Word pages to the available width on mobile so the document is visible without horizontal panning. Retain the editor zoom controls. Use China Hub Alpha.2 as the baseline, including its single unlock control, Word image persistence and Word opening passwords. See the [cross-platform feature matrix](docs/validation/cross-platform-feature-matrix.md).

@@ -85,6 +85,12 @@ const cipherParams = (id, entry, iv) => ({
 	name: 'AES-GCM', iv, additionalData: encoder.encode(JSON.stringify(['wujie-attachment-2', id, entry.path, entry.offset, entry.size, entry.hash])),
 });
 
+async function sealAttachment(bytes, id, key, entry, clear) {
+	const iv = crypto.getRandomValues(new Uint8Array(12));
+	bytes.set(iv, entry.offset);
+	bytes.set(new Uint8Array(await crypto.subtle.encrypt(cipherParams(id, entry, iv), key, clear)), entry.offset + iv.length);
+}
+
 export async function stageNoteAttachments(vault, id, key, text, files, verifyPath = async () => {}) {
 	const total = files.reduce((size, file) => size + file.stat.size, 0);
 	if (total > maxBytes || files.length > maxFiles) throw error('attachmentLimit', { limit: formatStorageSize(maxBytes) });
@@ -99,23 +105,81 @@ export async function stageNoteAttachments(vault, id, key, text, files, verifyPa
 		try {
 			if (clear.length !== size || file.stat.mtime !== mtime || file.path !== path) throw error('attachmentChanged', { path });
 			const entry = { path, offset, size, mtime, ctime, hash: await digest(clear) };
-			const iv = crypto.getRandomValues(new Uint8Array(12));
-			bytes.set(iv, offset);
-			bytes.set(new Uint8Array(await crypto.subtle.encrypt(cipherParams(id, entry, iv), key, clear)), offset + iv.length);
+			await sealAttachment(bytes, id, key, entry, clear);
 			entries.push(entry);
 			offset += size + overhead;
 		} finally { clear.fill(0); }
 	}
+	return writeAttachmentPackage(vault, id, key, text, entries, bytes);
+}
+
+const foldPath = path => path.normalize('NFC').toLowerCase();
+
+export async function stageImportedAttachments(vault, id, key, text, notePath, files, prior, verifyPath, active) {
+	const oldEntries = prior?.manifest.entries ?? [];
+	const total = oldEntries.reduce((size, entry) => size + entry.size, 0) + files.reduce((size, file) => size + file.size, 0);
+	const count = oldEntries.length + files.length;
+	if (!files.length || count > maxFiles || !Number.isSafeInteger(total) || total > maxBytes)
+		throw error('attachmentLimit', { limit: formatStorageSize(maxBytes) });
+	const bytes = new Uint8Array(total + count * overhead);
+	const entries = [...oldEntries];
+	const occupied = new Set([...vault.getFiles().map(file => file.path), ...oldEntries.map(entry => entry.path)].map(foldPath));
+	const directory = notePath.slice(0, notePath.lastIndexOf('/') + 1);
+	const assertActive = () => { if (!active()) throw error('writeContextChanged'); };
+	for (const entry of oldEntries) {
+		assertActive();
+		const clear = await decryptAttachment(prior.bytes, prior.id, prior.key, entry);
+		try { await sealAttachment(bytes, id, key, entry, clear); }
+		finally { clear.fill(0); }
+	}
+	let offset = prior?.manifest.size ?? 0;
+	const links = [];
+	for (const file of files) {
+		assertActive();
+		const name = file.name.normalize('NFC');
+		if (!safePath(name) || /[<>:"|?*/]|[. ]$/u.test(name) || /^[ .]/u.test(name) ||
+			/^(?:con|prn|aux|nul|com[1-9¹²³]|lpt[1-9¹²³])(?:\.|$)/iu.test(name) ||
+			markdown(name) || name.toLowerCase().endsWith('.wujie-lock') || encoder.encode(name).length > 240)
+			throw error('attachmentChanged', { path: name });
+		const dot = name.lastIndexOf('.');
+		const stem = dot < 0 ? name : name.slice(0, dot), extension = dot < 0 ? '' : name.slice(dot);
+		let basename = name, path = directory + basename;
+		for (let suffix = 2; occupied.has(foldPath(path)) || await vault.adapter.exists(path); suffix++) {
+			basename = `${stem}-${suffix}${extension}`;
+			path = directory + basename;
+		}
+		await verifyPath(path, true);
+		const clear = new Uint8Array(await file.arrayBuffer());
+		try {
+			assertActive();
+			if (clear.length !== file.size) throw error('attachmentChanged', { path });
+			const mtime = Number.isSafeInteger(file.lastModified) && file.lastModified >= 0 ? file.lastModified : Date.now();
+			const entry = { path, offset, size: file.size, mtime, ctime: mtime, hash: await digest(clear) };
+			await sealAttachment(bytes, id, key, entry, clear);
+			occupied.add(foldPath(path));
+			entries.push(entry);
+			offset += entry.size + overhead;
+			const image = attachmentPreviewType(path);
+			const label = image ? '' : basename.replace(/[\[\]]/gu, '\\$&');
+			links.push(`${image ? '!' : ''}[${label}](<./${encodeURIComponent(basename)}>)`);
+		} finally { clear.fill(0); }
+	}
+	assertActive();
+	return writeAttachmentPackage(vault, id, key, `${text}${text ? '\n\n' : ''}${links.join('\n')}\n`, entries, bytes);
+}
+
+async function writeAttachmentPackage(vault, id, key, text, entries, bytes) {
 	const value = JSON.stringify({ text, restoring: false, entries });
 	const manifest = parseAttachmentManifest(value);
 	const file = await vault.createBinary(attachmentPackagePath(id), bytes.buffer);
+	let verified;
 	try {
-		await verifyNoteAttachments(vault, id, key, manifest);
+		verified = await verifyNoteAttachments(vault, id, key, manifest);
 	} catch (problem) {
 		await vault.delete(file, true);
 		throw problem;
 	}
-	return { value, manifest, file };
+	return { value, manifest, file, bytes: verified };
 }
 
 export async function readAttachmentPackage(vault, id, manifest) {

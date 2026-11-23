@@ -468,13 +468,14 @@ export function registerDocxEditor(owner) {
 	};
 	if (workspace.onLayoutReady) workspace.onLayoutReady(registerExtension);
 	else registerExtension();
-	owner.registerEvent(workspace.on('file-menu', (menu, file) => {
+	const addFileMenu = (menu, file) => {
 		if (file instanceof TFolder) menu.addItem(item => item.setTitle(t('docx.new')).setIcon('file-plus').onClick(() => create(file)));
 		if (isDocx(file)) {
 			menu.addItem(item => item.setTitle(t('docx.open')).setIcon('file-text').onClick(() => open(file)));
 			if (canProtect) menu.addItem(item => item.setTitle(t('encryption.text11')).setIcon('lock').onClick(() => open(file, true)));
 		}
-	}));
+	};
+	owner.registerEvent(workspace.on('file-menu', addFileMenu));
 	owner.addCommand({ id: 'new-word-document', name: t('docx.new'), callback: () => create(workspace.getActiveFile()?.parent ?? vault.getRoot()) });
 	class DocxPicker extends FuzzySuggestModal {
 		getItems() { return vault.getFiles().filter(isDocx); }
@@ -489,4 +490,5 @@ export function registerDocxEditor(owner) {
 		picker.open();
 	} });
 	owner.register(() => { naming?.close(); picker?.close(); });
+	return addFileMenu;
 }

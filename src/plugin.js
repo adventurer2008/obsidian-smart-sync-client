@@ -782,8 +782,8 @@ export default class IndependentSync extends Plugin {
 			}
 		this.logViews = new Set();
 		registerNoteSearch(this);
-		registerEpubReader(this);
-		registerDocxEditor(this);
+		const addEpubMenu = registerEpubReader(this);
+		const addDocxMenu = registerDocxEditor(this);
 		let translation;
 		if (typeof __SMART_SYNC_CN_TRANSLATION__ === 'undefined' ? edition.edition === 'cn' : __SMART_SYNC_CN_TRANSLATION__) {
 			translation = registerNoteTranslation(this);
@@ -805,8 +805,13 @@ export default class IndependentSync extends Plugin {
 				}
 				addFileMenu(context, context.file, true);
 				encryption.addFileMenu(context, context.file);
+				addDocxMenu?.(context, context.file);
+				addEpubMenu?.(context, context.file);
 			});
-			const disposeFolder = menus?.registerFolderMenu?.(context => addFileMenu(context, context.folder, true));
+			const disposeFolder = menus?.registerFolderMenu?.(context => {
+				addFileMenu(context, context.folder, true);
+				addDocxMenu?.(context, context.folder);
+			});
 			this.disposeNavigatorMenus = () => {
 				disposeFile?.();
 				disposeFolder?.();

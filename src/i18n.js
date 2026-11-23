@@ -1658,6 +1658,13 @@ Object.assign(englishDraft, {
 });
 Object.assign(messages, {
  'encryption.editTooLarge':'超过{limit}，已保留修改前的内容，请缩小范围。',
+ 'encryption.editWithAttachments':'正文会自动加密保存。通过「添加附件」导入的文件会随笔记加密，所选原件会保留。直接输入链接只保存链接文字。',
+ 'encryption.editTextOnly':'此处只自动加密保存选中的正文，输入附件链接不会加密文件。',
+ 'encryption.editConnected':'正文会自动加密保存。添加加密附件目前只在未连接同步工作区的库中开放。',
+ 'encryption.addAttachments':'添加附件',
+ 'encryption.importAttachments':'加密保存附件',
+ 'encryption.importConfirm':'输入笔记密码，将选中的 {count} 个文件作为加密附件保存。所选原件会保留。',
+ 'encryption.attachmentsSaved':'附件已随笔记加密保存。',
  'encryption.attachmentIndex':"笔记或附件索引尚未更新，请保存并稍后重试。",
  'encryption.attachmentMissing':"找不到本地附件「{path}」。请先恢复附件再加密。",
  'encryption.attachmentChanged':"附件「{path}」已变更、路径不可用或有同名文件。请检查后重试。",
@@ -1677,6 +1684,13 @@ Object.assign(messages, {
 });
 Object.assign(englishDraft, {
  'encryption.editTooLarge':'This exceeds {limit}. Your previous content was kept. Reduce the selection and try again.',
+ 'encryption.editWithAttachments':'Text is automatically encrypted when saved. Add attachments imports encrypted copies and leaves the selected originals in place. Typing a link saves only its text.',
+ 'encryption.editTextOnly':'Only the selected text is encrypted here. Typing an attachment link saves only its text.',
+ 'encryption.editConnected':'Text is automatically encrypted when saved. Encrypted attachment imports are available in vaults without a connected sync workspace.',
+ 'encryption.addAttachments':'Add attachments',
+ 'encryption.importAttachments':'Encrypt and save attachments',
+ 'encryption.importConfirm':'Enter the note password to encrypt {count} selected files as attachments. The original files stay in place.',
+ 'encryption.attachmentsSaved':'Attachments were encrypted and saved with the note.',
  'encryption.attachmentIndex':"The note or attachment index is still updating. Save and try again.",
  'encryption.attachmentMissing':"Local attachment “{path}” is missing. Restore it before encrypting the note.",
  'encryption.attachmentChanged':"Attachment “{path}” changed, has an unsupported path, or is blocked by another file. Check it and try again.",
