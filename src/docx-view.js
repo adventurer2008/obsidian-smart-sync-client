@@ -54,12 +54,11 @@ function fitMobilePages(target, ref) {
 	};
 }
 
-export function registerDocxEditor(owner, { syncActive = () => Boolean(owner.running), viewType = bundledViewType } = {}) {
+export function registerDocxEditor(owner, { syncActive = () => Boolean(owner.running), viewType = bundledViewType, openLabel = t('docx.open') } = {}) {
 	const { EditableFileView, FuzzySuggestModal, Modal, Notice, Platform, TFolder } = Obsidian;
 	const { vault, workspace } = owner.app;
 	if (!EditableFileView || !vault.readBinary || !vault.createBinary || !vault.modifyBinary || !workspace.getLeaf) return;
 	const canProtect = Boolean(globalThis.crypto?.subtle);
-	const openLabel = t(edition.id === 'wujie-word' ? 'docx.openStandalone' : 'docx.open');
 	const drafts = new WeakMap();
 
 	async function open(file, protect = false) {

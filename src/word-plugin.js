@@ -14,7 +14,9 @@ export default class WujieWord extends Plugin {
 			const sync = plugins?.['wujie-sync'];
 			// Older releases and the Global edition already supply the editor.
 			if (!addFileMenu && (plugins?.['smart-sync-global'] || sync && !sync.separateWordEditor)) return;
-			addFileMenu ??= registerDocxEditor(this, { syncActive: () => wordSyncActive(workspace), viewType: 'wujie-word-docx' });
+			addFileMenu ??= registerDocxEditor(this, {
+				syncActive: () => wordSyncActive(workspace), viewType: 'wujie-word-docx', openLabel: '打开 Word 文档',
+			});
 			const menus = plugins?.['notebook-navigator']?.api?.menus;
 			if (!addFileMenu || menus === navigatorMenus) return;
 			disposeNavigator?.();

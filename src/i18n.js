@@ -1716,7 +1716,6 @@ Object.assign(englishDraft, {
 });
 Object.assign(messages, {
 	'docx.new': '新建 Word 文档', 'docx.open': '在同步插件中打开 Word 文档', 'docx.find': '查找 Word 文档',
-	'docx.openStandalone': '打开 Word 文档',
 	'docx.name': '文件名', 'docx.create': '创建', 'docx.save': '保存', 'docx.loading': '正在打开 Word 文档…',
 	'docx.ready': '可编辑', 'docx.readOnly': '此文档为只读', 'docx.saving': '正在保存…', 'docx.saved': '已保存',
 	'docx.unsaved': '有未保存的修改', 'docx.invalidName': '请输入有效的文件名。', 'docx.exists': '已存在同名文件。',
@@ -1731,7 +1730,6 @@ Object.assign(messages, {
 });
 Object.assign(englishDraft, {
 	'docx.new': 'Create Word document', 'docx.open': 'Open Word document in the sync plugin', 'docx.find': 'Find Word documents',
-	'docx.openStandalone': 'Open Word document',
 	'docx.name': 'File name', 'docx.create': 'Create', 'docx.save': 'Save', 'docx.loading': 'Opening Word document…',
 	'docx.ready': 'Ready to edit', 'docx.readOnly': 'This document is read-only', 'docx.saving': 'Saving…', 'docx.saved': 'Saved',
 	'docx.unsaved': 'Unsaved changes', 'docx.invalidName': 'Enter a valid file name.', 'docx.exists': 'A file with this name already exists.',
