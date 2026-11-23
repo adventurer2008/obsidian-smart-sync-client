@@ -1,5 +1,11 @@
 # Cross-platform feature and scenario review
 
+## CHG-20261123-COMMUNITY-WORD-SEPARATION
+
+The China sync and Word editor builds target the existing Obsidian API and Safari minimum. The Word editor keeps its desktop and mobile rendering paths and runs offline. The two plugins share local activity signals within the same workspace. Files, passwords, notes, vault identity, and attachment formats require no data migration. After upgrading China Sync, enable the Word editor once and reopen existing Word tabs. The Global build continues to bundle the editor.
+
+Windows, macOS and desktop Linux use the local vault API. Android, iPhone and iPad retain the constrained Word layout and vault adapter path. Native installation, upgrade or rollback, touch and narrow layout, and system suspend or lock remain unverified on each platform. The simulated host covers Navigator menu registration, image drop, password save, and discovery of an active save by the sync component.
+
 ## CHG-20261123-COMMUNITY-119-REVIEW
 
 The packaged ZIP backend uses Promise and timers on Windows, macOS, desktop Linux, Android, iPhone/iOS and iPad/iPadOS. The DOCX editor test uses the actual browser ZIP backend with the isolated host fixture and exercises drag, save, reopen and password protection. Physical device verification remains pending on all six platforms, including touch/narrow layouts and the Windows system tray icon. The smaller tray image applies only to the Windows system tray. No new sync, storage, account, file format or lifecycle path is introduced.

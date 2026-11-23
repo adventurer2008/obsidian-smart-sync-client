@@ -1,5 +1,9 @@
 # Source change record
 
+## Unreleased — CHG-20261123-COMMUNITY-WORD-SEPARATION
+
+Requirement: separate the China Word editor and synchronization builds. Keep encrypted notes, attachments, EPUB, and configuration synchronization in Wujie Sync. The independently enabled Word editor keeps editing, image insertion, Office password protection, and file menus. Preserve save and synchronization ordering within each vault, and exclude both plugin installations from configuration synchronization.
+
 ## Unreleased — CHG-20261123-COMMUNITY-119-REVIEW
 
 Requirement: address the runtime script creation present in the 1.1.9 release and bring main.js below the size reported by Community. Build the DOCX ZIP dependency against native browser Promise and timers. Use a tray-sized copy of the same logo for the existing Windows tray icon.
