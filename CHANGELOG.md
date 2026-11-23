@@ -1,5 +1,9 @@
 # Source change record
 
+## China Hub Alpha 1.1.9-alpha.5 — CHG-20261123-SECURE-ATTACHMENT-SESSION-WORD-DROP
+
+Requirement: import attachments during unlocked note editing without a second password prompt and test it together with dragging images into Word. Secure attachment imports use the unlocked session and encrypt the new package before replacing the note marker. Word accepts PNG, JPEG and GIF files dropped onto an editable page and stores them inside the DOCX with the existing save and password flow. This release keeps the Notebook Navigator actions for note encryption, opening or protecting a Word file, opening EPUB, and creating Word documents from folders.
+
 ## Unreleased — CHG-20261123-SECURE-NOTE-INLINE-PREVIEW
 
 Requirement: edit a whole encrypted note directly in its unlocked view and show encrypted images where they are embedded. Use one document surface from unlock through autosave and completion. Place referenced images at their Markdown or wiki embed position using session-local Blob URLs. Preserve nested lock controls where a note contains separately encrypted segments.

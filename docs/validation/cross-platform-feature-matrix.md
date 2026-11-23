@@ -1,5 +1,18 @@
 # Cross-platform feature and scenario review
 
+## CHG-20261123-SECURE-ATTACHMENT-SESSION-WORD-DROP
+
+| Platform | Secure attachment import | Word image drop |
+| --- | --- | --- |
+| Windows desktop | Conditional on an unlocked whole note in a disconnected vault. Automated tests verify selection, recovery from an interrupted save, source mtime and locking. The user verified that importing an attachment in the isolated Windows Obsidian vault does not prompt again. | File drops require an editable page. Automated Word editor coverage verifies drop position, original embedded bytes, save, reopen and password-protected editing. The user verified that a dragged image remained in the Word document after saving and reopening. |
+| macOS desktop | Same conditions. Finder, clipboard and picker unverified. | Desktop file drop supported when Obsidian exposes a file drag event. Finder interaction unverified. |
+| Linux desktop | Same conditions. File manager, clipboard and picker unverified. | Desktop file drop supported when Obsidian exposes a file drag event. File manager interaction unverified. |
+| Android | Same conditions. Native chooser, foreground recovery, touch and screen lock unverified. | Conditional on a host file drag event. Touch users can use the existing Word image picker. Native selection and width unverified. |
+| iPhone/iOS | Same conditions. Native chooser, foreground recovery, touch and screen lock unverified. | Conditional on a host file drag event. The existing picker remains available. Native interaction unverified. |
+| iPad/iPadOS | Same conditions. Native chooser, split view, foreground recovery and screen lock unverified. | Conditional on a host file drag event. The existing picker remains available. Split-view drag and keyboard usage unverified. |
+
+The wrapping key is a nonextractable Web Crypto key and is cleared on session lock. A chooser that actually backgrounds and locks Obsidian requires a normal unlock and reselect. Failed imports leave the previous note and package in place. Revisions retain the same serialized envelope and password, so no read migration is required for earlier bundle-capable clients. Imports work offline and stay scoped to the active vault. Mixed versions do not affect disconnected note imports. Word uses its existing save path and password container, with no synchronization protocol change. Notebook Navigator still requires its menu API. Its simulated file and folder tests cover dispatch to the selected entry, unsupported targets, and plugin reload. Native Navigator menu acceptance, macOS, Linux and physical mobile checks for this version remain unverified.
+
 ## CHG-20261123-SECURE-NOTE-INLINE-PREVIEW
 
 | Platform | Support and verification |

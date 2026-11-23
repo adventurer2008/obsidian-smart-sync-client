@@ -10,6 +10,7 @@ const expected = [
 	'src/epub.js',
 	'src/epub-view.js',
 	'src/docx.js',
+	'src/docx-drop.js',
 	'src/docx-password.js',
 	'src/docx-view.js',
 	'scripts/docx-browser-node-api.cjs',

@@ -8459,64 +8459,78 @@ const docxPasswordLabels = {
 for (const [language, [protect, password, protectedText]] of Object.entries(docxPasswordLabels))
   Object.assign(catalogs[language], { 'docx.protect': protect, 'docx.password': password, 'docx.protected': protectedText });
 
+const docxImageDropLabels = {
+  de: 'Die Bilder konnten nicht eingefügt werden. Prüfe die Bilddateien und versuche es erneut.',
+  fr: 'Impossible d’insérer les images. Vérifiez les fichiers image et réessayez.',
+  es: 'No se pudieron insertar las imágenes. Comprueba los archivos de imagen e inténtalo de nuevo.',
+  'pt-BR': 'Não foi possível inserir as imagens. Verifique os arquivos de imagem e tente novamente.',
+  ru: 'Не удалось вставить изображения. Проверьте файлы изображений и повторите попытку.',
+  'zh-CN': '无法插入图片。请检查图片文件后重试。',
+  'zh-TW': '無法插入圖片。請檢查圖片檔案後再試一次。',
+  ja: '画像を挿入できませんでした。画像ファイルを確認して、もう一度お試しください。',
+  ko: '이미지를 삽입하지 못했습니다. 이미지 파일을 확인한 후 다시 시도하세요.',
+};
+for (const [language, label] of Object.entries(docxImageDropLabels))
+  catalogs[language]['docx.imageDropFailed'] = label;
+
 const secureAttachmentLabels = {
   'zh-CN': [
-    '正文会自动加密保存。通过「添加附件」导入的文件会随笔记加密，所选原件会保留。直接输入链接只保存链接文字。',
+    '正文会自动加密保存。添加的附件会一起加密保存，所选原件会保留。直接输入链接只保存链接文字。',
     '此处只自动加密保存选中的正文，输入附件链接不会加密文件。',
     '正文会自动加密保存。添加加密附件目前只在未连接同步工作区的库中开放。',
-    '添加附件', '加密保存附件', '输入笔记密码，将选中的 {count} 个文件作为加密附件保存。所选原件会保留。', '附件已随笔记加密保存。',
+    '添加附件', '笔记已锁定。请解锁后重新添加附件。', '正在保存附件，请稍后再添加。', '附件已随笔记加密保存。',
   ],
   'zh-TW': [
     '正文會自動加密儲存。透過「新增附件」匯入的檔案會隨筆記加密，所選原件會保留。直接輸入連結只會儲存連結文字。',
     '此處只會自動加密儲存選取的正文。輸入附件連結不會加密檔案。',
     '正文會自動加密儲存。目前只有未連線至同步工作區的儲存庫可以新增加密附件。',
-    '新增附件', '加密儲存附件', '輸入筆記密碼，將選取的 {count} 個檔案儲存為加密附件。所選原件會保留。', '附件已隨筆記加密儲存。',
+    '新增附件', '筆記已鎖定。請解鎖後重新新增附件。', '附件正在儲存，請稍後再新增。', '附件已隨筆記加密儲存。',
   ],
   ja: [
     '本文は自動的に暗号化して保存されます。「添付ファイルを追加」で暗号化したコピーを取り込みます。元のファイルはそのまま残ります。リンクを入力するとリンクの文字列だけが保存されます。',
     'ここでは選択したテキストだけが暗号化されます。添付リンクを入力しても、ファイルは暗号化されません。',
     '本文は自動的に暗号化して保存されます。暗号化した添付ファイルを追加できるのは、同期ワークスペースに接続していない保管庫です。',
-    '添付ファイルを追加', '添付ファイルを暗号化して保存', 'ノートのパスワードを入力して、選択した {count} 個のファイルを暗号化した添付ファイルとして保存します。元のファイルはそのまま残ります。', '添付ファイルをノートと一緒に暗号化して保存しました。',
+    '添付ファイルを追加', 'ノートはロックされています。ロックを解除してから、添付ファイルを追加し直してください。', '添付ファイルを保存しています。しばらくしてから追加してください。', '添付ファイルをノートと一緒に暗号化して保存しました。',
   ],
   ko: [
     '본문은 자동으로 암호화되어 저장됩니다. ‘첨부 파일 추가’는 암호화된 사본을 가져오며 원본은 그대로 둡니다. 링크를 입력하면 링크 텍스트만 저장됩니다.',
     '여기서는 선택한 텍스트만 암호화됩니다. 첨부 링크를 입력해도 파일은 암호화되지 않습니다.',
     '본문은 자동으로 암호화되어 저장됩니다. 암호화된 첨부 파일은 동기화 작업 공간에 연결되지 않은 보관함에서 추가할 수 있습니다.',
-    '첨부 파일 추가', '첨부 파일 암호화 및 저장', '노트의 암호를 입력해 선택한 파일 {count}개를 암호화된 첨부 파일로 저장하세요. 원본 파일은 그대로 유지됩니다.', '첨부 파일을 노트와 함께 암호화하여 저장했습니다.',
+    '첨부 파일 추가', '노트가 잠겼습니다. 잠금을 해제한 후 첨부 파일을 다시 추가하세요.', '첨부 파일을 저장하고 있습니다. 잠시 후 다시 추가하세요.', '첨부 파일을 노트와 함께 암호화하여 저장했습니다.',
   ],
   de: [
     'Der Text wird beim Speichern automatisch verschlüsselt. „Anhänge hinzufügen“ importiert verschlüsselte Kopien. Die Originaldateien bleiben erhalten. Bei eingegebenen Links wird nur der Linktext gespeichert.',
     'Hier wird nur der ausgewählte Text verschlüsselt. Bei einem eingegebenen Anhangslink wird nur der Linktext gespeichert.',
     'Der Text wird automatisch verschlüsselt gespeichert. Verschlüsselte Anhänge können in Tresoren ohne verbundenen Synchronisierungsarbeitsbereich importiert werden.',
-    'Anhänge hinzufügen', 'Anhänge verschlüsseln und speichern', 'Gib das Kennwort der Notiz ein, um {count} ausgewählte Dateien als verschlüsselte Anhänge zu speichern. Die Originaldateien bleiben erhalten.', 'Die Anhänge wurden mit der Notiz verschlüsselt und gespeichert.',
+    'Anhänge hinzufügen', 'Die Notiz ist gesperrt. Entsperre sie und füge die Anhänge erneut hinzu.', 'Anhänge werden gespeichert. Versuche es gleich noch einmal.', 'Die Anhänge wurden mit der Notiz verschlüsselt und gespeichert.',
   ],
   fr: [
     'Le texte est chiffré automatiquement à l’enregistrement. « Ajouter des pièces jointes » importe des copies chiffrées et conserve les originaux. Si vous saisissez un lien, seul son texte est enregistré.',
     'Seul le texte sélectionné est chiffré ici. Saisir un lien vers une pièce jointe enregistre uniquement le texte du lien.',
     'Le texte est chiffré automatiquement à l’enregistrement. L’importation de pièces jointes chiffrées est disponible dans les coffres sans espace de synchronisation connecté.',
-    'Ajouter des pièces jointes', 'Chiffrer et enregistrer les pièces jointes', 'Saisissez le mot de passe de la note pour enregistrer les {count} fichiers sélectionnés en tant que pièces jointes chiffrées. Les originaux restent en place.', 'Les pièces jointes ont été chiffrées et enregistrées avec la note.',
+    'Ajouter des pièces jointes', 'La note est verrouillée. Déverrouillez-la, puis ajoutez de nouveau les pièces jointes.', 'Les pièces jointes sont en cours d’enregistrement. Réessayez dans un instant.', 'Les pièces jointes ont été chiffrées et enregistrées avec la note.',
   ],
   es: [
     'El texto se cifra automáticamente al guardarlo. «Añadir archivos adjuntos» importa copias cifradas y conserva los originales. Al escribir un enlace, solo se guarda su texto.',
     'Aquí solo se cifra el texto seleccionado. Si escribes un enlace a un archivo adjunto, solo se guarda el texto del enlace.',
     'El texto se cifra automáticamente al guardarlo. Puedes importar archivos adjuntos cifrados en bóvedas sin un espacio de sincronización conectado.',
-    'Añadir archivos adjuntos', 'Cifrar y guardar archivos adjuntos', 'Introduce la contraseña de la nota para guardar los {count} archivos seleccionados como adjuntos cifrados. Los archivos originales permanecen en su ubicación.', 'Los archivos adjuntos se cifraron y guardaron con la nota.',
+    'Añadir archivos adjuntos', 'La nota está bloqueada. Desbloquéala y vuelve a añadir los archivos adjuntos.', 'Se están guardando archivos adjuntos. Inténtalo de nuevo en un momento.', 'Los archivos adjuntos se cifraron y guardaron con la nota.',
   ],
   'pt-BR': [
     'O texto é criptografado automaticamente ao salvar. “Adicionar anexos” importa cópias criptografadas e mantém os originais. Ao digitar um link, apenas o texto dele é salvo.',
     'Apenas o texto selecionado é criptografado aqui. Ao digitar um link de anexo, apenas o texto do link é salvo.',
     'O texto é criptografado automaticamente ao salvar. Você pode importar anexos criptografados em cofres sem um espaço de sincronização conectado.',
-    'Adicionar anexos', 'Criptografar e salvar anexos', 'Informe a senha da nota para salvar os {count} arquivos selecionados como anexos criptografados. Os arquivos originais permanecem no mesmo local.', 'Os anexos foram criptografados e salvos com a nota.',
+    'Adicionar anexos', 'A nota está bloqueada. Desbloqueie-a e adicione os anexos novamente.', 'Os anexos estão sendo salvos. Tente adicionar mais em instantes.', 'Os anexos foram criptografados e salvos com a nota.',
   ],
   ru: [
     'Текст автоматически шифруется при сохранении. Команда «Добавить вложения» импортирует зашифрованные копии и сохраняет исходные файлы. При вводе ссылки сохраняется только её текст.',
     'Здесь шифруется только выделенный текст. При вводе ссылки на вложение сохраняется только текст ссылки.',
     'Текст автоматически шифруется при сохранении. Импорт зашифрованных вложений доступен в хранилищах без подключённого рабочего пространства синхронизации.',
-    'Добавить вложения', 'Зашифровать и сохранить вложения', 'Введите пароль заметки, чтобы сохранить выбранные файлы ({count}) в виде зашифрованных вложений. Исходные файлы останутся на месте.', 'Вложения зашифрованы и сохранены вместе с заметкой.',
+    'Добавить вложения', 'Заметка заблокирована. Разблокируйте её и добавьте вложения снова.', 'Вложения сохраняются. Попробуйте добавить другие через несколько секунд.', 'Вложения зашифрованы и сохранены вместе с заметкой.',
   ],
 };
 const secureAttachmentKeys = ['editWithAttachments', 'editTextOnly', 'editConnected', 'addAttachments',
-  'importAttachments', 'importConfirm', 'attachmentsSaved'];
+  'importLocked', 'attachmentBusy', 'attachmentsSaved'];
 for (const [language, labels] of Object.entries(secureAttachmentLabels))
   secureAttachmentKeys.forEach((key, index) => { catalogs[language][`encryption.${key}`] = labels[index]; });
 

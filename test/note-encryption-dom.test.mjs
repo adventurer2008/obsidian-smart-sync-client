@@ -171,28 +171,24 @@ test('one whole-note file action removes the standalone image and only previews 
 		await manager.finishEditing(session);
 		assert.equal(session.editor.view, sameEditor);
 		manager.editSession(session);
+		const pdf = new File(['private PDF bytes'], 'file name.pdf', { lastModified: photo.stat.mtime });
+		const addedImage = new File([Uint8Array.of(5, 6, 7)], 'new image.png', { lastModified: photo.stat.mtime });
+		const process = vault.process;
+		vault.process = async () => { throw Error('fixture interrupted before marker commit'); };
+		await assert.rejects(manager.saveAttachments(session, [pdf]), /fixture interrupted/u);
+		vault.process = process;
+		assert.equal(disk, range.marker);
+		assert.equal(files.size, 2, 'failed import removes only the uncommitted ciphertext package');
+
 		[...area.querySelectorAll('button')].find(el => el.textContent === '添加附件').click();
 		const picker = document.querySelector('input[type=file]');
 		assert.ok(picker.multiple);
-		const pdf = new File(['private PDF bytes'], 'file name.pdf', { lastModified: photo.stat.mtime });
-		const addedImage = new File([Uint8Array.of(5, 6, 7)], 'new image.png', { lastModified: photo.stat.mtime });
 		Object.defineProperty(picker, 'files', { value: [pdf, addedImage] });
+		const modalCount = modals.length;
 		picker.dispatchEvent(new dom.window.Event('change'));
-		await new Promise(resolve => setImmediate(resolve));
-		const addForm = modals.at(-1);
-		assert.equal(addForm.titleText, '加密保存附件');
-		addForm.password.value = 'wrong password'; await addForm.run();
-		assert.equal(addForm.closed, undefined);
-		assert.equal(disk, range.marker);
-		assert.equal(files.size, 2);
-		const process = vault.process;
-		vault.process = async () => { throw Error('fixture interrupted before marker commit'); };
-		addForm.password.value = password; await addForm.run();
-		vault.process = process;
-		assert.match(addForm.status.textContent, /fixture interrupted/);
-		assert.equal(disk, range.marker);
-		assert.equal(files.size, 2, 'failed import removes only the uncommitted ciphertext package');
-		await submit();
+		assert.ok(session.attachmentWork);
+		await session.attachmentWork;
+		assert.equal(modals.length, modalCount);
 		const [updated] = lockedRanges(disk);
 		assert.notEqual(updated.box.id, range.box.id);
 		assert.equal(files.has('file name.pdf'), false);
@@ -236,7 +232,7 @@ test('real CodeMirror DOM replaces inline and multiline full-note ciphertext wit
 	}
 });
 
-test('the first secure attachment can be saved after the picker backgrounds and locks the note', async () => {
+test('a picker returning after lock cannot import until the note is reopened', async () => {
 	const value = await fixture('note');
 	const vault = value.manager.app.vault;
 	const packages = new Map();
@@ -263,21 +259,29 @@ test('the first secure attachment can be saved after the picker backgrounds and 
 		add.click();
 		const picker = document.querySelector('input[type=file]');
 		const photo = new File([Uint8Array.of(7, 8, 9)], 'photo.png', { lastModified: 123 });
+		const before = value.read(), modalCount = modals.length;
+		assert.equal(session.wrapKey.extractable, false);
 		await value.manager.lock(session);
+		assert.equal(session.wrapKey, undefined);
 		Object.defineProperty(picker, 'files', { value: [photo] });
 		picker.dispatchEvent(new dom.window.Event('change'));
 		await new Promise(resolve => setImmediate(resolve));
-		assert.equal(modals.at(-1).titleText, '加密保存附件');
-		await submit();
+		assert.equal(modals.length, modalCount);
+		assert.equal(value.read(), before);
+		assert.equal(packages.size, 0);
 		assert.equal(value.container.querySelector('.wujie-crypto-editor'), null);
+		value.container.querySelector('button').click(); await submit();
+		const [reopened] = value.manager.sessions;
+		await value.manager.saveAttachments(reopened, [photo]);
 		const [range] = lockedRanges(value.read());
 		assert.equal(range.box.kind, 'bundle');
 		assert.equal(packages.size, 1);
 		assert.equal(packages.has('photo.png'), false);
 		const { text } = await openLocked(range.box, password);
 		assert.match(JSON.parse(text).text, /初始秘密[\s\S]*!\[\]\(<\.\/photo\.png>\)/u);
-		value.container.querySelector('button').click(); await submit();
-		assert.equal([...value.manager.sessions][0].box.id, range.box.id);
+		assert.equal(reopened.box.id, range.box.id);
+		assert.equal(range.box.salt, session.box.salt);
+		await assert.rejects(openLocked(range.box, 'wrong password'));
 	} finally { value.dispose(); await Promise.all(value.manager.pendingWrites); }
 });
 

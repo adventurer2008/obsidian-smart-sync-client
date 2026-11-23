@@ -217,12 +217,29 @@ test('DOCX editor autosaves, preserves images and conflicts, and saves password-
 	(editor.querySelector('p') ?? editor).textContent = 'Saved when switching windows';
 	await waitFor(() => !save.disabled);
 	const picture = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jG2kAAAAASUVORK5CYII=';
-	const pm = view.session.editor.current.getEditorRef().getView();
-	const image = pm.state.schema.nodes.image.create({
-		src: `data:image/png;base64,${picture}`, rId: 'rId_img_fixture', width: 24, height: 24, alt: 'Fixture image',
-	});
-	const pictureParagraph = pm.state.schema.nodes.paragraph.create(null, image);
-	pm.dispatch(pm.state.tr.insert(pm.state.doc.content.size, pictureParagraph));
+	const paged = view.session.editor.current.getEditorRef();
+	const pm = paged.getView();
+	const run = await waitFor(() => [...document.querySelectorAll('.layout-page-content span[data-pm-start][data-pm-end]')]
+		.find(span => span.textContent.includes('Saved when switching windows')));
+	const dropPosition = Number(run.dataset.pmStart);
+	paged.setSelection(pm.state.doc.content.size - 1);
+	document.elementsFromPoint = () => [run, run.closest('.layout-page')];
+	window.Image = class {
+		naturalWidth = 1;
+		naturalHeight = 1;
+		set src(value) { queueMicrotask(() => value.includes(picture) ? this.onload() : this.onerror()); }
+	};
+	const transfer = { types: ['Files'], files: [new window.File([Buffer.from(picture, 'base64')], 'Dropped image.png')] };
+	const dispatchDrag = (target, type) => {
+		const event = new window.MouseEvent(type, { bubbles: true, cancelable: true, clientX: -1 });
+		Object.defineProperty(event, 'dataTransfer', { value: transfer });
+		target.dispatchEvent(event);
+		return event;
+	};
+	assert.equal(dispatchDrag(run, 'dragover').defaultPrevented, true);
+	assert.equal(transfer.dropEffect, 'copy');
+	assert.equal(dispatchDrag(run, 'drop').defaultPrevented, true);
+	await waitFor(() => pm.state.doc.nodeAt(dropPosition)?.type.name === 'image');
 	window.dispatchEvent(new window.Event('blur'));
 	await Promise.resolve();
 	assert.ok(view.session.saving);
@@ -237,7 +254,7 @@ test('DOCX editor autosaves, preserves images and conflicts, and saves password-
 	if (process.env.SMART_SYNC_DOCX_WORD_FIXTURE)
 		await writeFile(process.env.SMART_SYNC_DOCX_WORD_FIXTURE + '-image.docx', new Uint8Array(bytes));
 
-	(editor.querySelector('p') ?? editor).textContent = 'Saved when switching files';
+	pm.dispatch(pm.state.tr.insertText('Saved when switching files', dropPosition + 1, pm.state.doc.content.size - 1));
 	view.file = null;
 	await view.onUnloadFile(file);
 	assert.equal(writes, 3);
@@ -248,7 +265,7 @@ test('DOCX editor autosaves, preserves images and conflicts, and saves password-
 	const nextEditor = document.querySelector('[contenteditable="true"]');
 	const nextSave = document.querySelector('.smart-sync-docx-controls button');
 	assert.ok(nextEditor.textContent.includes('Saved when switching files'));
-	assert.ok(document.querySelector('img[alt="Fixture image"]'));
+	assert.ok(document.querySelector('img[alt="Dropped image.png"]'));
 
 	(nextEditor.querySelector('p') ?? nextEditor).textContent = 'Unsaved local edit';
 	await waitFor(() => !nextSave.disabled);
@@ -292,8 +309,8 @@ test('DOCX editor autosaves, preserves images and conflicts, and saves password-
 	assert.equal(writes, 4);
 	submit(leaf.contentEl.querySelector('.smart-sync-docx-password'), password);
 	await waitFor(() => view.session?.ready);
-	const protectedEditor = document.querySelector('[contenteditable="true"]');
-	(protectedEditor.querySelector('p') ?? protectedEditor).textContent = 'Edited with the opening password';
+	const unlockedView = view.session.editor.current.getEditorRef().getView();
+	unlockedView.dispatch(unlockedView.state.tr.insertText('Edited with the opening password ', dropPosition + 1));
 	await waitFor(() => writes === 5 && view.session.saved === view.session.changes);
 	assert.ok(isPasswordDocx(bytes));
 	assert.equal(secured.stat.mtime, 456);

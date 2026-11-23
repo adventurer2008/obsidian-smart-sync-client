@@ -250,9 +250,9 @@ export function registerDocxEditor(owner) {
 				const protection = passwordRequired ? unlocked.protection : undefined;
 				const editingBuffer = !draft ? base : protection ? await openPasswordDocxWithKey(draft.output, protection, Parser) : draft.output;
 				const inspection = inspectDocx(base, Parser);
-				const [{ DocxEditor }, { createElement, createRef }, { createRoot }, { locales }, { setGoogleFontsEnabled }] = await Promise.all([
+				const [{ DocxEditor }, { createElement, createRef }, { createRoot }, { locales }, { setGoogleFontsEnabled }, { registerDocxImageDrop }] = await Promise.all([
 					import('@eigenpal/docx-editor-react'), import('react'), import('react-dom/client'),
-					import('@eigenpal/docx-editor-i18n'), import('@eigenpal/docx-editor-core'),
+					import('@eigenpal/docx-editor-i18n'), import('@eigenpal/docx-editor-core'), import('./docx-drop.js'),
 				]);
 				if (!current()) return;
 				setGoogleFontsEnabled(false);
@@ -400,6 +400,12 @@ export function registerDocxEditor(owner) {
 					if (document.hidden) void session.flush();
 				}, { signal: events.signal });
 				save.addEventListener('click', () => void saveFile());
+				registerDocxImageDrop(target, {
+					getEditor: () => session.editor.current,
+					canEdit: () => current() && session.ready && !inspection.readOnly && !session.protecting && !session.leaving,
+					current, sourceSize: () => session.buffer.byteLength,
+					report: key => new Notice(t(key)), signal: events.signal,
+				});
 				target.addEventListener('keydown', event => {
 					if (!event.altKey && (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
 						event.preventDefault();

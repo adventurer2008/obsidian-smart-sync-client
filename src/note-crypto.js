@@ -66,13 +66,10 @@ async function wrappingKey(password, box, creating = false) {
 	} finally { bytes.fill(0); }
 }
 async function importDataKey(raw) { return crypto.subtle.importKey('raw', raw, 'AES-GCM', false, ['encrypt', 'decrypt']); }
-async function dataBytes(box, password) {
-	validateBox(box);
-	const key = await wrappingKey(password, box);
+async function dataBytes(box, key) {
 	return new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unbase64(box.wrapIV), additionalData: wrapAAD(box) }, key, unbase64(box.wrappedKey)));
 }
-async function wrap(raw, password, box) {
-	const key = await wrappingKey(password, box, true);
+async function wrap(raw, key, box) {
 	box.wrapIV = base64(random(12));
 	box.wrappedKey = base64(new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv: unbase64(box.wrapIV), additionalData: wrapAAD(box) }, key, raw)));
 }
@@ -94,20 +91,34 @@ export async function createLocked(text, password, hint = '', kind = 'text', pre
 	const raw = random(32);
 	try {
 		const box = { v: kind === 'bundle' ? 2 : 1, kind, id: hex(random(16)), rounds: NOTE_ROUNDS, salt: base64(random(24)), hint };
-		await wrap(raw, password, box);
+		await wrap(raw, await wrappingKey(password, box, true), box);
 		const key = await importDataKey(raw);
 		return await updateLocked(box, key, prepare ? await prepare(box.id, key) : text);
 	} finally { raw.fill(0); }
 }
-export async function openLocked(box, password) {
+export async function createAttachmentRevision(previous, wrapKey, prepare) {
+	const { rounds, salt, hint } = validateBox(previous);
+	const box = { v: 2, kind: 'bundle', id: hex(random(16)), rounds, salt, hint };
+	const raw = random(32);
+	try {
+		await wrap(raw, wrapKey, box);
+		const key = await importDataKey(raw);
+		return await updateLocked(box, key, await prepare(box.id, key));
+	} finally { raw.fill(0); }
+}
+export async function openLocked(box, password, { retainWrappingKey = false } = {}) {
 	let raw, packed, clear;
 	try {
-		raw = await dataBytes(box, password);
+		validateBox(box);
+		const wrapKey = await wrappingKey(password, box);
+		raw = await dataBytes(box, wrapKey);
 		const key = await importDataKey(raw);
 		packed = new Uint8Array(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unbase64(box.iv), additionalData: bodyAAD(box) }, key, unbase64(box.body)));
 		clear = await decompressBytes(packed, box.size);
 		if (clear.length !== box.size) throw fault();
-		return { text: decoder.decode(clear), key };
+		const opened = { text: decoder.decode(clear), key };
+		if (retainWrappingKey) opened.wrapKey = wrapKey;
+		return opened;
 	} catch { throw fault(); }
 	finally { raw?.fill(0); packed?.fill(0); clear?.fill(0); }
 }
@@ -116,10 +127,10 @@ export async function rewrapLocked(box, password, nextPassword, hint = '') {
 	try {
 		// Verify the content as well as the password before changing its protection.
 		await openLocked(box, password);
-		raw = await dataBytes(box, password);
+		raw = await dataBytes(box, await wrappingKey(password, box));
 		if (typeof hint !== 'string' || hint.length > 200) throw fault();
 		const next = { ...box, salt: base64(random(24)), hint };
-		await wrap(raw, nextPassword, next);
+		await wrap(raw, await wrappingKey(nextPassword, next, true), next);
 		return validateBox(next);
 	} finally { raw?.fill(0); }
 }

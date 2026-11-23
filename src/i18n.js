@@ -1658,12 +1658,12 @@ Object.assign(englishDraft, {
 });
 Object.assign(messages, {
  'encryption.editTooLarge':'超过{limit}，已保留修改前的内容，请缩小范围。',
- 'encryption.editWithAttachments':'正文会自动加密保存。通过「添加附件」导入的文件会随笔记加密，所选原件会保留。直接输入链接只保存链接文字。',
+ 'encryption.editWithAttachments':'正文会自动加密保存。添加的附件会一起加密保存，所选原件会保留。直接输入链接只保存链接文字。',
  'encryption.editTextOnly':'此处只自动加密保存选中的正文，输入附件链接不会加密文件。',
  'encryption.editConnected':'正文会自动加密保存。添加加密附件目前只在未连接同步工作区的库中开放。',
  'encryption.addAttachments':'添加附件',
- 'encryption.importAttachments':'加密保存附件',
- 'encryption.importConfirm':'输入笔记密码，将选中的 {count} 个文件作为加密附件保存。所选原件会保留。',
+ 'encryption.importLocked':'笔记已锁定。请解锁后重新添加附件。',
+ 'encryption.attachmentBusy':'正在保存附件，请稍后再添加。',
  'encryption.attachmentsSaved':'附件已随笔记加密保存。',
  'encryption.format.heading':'二级标题',
  'encryption.format.bold':'加粗',
@@ -1694,8 +1694,8 @@ Object.assign(englishDraft, {
  'encryption.editTextOnly':'Only the selected text is encrypted here. Typing an attachment link saves only its text.',
  'encryption.editConnected':'Text is automatically encrypted when saved. Encrypted attachment imports are available in vaults without a connected sync workspace.',
  'encryption.addAttachments':'Add attachments',
- 'encryption.importAttachments':'Encrypt and save attachments',
- 'encryption.importConfirm':'Enter the note password to encrypt {count} selected files as attachments. The original files stay in place.',
+ 'encryption.importLocked':'The note is locked. Unlock it and add the attachments again.',
+ 'encryption.attachmentBusy':'Attachments are being saved. Try adding more in a moment.',
  'encryption.attachmentsSaved':'Attachments were encrypted and saved with the note.',
  'encryption.format.heading':'Heading 2',
  'encryption.format.bold':'Bold',
@@ -1732,6 +1732,7 @@ Object.assign(messages, {
 	'docx.preservation': '保存会影响文档原有内容。原文件未被覆盖。',
 	'docx.conflict': '原文件已更新或移除。请保留此标签页并复制未保存的内容。',
 	'docx.busy': '正在同步或保存另一个 Word 文档，请稍后重试。',
+	'docx.imageDropFailed': '无法插入图片。请检查图片文件后重试。',
 });
 Object.assign(englishDraft, {
 	'docx.new': 'Create Word document', 'docx.open': 'Open Word document in the sync plugin', 'docx.find': 'Find Word documents',
@@ -1745,6 +1746,7 @@ Object.assign(englishDraft, {
 	'docx.preservation': 'Saving would affect existing document content. The original file was kept.',
 	'docx.conflict': 'The file changed or was removed. Keep this tab open and copy your unsaved changes.',
 	'docx.busy': 'Sync or another Word save is in progress. Try again shortly.',
+	'docx.imageDropFailed': 'Could not insert the images. Check the image files and try again.',
 });
 // Missing translations are a release blocker; physical-device acceptance is separate.
 export const missingEnglishKeys = Object.keys(messages).filter(key => !owns(englishDraft, key));
