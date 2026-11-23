@@ -272,5 +272,12 @@ export function desktopFiles(vault, { load, stopped = () => false } = {}) {
 		}
 		if (path.relative(base, target).split(path.sep).join('/') !== input) throw Error('Unsafe attachment path');
 	};
-	return { source, sink, copy, active, prepare, sameEntry, canonicalPath, verifyAttachmentPath };
+	const verifyConflictDirectory = async name => {
+		const input = safePath(name);
+		const target = inside(base, path.resolve(base, input));
+		const root = await fs.realpath(base);
+		const actual = path.relative(root, await fs.realpath(target)).split(path.sep).join('/');
+		if (actual !== input || !(await fs.lstat(target)).isDirectory()) throw Error('Unsafe conflict directory');
+	};
+	return { source, sink, copy, active, prepare, sameEntry, canonicalPath, verifyAttachmentPath, verifyConflictDirectory };
 }

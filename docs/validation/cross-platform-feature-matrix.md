@@ -1,5 +1,20 @@
 # Cross-platform feature and scenario review
 
+## CHG-20261123-EMPTY-CONFLICT-DIRECTORY
+
+| Platform | Support | Acceptance |
+| --- | --- | --- |
+| Windows | Conditional on the Obsidian adapter and desktop directory validation | Temporary filesystem and simulated host verified. Native Obsidian file explorer unverified. |
+| macOS | Conditional on the Obsidian adapter and desktop directory validation | Native Obsidian unverified. |
+| Desktop Linux | Conditional on the Obsidian adapter and desktop directory validation | Native Obsidian unverified. |
+| Android | Conditional on the Obsidian adapter's empty-only removal | Shared adapter path covered by the Windows fixture. Native Android unverified. |
+| iPhone/iOS | Conditional on the Obsidian adapter's empty-only removal | Shared adapter path covered by the Windows fixture. Native iPhone unverified. |
+| iPad/iPadOS | Conditional on the Obsidian adapter's empty-only removal | Shared adapter path covered by the Windows fixture. Native iPad unverified. |
+
+The China and Global clients clean the local recovery tree after a successful sync or removal of a configuration conflict copy. Missing adapter capabilities and filesystem errors leave the directory for a later check. Nonempty branches, retained copies, concurrent arrivals and desktop directory links are protected. The backup path and its sync exclusion remain compatible with older clients. No data migration is required for upgrade or rollback. Cleanup is scoped to the current vault and excludes the configuration directory, ordinary files, credentials, sync progress and source mtime. There is no new control, so narrow layouts and touch are not applicable. Lock, background, reboot and offline recovery were not tested on physical devices. Cleanup requires a completed sync or a local conflict resolution and can be retried after interruption.
+
+Windows Node 26.12.1 ran 408 passing tests, with one paired-service test skipped. Both regional builds and dependency closure checks passed. The local China Community lint command succeeded. No Hub release or production vault change was performed.
+
 ## CHG-20261123-CN-ORIGIN-FAILOVER
 
 | Platform | Support and verification |

@@ -2200,6 +2200,7 @@ export default class IndependentSync extends Plugin {
 			return candidates.length === 1 && await desktop.sameEntry(candidates[0].path, path) ? candidates[0] : null;
 		};
 		const host = {
+			...(desktop ? { verifyConflictDirectory: desktop.verifyConflictDirectory } : {}),
 			...(desktop ? { canonicalPath: async path => {
 				try { return await desktop.canonicalPath(path); }
 				catch (error) { if (error.code === 'ENOENT') throw planChanged(); throw error; }
