@@ -1,5 +1,9 @@
 # Cross-platform feature and scenario review
 
+## CHG-20261124-SMART-WORD-NAME
+
+Smart Word changes the companion manifest display name only. Windows, macOS, Linux, Android, iPhone and iPad retain the existing supported host paths and plugin identity. Native update and display-name acceptance remain unverified on all six platforms.
+
 ## CHG-20261123-COMMUNITY-WORD-SEPARATION
 
 The China sync and Word editor builds target the existing Obsidian API and Safari minimum. The Word editor keeps its desktop and mobile rendering paths and runs offline. The two plugins share local activity signals within the same workspace. Files, passwords, notes, vault identity, and attachment formats require no data migration. After upgrading China Sync, enable the Word editor once and reopen existing Word tabs. The Global build continues to bundle the editor.

@@ -1,5 +1,9 @@
 # Source change record
 
+## Smart Word 1.0.1-alpha.1 — CHG-20261124-SMART-WORD-NAME
+
+Requirement: display the standalone Word editor as Smart Word. Keep the existing plugin identity and editor behavior.
+
 ## Unreleased — CHG-20261123-COMMUNITY-WORD-SEPARATION
 
 Requirement: separate the China Word editor and synchronization builds. Keep encrypted notes, attachments, EPUB, and configuration synchronization in Wujie Sync. The independently enabled Word editor keeps editing, image insertion, Office password protection, and file menus. Preserve save and synchronization ordering within each vault, and exclude both plugin installations from configuration synchronization.
