@@ -160,7 +160,7 @@ export async function stageImportedAttachments(vault, id, key, text, notePath, f
 			entries.push(entry);
 			offset += entry.size + overhead;
 			const image = attachmentPreviewType(path);
-			const label = image ? '' : basename.replace(/[\[\]]/gu, '\\$&');
+			const label = image ? '' : basename.replace(/[[\]]/gu, '\\$&');
 			links.push(`${image ? '!' : ''}[${label}](<./${encodeURIComponent(basename)}>)`);
 		} finally { clear.fill(0); }
 	}
