@@ -138,29 +138,8 @@ export class NoteEncryption {
 	addFileMenu(menu, file) {
 		if (!fileIsNote(file)) return;
 		void this.isWholeNoteLocked(file);
-		if (this.fileLocks.get(file)?.locked) {
-			menu.addItem(item => item.setTitle(t('encryption.trashLockedNote')).setIcon('trash-2').onClick(() => this.confirmTrash(file)));
-		} else {
+		if (!this.fileLocks.get(file)?.locked)
 			menu.addItem(item => item.setTitle(t('encryption.encryptNote')).setIcon('lock').onClick(() => { void this.encryptNote(file).catch(failure); }));
-		}
-	}
-	confirmTrash(file) {
-		const modal = new Modal(this.app);
-		modal.setTitle(t('encryption.trashLockedNote'));
-		modal.contentEl.createEl('p', { text: t('encryption.trashLockedNoteConfirm', { path: file.path }) });
-		const confirm = button(modal.contentEl, t('encryption.trashLockedNote'), () => { void (async () => {
-			confirm.disabled = true;
-			try {
-				if (this.app.vault.getAbstractFileByPath(file.path) !== file || !hasWholeNoteLock(await this.app.vault.read(file)))
-					throw Error(t('encryption.writeContextChanged'));
-				await this.app.fileManager.trashFile(file);
-				modal.close();
-			} catch (error) { failure(error); }
-			finally { confirm.disabled = false; }
-		})(); });
-		confirm.addClass('mod-warning');
-		button(modal.contentEl, t('encryption.text12'), () => modal.close());
-		modal.open();
 	}
 	async listLockedNotes() {
 		const modal = new Modal(this.app);

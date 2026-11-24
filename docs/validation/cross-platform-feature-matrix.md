@@ -1,5 +1,9 @@
 # Cross-platform feature and scenario review
 
+## CHG-20261124-REMOVE-ENCRYPTED-NOTE-TRASH
+
+Windows, macOS, Linux, Android, iPhone and iPad share the same menu code. The extra whole-note action is removed. Obsidian provides the whole-file deletion action. Editor block deletion and the file-tree badge are covered in simulated editor and menu tests. Native menus and touch were not retested. The change does not write note data or affect attachment storage, synchronization, timestamps, keys, connectivity, or lock state. No migration is required for upgrade or rollback.
+
 ## CHG-20261124-ENCRYPTED-NOTE-IMAGE-EXPERIENCE
 
 | Platform | Support | Acceptance |

@@ -539,7 +539,7 @@ test('secure preview shows legacy raster data and leaves file URLs inert until e
 	} finally { value.dispose(); await Promise.all(value.manager.pendingWrites); }
 });
 
-test('encrypted file badge and list identify only whole-note locks and expose a confirmed trash action', async () => {
+test('encrypted file badge and list identify whole-note locks without adding a deletion action', async () => {
 	const value = await fixture('note');
 	const other = { path: 'plain.md' };
 	const explorer = value.container.createDiv();
@@ -547,10 +547,8 @@ test('encrypted file badge and list identify only whole-note locks and expose a 
 	const plain = explorer.createDiv({ cls: 'nav-file-title', attr: { 'data-path': other.path } });
 	const { manager } = value;
 	const { vault } = manager.app;
-	let trashed;
 	vault.getMarkdownFiles = () => [other, value.file];
 	vault.cachedRead = file => file === value.file ? vault.read(file) : Promise.resolve('plain');
-	manager.app.fileManager = { trashFile: async file => { trashed = file; } };
 	try {
 		manager.watchExplorer(explorer);
 		await new Promise(resolve => setTimeout(resolve, 100));
@@ -561,13 +559,9 @@ test('encrypted file badge and list identify only whole-note locks and expose a 
 		modals.at(-1).close();
 		const menu = new (await import('./encryption-dom-sdk.mjs')).Menu();
 		manager.addFileMenu(menu, value.file);
-		assert.equal(menu.items[0].title, '删除加密笔记…');
-		menu.items[0].callback();
-		const prompt = modals.at(-1);
-		assert.equal(trashed, undefined);
-		prompt.contentEl.querySelector('.mod-warning').click();
-		await new Promise(resolve => setImmediate(resolve));
-		assert.equal(trashed, value.file);
+		assert.deepEqual(menu.items, []);
+		manager.addFileMenu(menu, other);
+		assert.deepEqual(menu.items.map(item => item.title), ['加密整篇笔记']);
 	} finally { value.dispose(); await Promise.all(manager.pendingWrites); }
 });
 
