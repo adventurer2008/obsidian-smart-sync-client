@@ -209,8 +209,9 @@
 .wujie-decrypted-attachment img { display:block; max-width:100%; height:auto; }
 .wujie-encrypted.is-whole-note,.wujie-encrypted.is-editing { display:block; }
 /* Live Preview can render the same whole-note block through both the Markdown
-   processor and the source widget. Prefer the rendered control when present. */
-.cm-content:has(.wujie-crypto-rendered-lock.is-whole-note) .wujie-crypto-source-lock.is-whole-note:not(.is-open, .is-editing),
+   processor and the source widget. Keep the standalone block stable as the cursor moves. */
+.cm-content:has(.wujie-crypto-block-lock) .wujie-crypto-rendered-lock.is-whole-note,
+.cm-content:has(.wujie-crypto-rendered-lock.is-whole-note) .wujie-crypto-source-lock.is-whole-note:not(.wujie-crypto-block-lock, .is-open, .is-editing),
 .cm-content:has(.wujie-crypto-source-lock.is-whole-note:is(.is-open, .is-editing)) .wujie-crypto-rendered-lock.is-whole-note {
 	display: none;
 }

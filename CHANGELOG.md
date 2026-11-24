@@ -1,5 +1,9 @@
 # Source change record
 
+## Unreleased — CHG-20261124-LOCKED-NOTE-EDITING
+
+Requirement: prevent accidental removal of encrypted Markdown blocks and plaintext edits around full-note locks, and keep the lock stable when focus or the cursor moves. Keep surrounding text editable for inline encryption. Require the block password for intentional inline removal and keep the plaintext out of the write. Preserve secure edit and attachment saves, external file refresh, and history restore.
+
 ## Smart Word 1.0.1 — CHG-20261124-SMART-WORD-STABLE
 
 Requirement: promote the verified Smart Word Alpha editor to Stable. The existing Word format, editor behavior, plugin ID and minimum host version stay the same.

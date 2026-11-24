@@ -1,5 +1,18 @@
 # Cross-platform feature and scenario review
 
+## CHG-20261124-LOCKED-NOTE-EDITING
+
+| Platform | Support | Acceptance |
+| --- | --- | --- |
+| Windows | Shared Obsidian CodeMirror and vault hooks | Simulated editor, password dialog, and vault paths verified. Isolated native probe returned no result. |
+| macOS | Shared Obsidian CodeMirror and vault hooks | Native Obsidian unverified. |
+| Desktop Linux | Shared Obsidian CodeMirror and vault hooks | Native Obsidian unverified. |
+| Android | Shared editor guard and existing touch action sheet | Simulated mobile action sheet verified. Native touch, keyboard, narrow screen and lock lifecycle unverified. |
+| iPhone/iOS | Shared editor guard and existing touch action sheet | Simulated mobile action sheet verified. Native touch, keyboard, narrow screen and lock lifecycle unverified. |
+| iPad/iPadOS | Shared editor guard and existing touch action sheet | Simulated mobile action sheet verified. Native touch, keyboard, narrow screen and lock lifecycle unverified. |
+
+Tests cover rejected input and deletion, inline surrounding text and undo, password-confirmed inline removal, editing an empty line after unlock, encrypted save, attachment round-trip, and a host refresh checked against its saved baseline. The guard runs offline in each open editor and requires no note-format migration. Intentional deletion uses a new mtime. Password changes and permanent decryption keep their existing preservation path. The change has no native picker or account schema. Cloud history, mixed-version operation, connection recovery, upgrade, rollback, and physical-device focus or composition remain unverified for this candidate. Old clients retain their own editor behavior until upgraded. The guard preserves existing text outside a whole-note marker for recovery.
+
 ## CHG-20261124-SMART-WORD-NAME
 
 Smart Word uses the new `smart-word` plugin ID. Existing document formats and Word save coordination are unchanged. Windows, macOS, Linux, Android, iPhone and iPad retain the same supported host paths. A library can use only one editor to handle `.docx` by default. Native installation and display-name acceptance remain unverified on all six platforms. Released sync versions that predate the new ID may require excluding Smart Word in opt-in plugin file synchronization.

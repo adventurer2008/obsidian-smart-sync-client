@@ -1,5 +1,5 @@
 import { Modal, Menu, Notice, Platform, editorInfoField } from 'obsidian';
-import { StateField, EditorState } from '@codemirror/state';
+import { StateField, EditorState, Prec, Transaction } from '@codemirror/state';
 import { Decoration, EditorView, WidgetType, ViewPlugin } from '@codemirror/view';
 import { formatStorageSize, t } from './i18n.js';
 import { desktopFiles } from './desktop.js';
@@ -53,6 +53,7 @@ class PasswordWindow extends Modal {
 			});
 		}
 		if (this.titleText === t('encryption.text09')) this.contentEl.createEl('p', { text: t('encryption.text10') });
+		if (this.titleText === t('encryption.removeBlock')) this.contentEl.createEl('p', { text: t('encryption.removeBlockConfirm') });
 		this.status = this.contentEl.createDiv({ attr: { role: 'status', 'aria-live': 'polite' } });
 		this.submitButton = button(this.contentEl, this.creating ? t('encryption.text11') : this.titleText, () => { void this.run(); });
 		button(this.contentEl, t('encryption.text12'), () => this.close());
@@ -300,6 +301,7 @@ export class NoteEncryption {
 			[t('encryption.text36'), 'lock', () => this.lock(session)],
 		] : [[t('encryption.text37'), 'unlock', () => this.unlock(session.area, session.path, session.marker, session.box, session.parentSession)]];
 		actions.push([t('encryption.text38'), 'key-round', () => this.changePassword(session)], [t('encryption.text09'), 'unlock', () => this.permanent(session)]);
+		if (session.box.kind === 'text') actions.push([t('encryption.removeBlock'), 'trash-2', () => this.permanent(session, { remove: true })]);
 		if (Platform.isMobile) { const modal = new EncryptionActions(this, actions); this.actionMenu = modal; modal.open(); return; }
 		const menu = new Menu(); this.actionMenu = menu;
 		for (const [title, icon, action] of actions) menu.addItem(item => item.setTitle(title).setIcon(icon).onClick(() => { this.closeActions(); action(); }));
@@ -724,23 +726,25 @@ export class NoteEncryption {
 			}).open();
 		}).open();
 	}
-	permanent(session) {
-		new PasswordWindow(this, t('encryption.text09'), session.box, false, async (password, _hint, active) => {
+	permanent(session, { remove = false } = {}) {
+		if (remove && session.box.kind !== 'text') return;
+		const title = t(remove ? 'encryption.removeBlock' : 'encryption.text09');
+		new PasswordWindow(this, title, session.box, false, async (password, _hint, active) => {
 			await this.flushChildren(session);
 			await this.queueSave(session);
 			if (session.saved !== session.version) throw Error(t('encryption.text59'));
 			const opened = await openLocked(session.box, password);
 			if (session.box.kind === 'bundle') return this.attachmentOperation(() => this.restoreAttachmentBundle(session, opened, active));
-			const { text } = opened;
+			const text = remove ? '' : opened.text;
 			if (!active()) return;
-			const saved = await this.replaceMarker(session, text, true, active);
+			const saved = await this.replaceMarker(session, text, !remove, active);
 			if (!session.parentSession && !containsLockedText(saved)) {
 				for (const state of Object.values(this.owner.data?.connections ?? {})) if (state.localEncryption) delete state.localEncryption[session.path];
 				if (this.owner.data) await this.owner.saveData(this.owner.data);
 			}
 			this.clearSession(session);
 			if (session.parentSession && !session.parentSession.locked) session.area.createSpan({ text });
-			new Notice(t('encryption.text61'));
+			if (!remove) new Notice(t('encryption.text61'));
 		}).open();
 	}
 	async restoreAttachmentBundle(session, opened, active) {
@@ -900,8 +904,8 @@ export class NoteEncryption {
 }
 
 class LockWidget extends WidgetType {
-	constructor(manager, marker, box) { super(); Object.assign(this, { manager, marker, box }); }
-	eq(other) { return other.marker === this.marker && other.manager === this.manager; }
+	constructor(manager, marker, box, block) { super(); Object.assign(this, { manager, marker, box, block }); }
+	eq(other) { return other.marker === this.marker && other.manager === this.manager && other.block === this.block; }
 	toDOM(view) {
 		const file = editorInfoField ? view.state.field(editorInfoField, false)?.file : undefined;
 		// CodeMirror can recreate the widget when Obsidian refreshes the saved
@@ -915,9 +919,11 @@ class LockWidget extends WidgetType {
 		this.manager.widgetViews.set(area, view);
 		this.manager.renderLock(area, file?.path, this.marker, this.box);
 		area.addClass('wujie-crypto-source-lock');
+		area.classList.toggle('wujie-crypto-block-lock', this.block);
 		return area;
 	}
 	updateDOM(area) {
+		if (area.classList.contains('wujie-crypto-block-lock') !== this.block) return false;
 		const current = this.manager.areas.get(area);
 		if (current?.writingMarker === this.marker && this.manager.sessions.has(current) && !current.locked) return true;
 		if (current?.box?.id !== this.box?.id) return false;
@@ -940,27 +946,64 @@ class LockWidget extends WidgetType {
 }
 
 export function encryptionExtension(manager, addSelectionAction) {
-	const decorate = state => Decoration.set(lockedRanges(state.doc.toString()).map(range => Decoration.replace({
-		widget: new LockWidget(manager, range.marker, range.box),
-	}).range(range.from, range.to)), true);
+	const inspect = doc => {
+		const source = doc.toString();
+		const ranges = lockedRanges(source);
+		const isolated = ranges.length === 1 && !ranges[0].marker.startsWith(TEXT_PREFIX) &&
+			!source.slice(0, ranges[0].from).trim() && !source.slice(ranges[0].to).trim();
+		const decorations = Decoration.set(ranges.map(range => Decoration.replace({
+			widget: new LockWidget(manager, range.marker, range.box, isolated),
+			block: isolated,
+		}).range(isolated ? 0 : range.from, isolated ? doc.length : range.to)), true);
+		return { ranges, wholeNote: isolated || ranges.some(({ box }) => box && box.kind !== 'text'), decorations };
+	};
 	const field = StateField.define({
-		create: decorate,
-		update: (value, transaction) => transaction.docChanged ? decorate(transaction.state) : value,
-		provide: value => [EditorView.decorations.from(value), EditorView.atomicRanges.of(view => view.state.field(value))],
+		create: state => inspect(state.doc),
+		update: (value, transaction) => transaction.docChanged ? inspect(transaction.newDoc) : value,
+		provide: value => [
+			EditorView.decorations.from(value, state => state.decorations),
+			EditorView.atomicRanges.of(view => view.state.field(value).decorations),
+			Prec.highest(EditorState.readOnly.computeN([value], state => state.field(value).wholeNote ? [true] : [])),
+			Prec.highest(EditorView.contentAttributes.computeN([value], state => state.field(value).wholeNote
+				? [{ contenteditable: 'false' }] : [])),
+		],
 	});
+	const hostInfo = state => editorInfoField ? state.field(editorInfoField, false) : undefined;
 	const protect = EditorState.transactionFilter.of(transaction => {
 		if (!transaction.docChanged) return transaction;
-		const file = editorInfoField ? transaction.startState.field(editorInfoField, false)?.file : undefined;
-		const permitted = file && manager.viewWrites.get(file);
-		const source = transaction.startState.doc.toString();
-		// Obsidian refreshes the view with a minimal diff, which can be inside a marker.
-		if (permitted?.current === source && permitted.next === transaction.newDoc.toString()) return transaction;
-		let partial = false;
-		const ranges = lockedRanges(source);
+		const { startState, newDoc } = transaction;
+		const { ranges, wholeNote } = startState.field(field);
+		if (!ranges.length) return transaction;
+
+		const info = hostInfo(startState);
+		const allowed = info?.file && manager.viewWrites.get(info.file);
+		const next = newDoc.toString();
+		if (allowed?.current === startState.doc.toString() && allowed.next === next) return transaction;
+		// Obsidian uses "set" both to reload disk data and to mirror edits between panes.
+		// Only a confirmed saved baseline may bypass the lock, including sync/restore.
+		if (info?.file && transaction.annotation(Transaction.userEvent) === 'set' &&
+			info.lastSavedData?.replace(/\r\n/gu, '\n') === next) return transaction;
+		if (wholeNote) return [];
+
+		let touchesLock = false;
 		transaction.changes.iterChangedRanges((from, to) => {
-			if (ranges.some(range => from > range.from && from < range.to || to > range.from && to < range.to)) partial = true;
+			if (ranges.some(range => from < range.to && to > range.from)) touchesLock = true;
 		});
-		return partial ? [] : transaction;
+		return touchesLock ? [] : transaction;
+	});
+	const preserveHistory = EditorState.transactionExtender.of(transaction => {
+		if (!transaction.docChanged) return null;
+		const info = hostInfo(transaction.startState);
+		const { ranges } = transaction.startState.field(field);
+		let insertedLock = false;
+		transaction.changes.iterChanges((_from, _to, _newFrom, _newTo, inserted) => {
+			if (containsLockedText(inserted.toString())) insertedLock = true;
+		});
+		if (insertedLock || ranges.length && (transaction.annotation(Transaction.userEvent) === 'set' ||
+			info?.file && manager.viewWrites.has(info.file))) {
+			return { annotations: Transaction.addToHistory.of(false) };
+		}
+		return null;
 	});
 	const mobile = ViewPlugin.define(view => {
 		let toolbar, disposeSelectionAction;
@@ -973,7 +1016,7 @@ export function encryptionExtension(manager, addSelectionAction) {
 		const update = () => {
 			if (!Platform.isMobile) return;
 			const info = editorInfoField ? view.state.field(editorInfoField, false) : undefined;
-			if (view.state.selection.main.empty || !info?.editor || !fileIsNote(info.file)) { removeToolbar(); return; }
+			if (view.state.readOnly || view.state.selection.main.empty || !info?.editor || !fileIsNote(info.file)) { removeToolbar(); return; }
 			if (toolbar) return;
 			toolbar = view.dom.parentElement.createDiv({ cls: 'wujie-encryption-selection-tools' });
 			const action = button(toolbar, t('encryption.encryptSelection'), () => { void manager.encryptSelection(info.editor, info.file).catch(failure); });
@@ -983,7 +1026,7 @@ export function encryptionExtension(manager, addSelectionAction) {
 		update();
 		return { update, destroy: removeToolbar };
 	});
-	return [field, protect, mobile];
+	return [field, protect, preserveHistory, mobile];
 }
 
 export function registerNoteEncryption(owner, addSelectionAction, addReadingAction) {
