@@ -1,6 +1,6 @@
 # Source change record
 
-## Unreleased — CHG-20261124-ENCRYPTED-NOTE-IMAGE-EXPERIENCE
+## 1.1.12-alpha.2 — CHG-20261124-ENCRYPTED-NOTE-IMAGE-EXPERIENCE
 
 Requirement: preview legacy raster images embedded in encrypted Markdown, insert new files at the caret or drop target, and keep images rendered while selecting ordinary text. Provide an explicit image-source toggle. Warn about external local image references before encrypting. Submit password forms with Enter outside composition, surface idle lock settings beside existing lock controls, and expose a native file-tree lock badge, an encrypted-note list and a separate confirmed trash action. File navigation continues to open the locked note without a password modal.
 
