@@ -197,6 +197,7 @@ for (const connected of [false, true]) test(
 		assert.equal(disk, range.marker);
 		assert.equal(files.size, 1, 'failed import leaves the former encrypted note in place');
 
+		session.editor.view.dispatch({ selection: { anchor: body.indexOf('\n') } });
 		[...area.querySelectorAll('button')].find(el => el.textContent === '添加附件').click();
 		const picker = document.querySelector('input[type=file]');
 		assert.ok(picker.multiple);
@@ -211,6 +212,7 @@ for (const connected of [false, true]) test(
 		assert.equal(files.has('file name.pdf'), false);
 		assert.equal(files.has(`wujie-locked-${range.box.id}.wujie-lock`), false);
 		assert.ok(contents(session.editor.view).includes('[file name.pdf](<./file%20name.pdf>)'));
+		assert.ok(contents(session.editor.view).indexOf('<./new%20image.png>') < contents(session.editor.view).indexOf('private image note'));
 		for (let tries = 0; tries < 20 && !area.querySelector('.wujie-editor-image[alt="new image.png"]'); tries++)
 			await new Promise(resolve => setImmediate(resolve));
 		assert.ok(area.querySelector('.wujie-editor-image[alt="new image.png"]')?.closest('.cm-line'));
@@ -222,7 +224,7 @@ for (const connected of [false, true]) test(
 		assert.equal(files.has(photo.path), false);
 		manager.permanent({ area, path: file.path, marker: updated.marker, box: updated.box, saved: 0, version: 0 });
 		await submit();
-		assert.ok(disk.startsWith(body));
+		assert.ok(disk.startsWith(body.split('\n')[0] + '\n') && disk.endsWith('\nprivate image note'));
 		assert.deepEqual(new Uint8Array(await vault.readBinary(files.get(photo.path))), Uint8Array.of(1, 2, 3, 4));
 		assert.equal(files.get(photo.path).stat.mtime, photo.stat.mtime);
 		assert.equal(new TextDecoder().decode(await vault.readBinary(files.get('file name.pdf'))), 'private PDF bytes');
@@ -296,7 +298,7 @@ test('a picker returning after lock cannot import until the note is reopened', a
 		assert.equal(packages.size, 0);
 		assert.equal(packages.has('photo.png'), false);
 		const { text } = await openLocked(range.box, password);
-		assert.match(JSON.parse(text).text, /初始秘密[\s\S]*!\[\]\(<\.\/photo\.png>\)/u);
+		assert.match(JSON.parse(text).text, /!\[\]\(<\.\/photo\.png>\)[\s\S]*初始秘密/u);
 		assert.equal(reopened.box.id, range.box.id);
 		assert.equal(range.box.salt, session.box.salt);
 		await assert.rejects(openLocked(range.box, 'wrong password'));
@@ -344,7 +346,7 @@ test('adding to an existing sidecar bundle migrates it only after saving the new
 });
 
 test('connected vault drop travels as one note and unlocks with attachments on the second device', async t => {
-	const source = await fixture('note');
+	const source = await fixture('note', 'before drop\nafter drop');
 	let receiver;
 	const image = new File([Uint8Array.of(1, 3, 7)], 'photo.png', { lastModified: 1577836800456 });
 	const pdfContents = '%PDF-1.7\nprivate document bytes\n' + 'a'.repeat(2400000);
@@ -365,9 +367,14 @@ test('connected vault drop travels as one note and unlocks with attachments on t
 		source.container.querySelector('button').click(); await submit();
 		const [session] = source.manager.sessions;
 		assert.ok([...session.area.querySelectorAll('button')].some(control => control.textContent === '添加附件'));
+		const managerView = session.editor.view;
+		managerView.posAtCoords = coordinates => {
+			assert.deepEqual(coordinates, { x: 15, y: 25 });
+			return managerView.state.doc.line(1).to;
+		};
 		const transfer = { types: ['Files'], files: [image, pdf] };
 		const fire = type => {
-			const event = new dom.window.MouseEvent(type, { bubbles: true, cancelable: true });
+			const event = new dom.window.MouseEvent(type, { bubbles: true, cancelable: true, clientX: 15, clientY: 25 });
 			Object.defineProperty(event, 'dataTransfer', { value: transfer });
 			session.editor.view.contentDOM.dispatchEvent(event);
 			return event;
@@ -429,7 +436,7 @@ test('connected vault drop travels as one note and unlocks with attachments on t
 		receiver.manager.app.vault.createBinary = () => assert.fail('Temporary unlock must not create a file');
 		receiver.container.querySelector('button').click(); await submit();
 		const [reopened] = receiver.manager.sessions;
-		assert.match(contents(reopened.editor.view), /report\.pdf/u);
+		assert.match(contents(reopened.editor.view), /^before drop\n!\[\]\(<\.\/photo\.png>\)\n\[report\.pdf\]\(<\.\/report\.pdf>\)\nafter drop$/u);
 		for (let tries = 0; tries < 20 && !receiver.container.querySelector('.wujie-editor-image'); tries++)
 			await new Promise(resolve => setImmediate(resolve));
 		assert.match(receiver.container.querySelector('.wujie-editor-image')?.src ?? '', /^blob:connected-/u);
@@ -501,6 +508,67 @@ test('secure live preview renders formatting in place, keeps Markdown on save an
 		assert.equal(contents(view), '');
 		assert.ok(!value.container.textContent.includes('粗体内容'));
 	} finally { value.dispose(); await Promise.all(value.manager.pendingWrites); }
+});
+
+test('secure preview shows legacy raster data and leaves file URLs inert until explicitly imported', async () => {
+	const data = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR42mNgAAIAAAUAAarVyFEAAAAASUVORK5CYII=';
+	const source = '![](' + data + ')\n\n![](<file:///C:/Temp/legacy.png>)';
+	const value = await fixture('note', source);
+	try {
+		value.container.querySelector('.wujie-encrypted button').click();
+		const prompt = modals.at(-1);
+		prompt.password.value = password;
+		prompt.password.dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: 'Enter', isComposing: true, bubbles: true }));
+		assert.ok(!prompt.busy && !prompt.closed, 'IME confirmation must not submit');
+		prompt.password.dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+		for (let tries = 0; tries < 100 && !prompt.closed; tries++) await new Promise(resolve => setTimeout(resolve, 10));
+		assert.equal(prompt.closed, true);
+		const [session] = value.manager.sessions;
+		const view = session.editor.view;
+		assert.equal(view.dom.querySelector('.wujie-editor-image')?.getAttribute('src'), data, view.contentDOM.innerHTML);
+		assert.equal(view.dom.querySelectorAll('img[src^="file:"]').length, 0);
+		view.dispatch({ selection: { anchor: 0, head: 5 } });
+		assert.equal(view.dom.querySelector('.wujie-editor-image')?.getAttribute('src'), data);
+		const sourceControl = [...session.area.querySelectorAll('button')].find(control => control.textContent === '图片源码');
+		sourceControl.click();
+		assert.equal(view.dom.querySelector('.wujie-editor-image'), null);
+		assert.ok(view.dom.textContent.includes(data));
+		sourceControl.click();
+		assert.equal(view.dom.querySelector('.wujie-editor-image')?.getAttribute('src'), data);
+		assert.equal((await openLocked(lockedRanges(value.read())[0].box, password)).text, source);
+	} finally { value.dispose(); await Promise.all(value.manager.pendingWrites); }
+});
+
+test('encrypted file badge and list identify only whole-note locks and expose a confirmed trash action', async () => {
+	const value = await fixture('note');
+	const other = { path: 'plain.md' };
+	const explorer = value.container.createDiv();
+	const row = explorer.createDiv({ cls: 'nav-file-title', attr: { 'data-path': value.file.path } });
+	const plain = explorer.createDiv({ cls: 'nav-file-title', attr: { 'data-path': other.path } });
+	const { manager } = value;
+	const { vault } = manager.app;
+	let trashed;
+	vault.getMarkdownFiles = () => [other, value.file];
+	vault.cachedRead = file => file === value.file ? vault.read(file) : Promise.resolve('plain');
+	manager.app.fileManager = { trashFile: async file => { trashed = file; } };
+	try {
+		manager.watchExplorer(explorer);
+		await new Promise(resolve => setTimeout(resolve, 100));
+		assert.ok(row.classList.contains('wujie-locked-file'));
+		assert.ok(!plain.classList.contains('wujie-locked-file'));
+		await manager.listLockedNotes();
+		assert.deepEqual([...modals.at(-1).contentEl.querySelectorAll('button')].map(button => button.textContent), [value.file.path]);
+		modals.at(-1).close();
+		const menu = new (await import('./encryption-dom-sdk.mjs')).Menu();
+		manager.addFileMenu(menu, value.file);
+		assert.equal(menu.items[0].title, '删除加密笔记…');
+		menu.items[0].callback();
+		const prompt = modals.at(-1);
+		assert.equal(trashed, undefined);
+		prompt.contentEl.querySelector('.mod-warning').click();
+		await new Promise(resolve => setImmediate(resolve));
+		assert.equal(trashed, value.file);
+	} finally { value.dispose(); await Promise.all(manager.pendingWrites); }
 });
 
 test('encrypted autosave refreshes a stale host editor and still refuses new surrounding edits', async () => {

@@ -199,6 +199,14 @@
 .wujie-crypto-form label { display:flex; flex-direction:column; gap:6px; }
 .wujie-crypto-form input { width:100%; min-width:0; }
 .wujie-crypto-form p { color:var(--text-muted); font-size:var(--font-ui-small); line-height:1.6; }
+.nav-file-title.wujie-locked-file::after {
+	content: '🔒';
+	flex: none;
+	margin-inline-start: 0.35em;
+	font-size: var(--font-ui-smaller);
+}
+.wujie-locked-note-list { display: grid; gap: 0.4em; }
+.wujie-locked-note-list > button { white-space: normal; height: auto; text-align: start; }
 .wujie-encrypted { display:inline; max-width:100%; vertical-align:baseline; white-space:normal; border-radius:4px; }
 .wujie-encrypted > button { display:inline-flex; align-items:center; height:24px; min-height:0; padding:1px 7px; border:0; border-radius:4px; background:var(--background-secondary); color:var(--text-muted); box-shadow:none; font-size:var(--font-ui-small); vertical-align:baseline; }
 .wujie-encrypted > button:hover { background:var(--background-modifier-hover); color:var(--text-normal); }

@@ -9,7 +9,7 @@ import {
 	decodeBox, encodeBox, replaceLocked, TEXT_PREFIX, containsLockedText, NOTE_LIMIT, NOTE_DRAFT_LIMIT,
 } from './note-crypto.js';
 import {
-	findNoteAttachments, stageNoteAttachments, stageImportedAttachments, parseAttachmentManifest, readAttachmentPackage,
+	findNoteAttachments, stageNoteAttachments, stageImportedAttachments, attachmentInsertion, parseAttachmentManifest, readAttachmentPackage,
 	finishAttachmentLock, verifyNoteAttachments, restoreNoteAttachments, decryptAttachment, attachmentPreviewType, attachmentPackagePath,
 } from './note-attachments.js';
 
@@ -21,6 +21,8 @@ const button = (area, text, callback) => {
 };
 const fileIsNote = file => typeof file?.path === 'string' && file.path.toLowerCase().endsWith('.md');
 const safeId = id => typeof id === 'string' && /^[a-f0-9]{32}$/u.test(id);
+const hasWholeNoteLock = text => text.includes('```wujie-encrypted') &&
+	lockedRanges(text).some(range => range.box && range.box.kind !== 'text');
 
 class PasswordWindow extends Modal {
 	constructor(manager, title, box, creating, submit) {
@@ -33,7 +35,12 @@ class PasswordWindow extends Modal {
 		this.contentEl.addClass('wujie-crypto-form');
 		const field = (label, type, max) => {
 			const row = this.contentEl.createEl('label', { text: label });
-			const input = row.createEl('input', { type, attr: { 'aria-label': label, maxlength: String(max), autocomplete: type === 'password' ? 'off' : 'off', autocapitalize: 'off', spellcheck: 'false' } });
+			const input = row.createEl('input', { type, attr: { 'aria-label': label, maxlength: String(max), autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false' } });
+			input.addEventListener('keydown', event => {
+				if (event.key !== 'Enter' || event.isComposing || event.keyCode === 229) return;
+				event.preventDefault(); event.stopPropagation();
+				void this.run();
+			});
 			return input;
 		};
 		this.password = field(this.creating ? t('encryption.text03') : t('encryption.text04'), 'password', 1024);
@@ -42,6 +49,7 @@ class PasswordWindow extends Modal {
 			this.hint = field(t('encryption.text06'), 'text', 200);
 			this.hint.value = this.box?.hint ?? '';
 			this.contentEl.createEl('p', { text: t('encryption.text07') });
+			if (this.externalImages) this.contentEl.createEl('p', { text: t('encryption.externalImageNotice') });
 			if (this.attachments?.length) {
 				this.contentEl.createEl('p', { text: t('encryption.attachmentConfirm', { count: this.attachments.length }) });
 				const list = this.contentEl.createEl('ul');
@@ -107,11 +115,100 @@ export class NoteEncryption {
 		this.widgetViews = new WeakMap();
 		this.volatileDrafts = new Map();
 		this.removingAttachments = new Set();
+		this.fileLocks = new WeakMap();
+		this.badgedRows = new Set();
 		this.recoveryDir = `${this.app.vault.configDir}/plugins/${owner.manifest.id}/encrypted-drafts`;
 	}
-	addFileMenu(menu, file) {
-		if (fileIsNote(file)) menu.addItem(item => item.setTitle(t('encryption.encryptNote')).setIcon('lock').onClick(() => { void this.encryptNote(file).catch(failure); }));
+	async isWholeNoteLocked(file) {
+		if (!fileIsNote(file)) return false;
+		let item = this.fileLocks.get(file);
+		if (!item) {
+			item = {};
+			item.ready = Promise.resolve().then(() => this.app.vault.cachedRead?.(file) ?? this.app.vault.read(file)).then(text => {
+				item.locked = hasWholeNoteLock(text);
+				return item.locked;
+			}).catch(() => {
+				if (this.fileLocks.get(file) === item) this.fileLocks.delete(file);
+				return false;
+			});
+			this.fileLocks.set(file, item);
+		}
+		return item.ready;
 	}
+	addFileMenu(menu, file) {
+		if (!fileIsNote(file)) return;
+		void this.isWholeNoteLocked(file);
+		if (this.fileLocks.get(file)?.locked) {
+			menu.addItem(item => item.setTitle(t('encryption.trashLockedNote')).setIcon('trash-2').onClick(() => this.confirmTrash(file)));
+		} else {
+			menu.addItem(item => item.setTitle(t('encryption.encryptNote')).setIcon('lock').onClick(() => { void this.encryptNote(file).catch(failure); }));
+		}
+	}
+	confirmTrash(file) {
+		const modal = new Modal(this.app);
+		modal.setTitle(t('encryption.trashLockedNote'));
+		modal.contentEl.createEl('p', { text: t('encryption.trashLockedNoteConfirm', { path: file.path }) });
+		const confirm = button(modal.contentEl, t('encryption.trashLockedNote'), () => { void (async () => {
+			confirm.disabled = true;
+			try {
+				if (this.app.vault.getAbstractFileByPath(file.path) !== file || !hasWholeNoteLock(await this.app.vault.read(file)))
+					throw Error(t('encryption.writeContextChanged'));
+				await this.app.fileManager.trashFile(file);
+				modal.close();
+			} catch (error) { failure(error); }
+			finally { confirm.disabled = false; }
+		})(); });
+		confirm.addClass('mod-warning');
+		button(modal.contentEl, t('encryption.text12'), () => modal.close());
+		modal.open();
+	}
+	async listLockedNotes() {
+		const modal = new Modal(this.app);
+		modal.setTitle(t('encryption.listLockedNotes'));
+		const results = modal.contentEl.createDiv({ cls: 'wujie-locked-note-list' });
+		const status = results.createDiv({ text: t('encryption.checkingLockedNotes'), attr: { role: 'status' } });
+		modal.open();
+		let count = 0;
+		for (const file of this.app.vault.getMarkdownFiles().sort((a, b) => a.path.localeCompare(b.path))) {
+			if (this.stopped || !results.isConnected) return;
+			if (!await this.isWholeNoteLocked(file) || !results.isConnected) continue;
+			count++;
+			button(results, file.path, () => { modal.close(); void this.app.workspace.getLeaf(false).openFile(file).catch(failure); });
+		}
+		if (count) status.remove();
+		else status.setText(t('encryption.noLockedNotes'));
+	}
+	watchExplorer(container) {
+		if (!container || !container.ownerDocument?.defaultView?.MutationObserver) return;
+		const selector = '.nav-file-title[data-path]';
+		const update = () => {
+			this.explorerTimer = undefined;
+			for (const row of this.badgedRows) if (!row.isConnected) this.badgedRows.delete(row);
+			for (const row of container.querySelectorAll(selector)) {
+				const path = row.dataset.path;
+				const file = this.app.vault.getAbstractFileByPath(path);
+				if (!fileIsNote(file)) { row.classList.remove('wujie-locked-file'); this.badgedRows.delete(row); continue; }
+				const status = this.isWholeNoteLocked(file);
+				const snapshot = this.fileLocks.get(file);
+				void status.then(locked => {
+					if (this.stopped || !row.isConnected || row.dataset.path !== path || this.fileLocks.get(file) !== snapshot) return;
+					row.classList.toggle('wujie-locked-file', locked);
+					if (locked) this.badgedRows.add(row);
+					else this.badgedRows.delete(row);
+				});
+			}
+		};
+		const refresh = this.refreshExplorer = () => {
+			if (this.explorerTimer === undefined) this.explorerTimer = setTimeout(update, 60);
+		};
+		this.explorerObserver = new container.ownerDocument.defaultView.MutationObserver(records => {
+			const hasRow = node => node.nodeType === 1 && (node.matches(selector) || node.querySelector(selector));
+			if (records.some(record => record.type === 'attributes' || [...record.addedNodes, ...record.removedNodes].some(hasRow))) refresh();
+		});
+		this.explorerObserver.observe(container, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-path'] });
+		refresh();
+	}
+
 	active(epoch) { return !this.stopped && epoch === this.epoch && !this.document?.hidden; }
 	async capture(file, editor) {
 		if (!fileIsNote(file)) throw Error(t('encryption.text16'));
@@ -208,6 +305,7 @@ export class NoteEncryption {
 			await this.convert(snapshot, next, active);
 		});
 		prompt.attachments = attachments;
+		prompt.externalImages = kind === 'note' && /!\[[^\]\r\n]*\]\(\s*<?file:/iu.test(original);
 		prompt.open();
 	}
 	async attachmentOperation(task) {
@@ -406,6 +504,8 @@ export class NoteEncryption {
 		if (session.locked || !session.wrapKey) return;
 		this.cancelAttachmentPicker?.();
 		const document = session.area.ownerDocument;
+		const position = session.editor?.view.state.selection.main.head ?? session.text.length;
+		const revision = session.version;
 		const picker = document.body.createEl('input', { type: 'file' });
 		picker.multiple = true;
 		picker.hidden = true;
@@ -418,7 +518,9 @@ export class NoteEncryption {
 			if (document.hidden) return;
 			const files = [...picker.files ?? []];
 			dispose();
-			if (files.length) void this.saveAttachments(session, files).catch(failure);
+			if (!files.length) return;
+			if (session.version !== revision) { failure(Error(t('encryption.writeContextChanged'))); return; }
+			void this.saveAttachments(session, files, position).catch(failure);
 		};
 		this.cancelAttachmentPicker = dispose;
 		picker.addEventListener('cancel', dispose, { once: true });
@@ -428,20 +530,22 @@ export class NoteEncryption {
 		}, { once: true });
 		picker.click();
 	}
-	async saveAttachments(session, files) {
+	async saveAttachments(session, files, position = session.editor?.view.state.selection.main.head ?? session.text.length) {
 		const active = () => !session.locked && session.area.isConnected && this.active(session.epoch);
 		if (!active() || !session.wrapKey) throw Error(t('encryption.importLocked'));
 		if (session.attachmentWork) throw Error(t('encryption.attachmentBusy'));
 		const saving = this.queueSave(session);
+		const insertion = session.attachmentInsertion = { position };
 		const work = saving.then(() => {
 			if (!active()) throw Error(t('encryption.importLocked'));
 			session.status?.setText(t('encryption.text43'));
-			return this.importAttachments(session, files, active);
+			return this.importAttachments(session, files, active, insertion);
 		}).catch(error => {
 			if (active() && session.saved === session.version) session.status?.setText('');
 			throw error;
 		}).finally(() => {
 			session.attachmentWork = undefined;
+			session.attachmentInsertion = undefined;
 			this.pendingWrites.delete(work);
 			if (!session.locked && session.saved !== session.version) void this.queueSave(session);
 		});
@@ -449,7 +553,7 @@ export class NoteEncryption {
 		this.pendingWrites.add(work);
 		return work;
 	}
-	async importAttachments(session, files, active) {
+	async importAttachments(session, files, active, insertion) {
 		await this.attachmentOperation(async () => {
 			const { vault } = this.app;
 			const file = vault.getAbstractFileByPath(session.path);
@@ -471,7 +575,7 @@ export class NoteEncryption {
 				const next = await createAttachmentRevision(previous, wrapKey, async (id, newKey) => {
 					key = newKey;
 					staged = await stageImportedAttachments(vault, id, key, text, session.path, files,
-						prior, (path, missing) => this.verifyAttachmentPath(path, missing), canCommit);
+						prior, (path, missing) => this.verifyAttachmentPath(path, missing), canCommit, insertion.position);
 					return staged;
 				});
 				for (const entry of staged.manifest.entries.slice(manifest?.entries.length ?? 0)) {
@@ -487,16 +591,18 @@ export class NoteEncryption {
 					if (other !== session && other.path === session.path) void this.lock(other);
 				}
 				const unchanged = session.version === revision;
+				const { position } = insertion;
+				const inserted = attachmentInsertion(session.text, position, staged.links);
 				if (!session.locked || !unchanged) {
 					session.key = key;
 					session.manifest = staged.manifest;
-					// Preserve edits made while the host completes the marker swap.
-					session.text = unchanged ? staged.manifest.text : session.text + '\n\n' + staged.manifest.text.slice(text.length).trimStart();
+					// The insertion tracks intervening edits while the saved marker is refreshed.
+					session.text = session.text.slice(0, position) + inserted + session.text.slice(position);
 				}
 				if (!session.locked) {
 					session.attachmentBytes = staged.bytes;
 					if (session.editor) {
-						session.editor.replace(session.text);
+						session.editor.insertAttachmentText(position, inserted);
 						this.clearAttachmentPreviews(session);
 						void this.showInlineAttachments(session);
 					} else this.showSession(session);
@@ -534,17 +640,19 @@ export class NoteEncryption {
 			label: t('encryption.text42'),
 			path: session.path,
 			onLimit: () => session.status.setText(t('encryption.editTooLarge', { limit: formatStorageSize(NOTE_LIMIT) })),
-			onChange: text => {
+			onChange: (text, changes) => {
 				if (session.locked) return;
+				const insertion = session.attachmentInsertion;
+				if (insertion) insertion.position = changes.mapPos(insertion.position, 1);
 				session.text = text; session.version++; session.lastUse = Date.now();
 				session.status.setText(t('encryption.text43')); this.queueSave(session);
 			},
 		});
-		const importFiles = (event, files) => {
+		const importFiles = (event, files, position) => {
 			if (!files?.length) return;
 			event.preventDefault();
 			event.stopPropagation();
-			if (canAttach) void this.saveAttachments(session, [...files]).catch(failure);
+			if (canAttach) void this.saveAttachments(session, [...files], position).catch(failure);
 			else new Notice(t('encryption.editTextOnly'));
 		};
 		editorArea.addEventListener('paste', event => importFiles(event, event.clipboardData?.files), true);
@@ -554,7 +662,11 @@ export class NoteEncryption {
 			event.stopPropagation();
 			event.dataTransfer.dropEffect = 'copy';
 		}, true);
-		editorArea.addEventListener('drop', event => importFiles(event, event.dataTransfer?.files), true);
+		editorArea.addEventListener('drop', event => {
+			const position = event.dataTransfer?.files?.length && Number.isFinite(event.clientX) && Number.isFinite(event.clientY)
+				? editor.view.posAtCoords({ x: event.clientX, y: event.clientY }, false) : undefined;
+			importFiles(event, event.dataTransfer?.files, position ?? undefined);
+		}, true);
 		const formats = [
 			['H2', 'heading', '## ', true], ['B', 'bold', '**'], ['I', 'italic', '*'],
 			['•', 'list', '- ', true], ['❝', 'quote', '> ', true], ['</>', 'code', '`'],
@@ -566,12 +678,17 @@ export class NoteEncryption {
 			action.addEventListener('mousedown', event => event.preventDefault());
 		}
 		if (canAttach) button(toolbar, t('encryption.addAttachments'), () => this.chooseAttachments(session));
+		const imageSource = button(toolbar, t('encryption.imageSource'), () => {
+			imageSource.setAttribute('aria-pressed', String(editor.toggleImageSource()));
+		});
+		imageSource.setAttribute('aria-pressed', 'false');
 		if (session.unified) {
 			const more = button(toolbar, '⋯', event => this.openActions(session, event));
 			more.setAttribute('aria-label', t('encryption.text34'));
 		}
 		button(session.area, t('encryption.text44'), () => { void this.finishEditing(session); });
 		button(session.area, t('encryption.text36'), () => this.lock(session));
+		button(session.area, t('encryption.text70'), () => this.settings());
 		if (session.manifest) void this.showInlineAttachments(session);
 		this.watchRenderedEditor(session);
 		if (focus) editor.view.focus();
@@ -900,7 +1017,13 @@ export class NoteEncryption {
 		})().catch(failure); });
 		modal.open();
 	}
-	dispose() { this.cancelAttachmentPicker?.(); this.lockAll(); this.stopped = true; }
+	dispose() {
+		this.cancelAttachmentPicker?.(); this.lockAll(); this.stopped = true;
+		this.explorerObserver?.disconnect();
+		clearTimeout(this.explorerTimer);
+		for (const row of this.badgedRows) row.classList.remove('wujie-locked-file');
+		this.badgedRows.clear();
+	}
 }
 
 class LockWidget extends WidgetType {
@@ -1039,12 +1162,14 @@ export function registerNoteEncryption(owner, addSelectionAction, addReadingActi
 	owner.lockEncryptedNotes = () => manager.lockAll();
 	owner.recoverEncryptedDrafts = () => manager.recoverDrafts().catch(failure);
 	owner.noteEncryptionSettings = () => manager.settings();
+	owner.listEncryptedNotes = () => manager.listLockedNotes().catch(failure);
 	for (const [id, name, method] of [
 		['encrypt-selected-text', t('encryption.encryptSelection'), 'encryptSelectedText'],
 		['encrypt-whole-note', t('encryption.encryptNote'), 'encryptWholeNote'],
 		['lock-encrypted-notes', t('encryption.text80'), 'lockEncryptedNotes'],
 		['recover-encrypted-drafts', t('encryption.text65'), 'recoverEncryptedDrafts'],
 		['note-encryption-settings', t('encryption.text70'), 'noteEncryptionSettings'],
+		['list-encrypted-notes', t('encryption.listLockedNotes'), 'listEncryptedNotes'],
 	]) owner.addCommand({ id, name, callback: () => owner[method]() });
 	const workspace = owner.app.workspace;
 	if (workspace.on) {
@@ -1055,10 +1180,13 @@ export function registerNoteEncryption(owner, addSelectionAction, addReadingActi
 		owner.registerEvent(workspace.on('file-menu', (menu, file) => manager.addFileMenu(menu, file)));
 		owner.registerEvent(workspace.on('layout-change', () => manager.sweep()));
 	}
-	if (owner.app.vault.on) for (const event of ['rename', 'delete']) owner.registerEvent(owner.app.vault.on(event, file => {
-		if (event !== 'delete' || !manager.removingAttachments.has(file)) manager.lockAll();
+	if (owner.app.vault.on) for (const event of ['create', 'modify', 'rename', 'delete']) owner.registerEvent(owner.app.vault.on(event, file => {
+		manager.fileLocks.delete(file);
+		manager.refreshExplorer?.();
+		if (event === 'rename' || event === 'delete' && !manager.removingAttachments.has(file)) manager.lockAll();
 	}));
 	manager.document = workspace.containerEl?.ownerDocument;
+	manager.watchExplorer(workspace.containerEl);
 	if (manager.document && owner.registerDomEvent) {
 		owner.registerDomEvent(manager.document, 'contextmenu', event => manager.readingMenu(event), true);
 		owner.registerDomEvent(manager.document, 'visibilitychange', () => { if (manager.document.hidden) manager.lockAll(); });

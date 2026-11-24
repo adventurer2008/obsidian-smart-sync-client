@@ -1,5 +1,18 @@
 # Cross-platform feature and scenario review
 
+## CHG-20261124-ENCRYPTED-NOTE-IMAGE-EXPERIENCE
+
+| Platform | Support | Acceptance |
+| --- | --- | --- |
+| Windows | Shared editor, file picker, native file-tree badges and local drag/drop | Automated editor coverage. Native vault, mouse, IME and file-tree acceptance pending. |
+| macOS | Shared editor, file picker, native file-tree badges and local drag/drop | Native acceptance pending. |
+| Linux desktop | Shared editor, file picker, native file-tree badges and local drag/drop | Native acceptance pending. |
+| Android | Shared editor and supported host file picker; drop only where the host supplies a file event | Native touch, mobile file picker, list and background behavior unverified. |
+| iPhone/iOS | Shared editor and supported host file picker; drop only where the host supplies a file event | Native touch, mobile file picker, list and background behavior unverified. |
+| iPad/iPadOS | Shared editor and supported host file picker; drop only where the host supplies a file event | Native touch and pointer, split view, mobile file picker, list and background behavior unverified. |
+
+Embedded raster previews load from decrypted note memory. Local file URL references are left inert and retain their Markdown. The encrypted-note list appears in the command palette. Tree badges use native row attributes when present. The separate confirmed action uses the host trash API and leaves Obsidian's built-in delete path available. Notebook Navigator uses the shared context-menu integration. No new note format or account settings are required. Existing attachment tests check encrypted package bytes, retention of source mtime and a two-device fixture. Physical devices, network interruption, mixed versions, upgrade and rollback remain unverified.
+
 ## CHG-20261124-LOCKED-NOTE-EDITING
 
 | Platform | Support | Acceptance |

@@ -1,5 +1,9 @@
 # Source change record
 
+## Unreleased — CHG-20261124-ENCRYPTED-NOTE-IMAGE-EXPERIENCE
+
+Requirement: preview legacy raster images embedded in encrypted Markdown, insert new files at the caret or drop target, and keep images rendered while selecting ordinary text. Provide an explicit image-source toggle. Warn about external local image references before encrypting. Submit password forms with Enter outside composition, surface idle lock settings beside existing lock controls, and expose a native file-tree lock badge, an encrypted-note list and a separate confirmed trash action. File navigation continues to open the locked note without a password modal.
+
 ## 1.1.12-alpha.1 — CHG-20261124-LOCKED-NOTE-EDITING
 
 Requirement: prevent accidental removal of encrypted Markdown blocks and plaintext edits around full-note locks, and keep the lock stable when focus or the cursor moves. Keep surrounding text editable for inline encryption. Require the block password for intentional inline removal and keep the plaintext out of the write. Preserve secure edit and attachment saves, external file refresh, and history restore.
