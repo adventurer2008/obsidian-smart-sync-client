@@ -20,7 +20,6 @@ npm test
 npm run build:all
 npm run check:editions
 npm ci --prefix tools/community-lint --ignore-scripts
-npm run build:cn
 npm run check:community
 ```
 
