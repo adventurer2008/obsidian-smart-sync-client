@@ -1,5 +1,9 @@
 # Source change record
 
+## 1.1.12 — CHG-20261125-CN-1112-STABLE
+
+Requirement: promote the encrypted-note protections and editing improvements from China Hub 1.1.12-alpha.3 to China Stable.
+
 ## 1.1.12-alpha.3 — CHG-20261124-REMOVE-ENCRYPTED-NOTE-TRASH
 
 Requirement: remove the extra whole-note deletion entry and its confirmation dialog from shared file menus. Preserve the file-tree badge, encrypted-note list, and password confirmation for deleting an encrypted block in the editor.
