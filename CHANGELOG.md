@@ -1,6 +1,6 @@
 # Source change record
 
-## Unreleased — CHG-20261126-CN-PAIRING-CLOSE-ENROLLMENT
+## 1.1.14-alpha.1 — CHG-20261126-CN-PAIRING-CLOSE-ENROLLMENT
 
 Requirement: after a device applies a verified pairing configuration from the login dialog, dismiss that dialog along with the pairing prompts and return to settings. Keep the connection dialog available after failure or cancellation.
 
