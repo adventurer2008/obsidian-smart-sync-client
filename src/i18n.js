@@ -1093,6 +1093,9 @@ export const englishDraft = {
 	'overview.moreAccountHelp':
 		'Delete the account and all cloud data; the original login key becomes invalid',
 	'overview.accountSearch': 'Sign in, request access and sign out',
+	'firstUse.title': 'Get started with Smart Sync',
+	'firstUse.free': 'Start for free',
+	'firstUse.paid': 'View paid plans',
 	'billing.openPlans': 'Choose a plan and open an account',
 	'billing.browserHelp': 'If your browser did not open, tap the link below to continue.',
 	'billing.openBrowser': 'Open plans in browser',

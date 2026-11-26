@@ -953,3 +953,25 @@
 	margin-inline: 16px;
 	align-self: start;
 }
+
+.smart-sync-global-ui .setting-item.smart-sync-global-access {
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  margin: 8px 0;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 12px;
+  background: var(--background-secondary);
+}
+.smart-sync-global-ui .smart-sync-global-access > .setting-item-info,
+.smart-sync-global-ui .smart-sync-global-access > .setting-item-control {
+  flex: 1 0 100%;
+  margin: 0;
+}
+.smart-sync-global-ui .smart-sync-global-access > .setting-item-control {
+  justify-content: flex-start;
+  gap: 8px;
+}
+@media (max-width: 480px) {
+  .smart-sync-global-ui .smart-sync-global-access > .setting-item-control button { flex: 1 0 100%; }
+}

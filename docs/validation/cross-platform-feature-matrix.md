@@ -617,3 +617,16 @@ Windows, macOS, Linux desktop, Android, iPhone/iOS and iPad/iPadOS remain condit
 The user reports Alpha.6 testing passed and authorizes Stable 1.1.8. No platform or device details were supplied, so this is user Alpha acceptance without a six-platform certification. This promotion changes version metadata only; synchronization, pairing protocol and native capabilities are unchanged. Windows, macOS, desktop Linux, Android, iPhone/iOS and iPad/iPadOS retain their documented conditional support and existing native verification gaps. Background/lock/restart, offline recovery, mixed-device real pairing and native Hub installation are not newly marked passed. Preserve local configuration, encryption keys, checkpoints, vault isolation and source modification times; existing rollback limitations remain.
 
 CHG-20261121-GLOBAL-1110-STABLE: Global production release includes the shared local EPUB reader, local Markdown search acceleration, reduced polling while scanning unchanged files, Notebook Navigator menu support and sidebar/status/language improvements. Windows, macOS, Linux desktop, Android, iPhone/iOS and iPad/iPadOS are conditionally supported by their existing runtime capability checks. New Global physical-device acceptance is unverified on all six platforms. Existing China user feedback is limited to its recorded China package and device. Synthetic Windows/Linux tests, responsive browser checks and isolated live Global synchronization checks are recorded separately in the private release receipt. Verify Markdown priority, source mtime, encrypted markers, identity/vault separation and repeated idle synchronization. No storage format migration is introduced. Upgrade/rollback retains local settings and vault data. EPUB is read-only local parsing with size limits and sanitized content. Desktop-only actions retain existing mobile guards. Offline/background/native host acceptance remains unverified for this Global package.
+
+## Global first-use entry — CHG-20261126-GLOBAL-FIRST-USE
+
+| Platform | Support and acceptance |
+| --- | --- |
+| Windows desktop | Supported. Sign-in and plan actions covered by synthetic tests; native Obsidian and browser handoff unverified. |
+| macOS desktop | Supported through the same browser and in-app email routes; native acceptance unverified. |
+| Linux desktop | Supported through the same browser and in-app email routes; native acceptance unverified. |
+| Android | Supported with touch-sized controls and the existing external browser fallback; physical-device acceptance unverified. |
+| iPhone / iOS | Supported with touch-sized controls and the existing external browser fallback; physical-device acceptance unverified. |
+| iPad / iPadOS | Supported including narrow layouts; physical-device acceptance unverified. |
+
+First-use actions use the existing sign-in lifecycle, browser return, and retry handling. The public plan route needs a network connection. Background, lock-screen, restart and offline recovery remain unverified on physical devices. Mixed-version peers use the existing shared service. Vault isolation, sync payloads and original modification times are outside this UI change. Rolling back restores the former entries without a data migration.

@@ -1,6 +1,9 @@
 // CHG-20261106-GLOBAL-I18N: initial translations; native-language review pending.
 export const catalogs = {
   "zh-CN": {
+    "firstUse.title": "开始使用 Smart Sync",
+    "firstUse.free": "免费开通",
+    "firstUse.paid": "查看付费套餐",
     "epub.open": "用同步插件阅读 EPUB",
     "epub.find": "输入 EPUB 文件名",
     "epub.loading": "正在打开 EPUB…",
@@ -915,6 +918,9 @@ export const catalogs = {
     "literal:Access ends: {date}": "访问结束：{date}"
   },
   "zh-TW": {
+    "firstUse.title": "開始使用 Smart Sync",
+    "firstUse.free": "免費開通",
+    "firstUse.paid": "查看付費方案",
     "epub.open": "用同步外掛閱讀 EPUB",
     "epub.find": "輸入 EPUB 檔案名稱",
     "epub.loading": "正在開啟 EPUB…",
@@ -1829,6 +1835,9 @@ export const catalogs = {
     "literal:Access ends: {date}": "訪問結束：{date}"
   },
   "ja": {
+    "firstUse.title": "Smart Sync を始める",
+    "firstUse.free": "無料で始める",
+    "firstUse.paid": "有料プランを見る",
     "epub.open": "同期プラグインで EPUB を読む",
     "epub.find": "EPUB ファイルを検索",
     "epub.loading": "EPUB を開いています…",
@@ -2743,6 +2752,9 @@ export const catalogs = {
     "literal:Access ends: {date}": "アクセス終了: {date}"
   },
   "ko": {
+    "firstUse.title": "Smart Sync 시작하기",
+    "firstUse.free": "무료로 시작하기",
+    "firstUse.paid": "유료 요금제 보기",
     "epub.open": "동기화 플러그인에서 EPUB 읽기",
     "epub.find": "EPUB 파일 찾기",
     "epub.loading": "EPUB 여는 중…",
@@ -3657,6 +3669,9 @@ export const catalogs = {
     "literal:Access ends: {date}": "액세스 종료: {date}"
   },
   "de": {
+    "firstUse.title": "Mit Smart Sync starten",
+    "firstUse.free": "Kostenlos starten",
+    "firstUse.paid": "Kostenpflichtige Tarife ansehen",
     "epub.open": "EPUB im Sync-Plugin lesen",
     "epub.find": "EPUB-Datei suchen",
     "epub.loading": "EPUB wird geöffnet…",
@@ -4571,6 +4586,9 @@ export const catalogs = {
     "literal:Access ends: {date}": "Zugriff endet: {date}"
   },
   "fr": {
+    "firstUse.title": "Commencer avec Smart Sync",
+    "firstUse.free": "Commencer gratuitement",
+    "firstUse.paid": "Voir les offres payantes",
     "epub.open": "Lire un EPUB dans le module de synchronisation",
     "epub.find": "Rechercher un fichier EPUB",
     "epub.loading": "Ouverture de l’EPUB…",
@@ -5485,6 +5503,9 @@ export const catalogs = {
     "literal:Access ends: {date}": "Extrémités d'accès : {date}"
   },
   "es": {
+    "firstUse.title": "Empieza con Smart Sync",
+    "firstUse.free": "Empezar gratis",
+    "firstUse.paid": "Ver planes de pago",
     "epub.open": "Leer EPUB en el complemento de sincronización",
     "epub.find": "Buscar un archivo EPUB",
     "epub.loading": "Abriendo EPUB…",
@@ -6399,6 +6420,9 @@ export const catalogs = {
     "literal:Access ends: {date}": "Extremos de acceso: {date}"
   },
   "pt-BR": {
+    "firstUse.title": "Comece com o Smart Sync",
+    "firstUse.free": "Começar gratuitamente",
+    "firstUse.paid": "Ver planos pagos",
     "epub.open": "Ler EPUB no plugin de sincronização",
     "epub.find": "Buscar um arquivo EPUB",
     "epub.loading": "Abrindo EPUB…",
@@ -7313,6 +7337,9 @@ export const catalogs = {
     "literal:Access ends: {date}": "Fim do acesso: {date}"
   },
   "ru": {
+    "firstUse.title": "Начало работы со Smart Sync",
+    "firstUse.free": "Начать бесплатно",
+    "firstUse.paid": "Посмотреть платные тарифы",
     "epub.open": "Читать EPUB в плагине синхронизации",
     "epub.find": "Найти файл EPUB",
     "epub.loading": "Открытие EPUB…",

@@ -1,3 +1,7 @@
+# Global 1.1.11-alpha.1 — CHG-20261126-GLOBAL-FIRST-USE
+
+Requirement: make free enrollment, existing-account sign-in, and paid plans immediately available to signed-out Global users in settings and Sync now. Free enrollment uses the existing Google, GitHub, or email sign-in flow. Users may view public plans before signing in. Account onboarding still leads to vault selection.
+
 # Global Stable 1.1.10 — CHG-20261121-GLOBAL-1110-STABLE
 
 Requirement: deliver the unpublished shared Client features to Global production. Includes local EPUB reading, faster local Markdown search, reduced remote polling during unchanged scans while retaining Markdown priority, Notebook Navigator menus, sidebar restoration, desktop status feedback and language menu ordering. China-only selection translation stays edition-gated. Candidate incorporates the reviewed shared synchronization changes from the canonical public working tree. Physical Global device acceptance remains pending.

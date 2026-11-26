@@ -208,6 +208,13 @@ export function bindManualSyncAction(setting, plugin) {
  refreshStop();
  return () => { disposed = true; window.clearInterval(timer); plugin.statusListeners.delete(refreshStop); status.remove(); };
 }
+function globalFirstUseActions(plugin) {
+	return [
+		['firstUse.free', () => plugin.globalEnrollment(false, true)],
+		['billing.existing', () => plugin.enrollment()],
+		['firstUse.paid', () => plugin.openBilling(undefined, false, true)],
+	];
+}
 function action(container, label, callback) {
 	bindAction(new Setting(container), label, callback);
 }
@@ -2760,15 +2767,19 @@ export default class IndependentSync extends Plugin {
 			const binding = () => JSON.stringify([this.data.localId, this.data.settings.origin, this.data.settings.workspace, this.secret('account'), this.secret('access')]);
 			const expected = binding();
 			const live = () => !this.stopped && !this.stopping && !this.connecting && !this.running && binding() === expected;
-			const dialog = new ChoiceWindow(this.app, t('billing.setupTitle'), area => {
-				area.createEl('p', { text: t('billing.setupHelp') });
+			const global = edition.edition === 'global';
+			const dialog = new ChoiceWindow(this.app, t(global ? 'firstUse.title' : 'billing.setupTitle'), area => {
+				area.createEl('p', { text: t(global ? 'auth.help' : 'billing.setupHelp') });
 				const proceed = async callback => {
 					if (this.syncSetupWindow !== dialog || !live()) { dialog.close(); return; }
 					dialog.close();
 					await callback();
 				};
-				action(area, t('billing.buy'), () => proceed(() => this.openBilling()));
-				action(area, t('billing.existing'), () => proceed(() => this.enrollment()));
+				const actions = global ? globalFirstUseActions(this) : [
+					['billing.buy', () => this.openBilling()],
+					['billing.existing', () => this.enrollment()],
+				];
+				for (const [label, callback] of actions) action(area, t(label), () => proceed(callback));
 			});
 			dialog.onClose = () => {
 				dialog.contentEl.empty();
@@ -3746,14 +3757,14 @@ export default class IndependentSync extends Plugin {
 		if(!live())throw Error('Sign-in context changed');
 		return account;
 	}
-	globalEnrollment(reauth=false) {
+	globalEnrollment(reauth=false,firstUse=false) {
 		let closed=false,checking=false,starting=false,completed=false,timer,flow;
 		const accountKey=()=>this.secret?.('account')||this.secret?.('access')||'';
 		let expectedAccount=accountKey(),authorized;
 		let retryAt=0,retryDelay=2500,terminalFailure=false;
 		const stopPolling=()=>{window.clearInterval(timer);timer=undefined;};
 		let stopWatching=()=>{};
-		const dialog=new ChoiceWindow(this.app,t(reauth?'auth.reauth.title':'auth.title'),area=>{
+		const dialog=new ChoiceWindow(this.app,t(reauth ? 'auth.reauth.title' : firstUse ? 'firstUse.free' : 'auth.title'),area=>{
 			area.classList.add('smart-sync-auth');
 			const mark=area.createDiv({cls:'smart-sync-auth-mark',text:'∞'});mark.setAttribute('aria-hidden','true');
 			area.createEl('p',{text:t(reauth?'auth.reauth.intro':'auth.intro'),cls:'smart-sync-auth-intro'});
@@ -4026,11 +4037,11 @@ export default class IndependentSync extends Plugin {
 			throw error;
 		}
 	}
-	async openBilling(orderId,prepareOnly=false) {
+	async openBilling(orderId,prepareOnly=false,previewPublicPlans=false) {
 		if (!['cn','global'].includes(edition.edition)) return;
 		const localId = this.data.localId, origin = new URL(this.data.settings.origin).origin;
 		const guest = !this.secret('account') && !this.secret('access');
-		if(guest&&edition.edition==='global')return prepareOnly?undefined:this.enrollment();
+		if (guest && edition.edition === 'global' && !previewPublicPlans) return prepareOnly ? undefined : this.enrollment();
 		const billingIdentity = this.secret('account') || this.secret('access');
 		const live = () => !this.stopped && localId === this.data.localId && origin === new URL(this.data.settings.origin).origin && billingIdentity === (this.secret('account') || this.secret('access'));
 		const purchaseBase = regionalServices(edition, origin).purchase;
@@ -4063,6 +4074,10 @@ export default class IndependentSync extends Plugin {
 				this.billingHandoffCleanupRegistered=true;
 			}
 		};
+		if (guest && edition.edition === 'global') {
+			if (live()) openEntry(purchaseBase + '/plans');
+			return;
+		}
 		const prepared=this.preparedBillingEntry;
 		if(canPrepare&&prepared&&prepared.expires>Date.now()&&prepared.live()){
 			if(prepareOnly)return;
@@ -5318,6 +5333,7 @@ export class IndependentSettings extends PluginSettingTab {
 			`${plugin.data.settings.origin}|${plugin.data.settings.workspace}|${plugin.data.localId}`;
 		const scopeKey = identityScope();
 		const accountConnected = connected || plugin.accountAuthorized === true;
+		const globalWelcome = edition.edition === 'global' && !accountConnected;
 		const status = row(t('sections.status'), (setting) => {
 			let disposed = false;
 			let phase = plugin.overviewStatusText ?? plugin.status.textContent ?? plugin.status.text ?? t('sections.disconnected');
@@ -5425,7 +5441,7 @@ export class IndependentSettings extends PluginSettingTab {
 			accountConnected ? 'overview.emailUnavailable' : 'overview.signedOut',
 			accountConnected
 				? [['msg_cd2d74373d', 'signOut']]
-				: [
+				: globalWelcome ? [] : [
 						['overview.login', 'enrollment'],
 						...(edition.edition === 'cn' ? [] : [['overview.apply', 'requestAccess']]),
 					],
@@ -5465,7 +5481,7 @@ export class IndependentSettings extends PluginSettingTab {
 				details?.remove();
 			};
 		});
-		const billing = ['cn','global'].includes(edition.edition) ? row(t('billing.myPlan'), setting => {
+		const billing = !globalWelcome && ['cn','global'].includes(edition.edition) ? row(t('billing.myPlan'), setting => {
 			const credential = plugin.secret('account') || plugin.secret('access');
 			return mountBillingCard(setting, {
 				connected: accountConnected, load: async () => {
@@ -5536,6 +5552,20 @@ export class IndependentSettings extends PluginSettingTab {
 		});
 		return [
 			...header.map(present),
+			...(globalWelcome ? [present(row(t('firstUse.title'), setting => {
+				setting.settingEl?.classList.add('smart-sync-global-access');
+				setting.setDesc(t('auth.help'));
+				for (const [index, [label, callback]] of globalFirstUseActions(plugin).entries()) {
+					setting.addButton(button => {
+						button.setButtonText(t(label));
+						if (index === 0) button.setCta();
+						button.onClick(async () => {
+							if (plugin.stopped || identityScope() !== scopeKey || plugin.accountAuthorized || plugin.data.settings.workspace) return;
+							try { await callback(); } catch (error) { plugin.notify(failureMessage(error)); }
+						});
+					});
+				}
+			}))] : []),
             ...(edition.edition === 'global' ? [row(t('language.title'), setting => {
                 setting.settingEl?.classList.add('smart-sync-language-row');
                 return setting.addDropdown(input => input.addOptions({auto:t('language.auto'),...supportedLanguages}).setValue(plugin.data.interfaceLanguage ?? 'auto').onChange(async value => {
