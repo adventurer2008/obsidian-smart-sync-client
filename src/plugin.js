@@ -151,11 +151,18 @@ function bindAction(setting, label, callback) {
 		});
 	});
 }
+const chinaAccess = Object.freeze({
+	title: '开始使用无界同步',
+	help: '首次使用可以免费开通。开通后，从邮件复制登录密钥，再回到 Obsidian 登录。',
+	free: '免费开通',
+	login: '已有密钥，登录',
+	paid: '查看付费套餐',
+});
 function chinaAccessActions(plugin) {
 	return [
-		[t('cnAccess.free'), () => plugin.openBilling(undefined, false, 'free')],
-		[t('cnAccess.login'), () => plugin.enrollment()],
-		[t('cnAccess.paid'), () => plugin.openBilling(undefined, false, 'paid')],
+		[chinaAccess.free, () => plugin.openBilling(undefined, false, 'free')],
+		[chinaAccess.login, () => plugin.enrollment()],
+		[chinaAccess.paid, () => plugin.openBilling(undefined, false, 'paid')],
 	];
 }
 export function bindManualSyncAction(setting, plugin) {
@@ -2837,8 +2844,8 @@ export default class IndependentSync extends Plugin {
 			const expected = binding();
 			const live = () => !this.stopped && !this.stopping && !this.connecting && !this.running && binding() === expected;
 			const cn = edition.edition === 'cn';
-			const dialog = new ChoiceWindow(this.app, t(cn ? 'cnAccess.title' : 'billing.setupTitle'), area => {
-				area.createEl('p', { text: t(cn ? 'cnAccess.help' : 'billing.setupHelp') });
+			const dialog = new ChoiceWindow(this.app, (cn ? chinaAccess.title : t('billing.setupTitle')), area => {
+				area.createEl('p', { text: (cn ? chinaAccess.help : t('billing.setupHelp')) });
 				const proceed = async callback => {
 					if (this.syncSetupWindow !== dialog || !live()) { dialog.close(); return; }
 					dialog.close();
@@ -5470,9 +5477,9 @@ export class IndependentSettings extends PluginSettingTab {
 				value.accountCredential === plugin.secret('account') ? value : undefined;
 		};
 		const cnWelcome = edition.edition === 'cn' && !accountConnected;
-		const welcome = cnWelcome ? row(t('cnAccess.title'), setting => {
+		const welcome = cnWelcome ? row(chinaAccess.title, setting => {
 			setting.settingEl.classList.add('smart-sync-cn-access');
-			setting.setDesc(t('cnAccess.help'));
+			setting.setDesc(chinaAccess.help);
 			for (const [label, callback] of chinaAccessActions(plugin)) bindAction(setting, label, callback);
 			setting.controlEl?.querySelector('button')?.classList.add('mod-cta');
 		}, t('overview.accountSearch')) : undefined;
