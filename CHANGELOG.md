@@ -1,5 +1,9 @@
 # Source change record
 
+## 1.1.14 — CHG-20261126-CN-OVERVIEW-RETRY
+
+Promote China 1.1.14-alpha.2 to Stable. The account email refreshes after restart as soon as the account response is available. Verified pairing dismisses the connection dialog after saving the configuration.
+
 ## 1.1.14-alpha.2 — CHG-20261126-CN-OVERVIEW-RETRY
 
 Requirement: recover the verified account email in a connected China vault after restarting Obsidian. Re-read the current connection credentials on each settings refresh and save the account response without waiting for notebook or cloud usage requests. Keep display details bound to the current service, vault, and credentials, and clear them on explicit authorization denial.
