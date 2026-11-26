@@ -1,5 +1,9 @@
 # Source change record
 
+## Unreleased — CHG-20261126-CN-PAIRING-CLOSE-ENROLLMENT
+
+Requirement: after a device applies a verified pairing configuration from the login dialog, dismiss that dialog along with the pairing prompts and return to settings. Keep the connection dialog available after failure or cancellation.
+
 ## 1.1.13 — CHG-20261126-CN-FIRST-USE-ENTRY
 
 Promote the China first-use entry from 1.1.13-alpha.1 without runtime changes.

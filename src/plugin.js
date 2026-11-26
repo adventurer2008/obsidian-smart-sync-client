@@ -3981,7 +3981,8 @@ export default class IndependentSync extends Plugin {
 	async enrollment(initialMode = 'registered') {
 		if(edition.edition==='global'){if(this.secret('account'))return this.selectAccountWorkspace(await this.accountApi(),{close(){}});return this.globalEnrollment();}
 		let mode = !['cn','global'].includes(edition.edition) && initialMode === 'new' ? 'new' : 'registered',
-			version = 0;
+			version = 0,
+			closed = false;
 		const dialog = new ChoiceWindow(this.app, t('msg_911a5a5fee'), (area) => {
 			const render = () => {
 				version++;
@@ -4059,11 +4060,14 @@ export default class IndependentSync extends Plugin {
 						}
 					},
 				);
-				if (mode === 'registered') action(area, t('msg_a070395fba'), () => this.pairThisDevice());
+				if (mode === 'registered') action(area, t('msg_a070395fba'), () => this.pairThisDevice(() => {
+					if (!closed) dialog.close();
+				}));
 			};
 			render();
 		});
 		dialog.onClose = () => {
+			closed = true;
 			version++;
 			dialog.contentEl.empty();
 		};
@@ -4511,7 +4515,7 @@ export default class IndependentSync extends Plugin {
 		dialog.open();
 		return dialog;
 	}
-	async pairThisDevice() {
+	async pairThisDevice(onConnected) {
 		const api = this.pairingApi(this.workspaceApi(this.data.settings.origin, ''));
 		let pending = await beginPairing(api);
 		let received,
@@ -4582,6 +4586,7 @@ export default class IndependentSync extends Plugin {
 						await this.applyConfiguration(config);
 						confirmation.close();
 						pairingDialog.close();
+						onConnected?.();
 					});
 				});
 				confirmation.open();
