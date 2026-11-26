@@ -5489,14 +5489,9 @@ export class IndependentSettings extends PluginSettingTab {
 			setting.controlEl?.querySelector('button')?.classList.add('mod-cta');
 		}, t('overview.accountSearch')) : undefined;
 		const status = row(t('sections.status'), (setting) => {
-			const credential = plugin.secret(credentialName);
-			const accountCredential = plugin.secret('account');
 			const controller = new AbortController();
-			const current = () => !controller.signal.aborted && sameScope() &&
-				credential === plugin.secret(credentialName) && accountCredential === plugin.secret('account');
 			let phase = plugin.overviewStatusText ?? plugin.status.textContent ?? plugin.status.text ?? t('sections.disconnected');
 			let local = t('overview.spaceUnknown'), loading = false, lastDescription;
-			let cacheBinding;
 			const descriptionEl = setting.descEl ?? setting.settingEl?.querySelector('.setting-item-description');
 			const phaseEl = descriptionEl?.createSpan({ cls: 'smart-sync-status-phase' });
 			const spaceEl = descriptionEl?.createSpan({ cls: 'smart-sync-status-storage' });
@@ -5514,8 +5509,7 @@ export class IndependentSettings extends PluginSettingTab {
 					lastDescription = description;
 				}
 			};
-			const publish = fields => {
-				plugin.overviewIdentity = { ...fields, scope: scopeKey, credential, accountCredential };
+			const renderIdentity = () => {
 				for (const listener of plugin.statusListeners ?? []) listener(phase);
 			};
 			const cachedFields = value => ({
@@ -5523,7 +5517,7 @@ export class IndependentSettings extends PluginSettingTab {
 				label: typeof value?.label === 'string' ? value.label : '',
 				logicalBytes: Number.isSafeInteger(value?.logicalBytes) && value.logicalBytes >= 0 ? value.logicalBytes : undefined,
 			});
-			const persist = fields => {
+			const persist = (cacheBinding, fields) => {
 				if (!cacheBinding) return;
 				try {
 					const saved = JSON.stringify({ binding: cacheBinding, ...fields });
@@ -5532,11 +5526,21 @@ export class IndependentSettings extends PluginSettingTab {
 				} catch { /* The in-memory display remains available. */ }
 			};
 			const refresh = async () => {
-				if (!current() || loading || !accountConnected || !credential) return;
+				if (controller.signal.aborted || !sameScope() || loading || !accountConnected) return;
+				const credential = plugin.secret(credentialName);
+				if (!credential) return;
+				const accountCredential = plugin.secret('account');
+				const current = () => !controller.signal.aborted && sameScope() &&
+					credential === plugin.secret(credentialName) && accountCredential === plugin.secret('account');
+				const publish = fields => {
+					plugin.overviewIdentity = { ...fields, scope: scopeKey, credential, accountCredential };
+					renderIdentity();
+				};
+				let cacheBinding;
 				loading = true;
 				try {
 					if (connected) local = formatStorageSize(plugin.app.vault.getFiles().reduce((sum, file) => sum + (Number.isFinite(file.stat?.size) ? file.stat.size : 0), 0));
-					if (!cacheBinding && plugin.app.secretStorage) {
+					if (plugin.app.secretStorage) {
 						try {
 							cacheBinding = await fingerprint(new TextEncoder().encode(JSON.stringify([scopeKey, credential, accountCredential])));
 							if (!current()) return;
@@ -5545,35 +5549,41 @@ export class IndependentSettings extends PluginSettingTab {
 						} catch { /* A missing or unreadable cache must not block live requests. */ }
 					}
 					update(phase);
+					if (plugin.overviewIdentity && !identity()) renderIdentity();
 					const api = plugin.workspaceApi(config.origin, credential, config.workspace);
 					api.signal = controller.signal;
+					const denied = result => result.status === 'rejected' && [401, 403].includes(result.reason?.status);
 					const [account, notebook, usage] = await Promise.allSettled([
-						api.request('GET', 'account'),
+						api.request('GET', 'account').then(account => {
+							if (!current()) return;
+							const fields = { ...cachedFields(identity()), email: cachedFields(account).email };
+							publish(fields);
+							persist(cacheBinding, fields);
+						}, error => {
+							if (current() && [401, 403].includes(error?.status)) {
+								const fields = cachedFields(undefined);
+								publish(fields);
+								persist(cacheBinding, fields);
+							}
+							throw error;
+						}),
 						connected ? api.info() : undefined,
 						connected ? api.request('GET', api.scope('usage?summary=1')) : undefined,
 					]);
-					if (!current()) return;
-					const denied = result => result.status === 'rejected' && [401, 403].includes(result.reason?.status);
+					if (!current() || denied(account) || !connected) return;
 					const previous = identity();
 					const fields = cachedFields(previous);
-					if (denied(account)) {
-						Object.assign(fields, cachedFields(undefined));
+					if (denied(notebook) || notebook.reason?.status === 404) {
+						fields.label = '';
+						fields.logicalBytes = undefined;
 					} else {
-						if (account.status === 'fulfilled') fields.email = cachedFields(account.value).email;
-						if (connected) {
-							if (denied(notebook) || notebook.reason?.status === 404) {
-								fields.label = '';
-								fields.logicalBytes = undefined;
-							} else {
-								if (notebook.status === 'fulfilled') fields.label = cachedFields(notebook.value).label;
-								if (denied(usage) || usage.reason?.status === 404) fields.logicalBytes = undefined;
-								else if (usage.status === 'fulfilled') fields.logicalBytes = cachedFields(usage.value).logicalBytes;
-							}
-						}
+						if (notebook.status === 'fulfilled') fields.label = cachedFields(notebook.value).label;
+						if (denied(usage) || usage.reason?.status === 404) fields.logicalBytes = undefined;
+						else if (usage.status === 'fulfilled') fields.logicalBytes = cachedFields(usage.value).logicalBytes;
 					}
-					if (previous || denied(account) || [account, notebook, usage].some(result => result.status === 'fulfilled' && result.value)) {
+					if (previous || notebook.status === 'fulfilled' || usage.status === 'fulfilled') {
 						publish(fields);
-						persist(fields);
+						persist(cacheBinding, fields);
 					}
 				} catch { /* The next refresh can recover without affecting synchronization. */ }
 				finally { loading = false; }

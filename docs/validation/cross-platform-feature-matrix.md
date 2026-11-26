@@ -1,5 +1,11 @@
 # Cross-platform feature and scenario review
 
+## CHG-20261126-CN-OVERVIEW-RETRY
+
+The China 1.1.14-alpha.2 candidate builds on the prior China Alpha. Windows, macOS, desktop Linux, Android, iPhone/iOS, and iPad/iPadOS conditionally use the same settings refresh and device-local Obsidian secret storage. The reported Windows restart failure is pending retest on the affected machine. Native restart and network recovery are unverified on macOS and Linux desktop. Native restart, network recovery, backgrounding and lock are unverified on Android, iPhone and iPad. The existing rows and their wrapping are used, so new narrow-screen and touch controls are inapplicable.
+
+The focused Windows fixture covers late startup credentials, an account response arriving while cloud usage is pending, restart with a valid offline cache, credential changes, and authorization denial. The cache keeps the same format and rejects another connection. Existing and older devices use the same endpoints. Hub rollback can select the retained previous package. Display updates do not write vault contents, encryption keys, progress or source modification times.
+
 ## CHG-20261124-REMOVE-ENCRYPTED-NOTE-TRASH
 
 Windows, macOS, Linux, Android, iPhone and iPad share the same menu code. The extra whole-note action is removed. Obsidian provides the whole-file deletion action. Editor block deletion and the file-tree badge are covered in simulated editor and menu tests. Native menus and touch were not retested. The change does not write note data or affect attachment storage, synchronization, timestamps, keys, connectivity, or lock state. No migration is required for upgrade or rollback.

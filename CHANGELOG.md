@@ -1,5 +1,9 @@
 # Source change record
 
+## 1.1.14-alpha.2 — CHG-20261126-CN-OVERVIEW-RETRY
+
+Requirement: recover the verified account email in a connected China vault after restarting Obsidian. Re-read the current connection credentials on each settings refresh and save the account response without waiting for notebook or cloud usage requests. Keep display details bound to the current service, vault, and credentials, and clear them on explicit authorization denial.
+
 ## 1.1.14-alpha.1 — CHG-20261126-CN-PAIRING-CLOSE-ENROLLMENT
 
 Requirement: after a device applies a verified pairing configuration from the login dialog, dismiss that dialog along with the pairing prompts and return to settings. Keep the connection dialog available after failure or cancellation.
