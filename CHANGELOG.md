@@ -1,6 +1,6 @@
 # Source change record
 
-## Unreleased — CHG-20261126-CN-FIRST-USE-ENTRY
+## 1.1.13-alpha.1 — CHG-20261126-CN-FIRST-USE-ENTRY
 
 Requirement: expose free enrollment, existing-key sign-in and paid plans together on the signed-out China settings screen. The first manual sync prompt uses the same choices. The existing secure browser handoff selects the requested plan view without submitting a form or creating an order.
 

@@ -1052,3 +1052,4 @@
 @media (max-width: 480px) {
 	.smart-sync-cn-access .setting-item-control button { flex: 1 1 100%; }
 }
+.smart-sync-settings-page .setting-item.smart-sync-empty-cn-billing { display: none; }

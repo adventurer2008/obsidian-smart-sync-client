@@ -5649,9 +5649,9 @@ export class IndependentSettings extends PluginSettingTab {
 			};
 		});
 		const billing = ['cn','global'].includes(edition.edition) ? row(t('billing.myPlan'), setting => {
-			if (cnWelcome && !plugin.purchaseSession()) {
-				setting.settingEl.hidden = true;
-				return () => { setting.settingEl.hidden = false; };
+			if (cnWelcome && !plugin.purchaseSession?.()) {
+				setting.settingEl.classList.add('smart-sync-empty-cn-billing');
+				return () => { setting.settingEl.classList.remove('smart-sync-empty-cn-billing'); };
 			}
 			const credential = plugin.secret('account') || plugin.secret('access');
 			return mountBillingCard(setting, {
