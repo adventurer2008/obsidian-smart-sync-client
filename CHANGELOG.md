@@ -1,5 +1,9 @@
 # Source change record
 
+## Unreleased — CHG-20261126-CN-FIRST-USE-ENTRY
+
+Requirement: expose free enrollment, existing-key sign-in and paid plans together on the signed-out China settings screen. The first manual sync prompt uses the same choices. The existing secure browser handoff selects the requested plan view without submitting a form or creating an order.
+
 ## 1.1.12-alpha.3 — CHG-20261124-REMOVE-ENCRYPTED-NOTE-TRASH
 
 Requirement: remove the extra whole-note deletion entry and its confirmation dialog from shared file menus. Preserve the file-tree badge, encrypted-note list, and password confirmation for deleting an encrypted block in the editor.

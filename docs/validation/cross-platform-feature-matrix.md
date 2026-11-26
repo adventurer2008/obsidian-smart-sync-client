@@ -874,3 +874,7 @@ China edition reading mode uses the rendered Markdown selection. Windows, macOS 
 ## CHG-20261114-CN-117-STABLE
 
 Promotes the latest China Hub Alpha.15. The Stable version uses the same hosted lookup as Alpha. Conditional support and native verification gaps remain as documented for Windows, macOS, desktop Linux, Android, iOS and iPadOS. The version gate change is covered by synthetic lookup tests. Native reading selection and mobile touch are not inferred from automation. No storage format change or note writes are introduced by this promotion.
+
+### CHG-20261126-CN-FIRST-USE-ENTRY
+
+The China signed-out settings entry and browser handoff are available on Windows, macOS, Linux, Android, iPhone and iPad. Windows automated settings and billing tests passed. Desktop and narrow-screen previews used synthetic host and account data. Native Obsidian, Android and iOS browser return, iPad split-screen and actual email delivery remain unverified. A new client paired with the older billing page retains the existing combined catalog. The updated page supports both old and new sign-in labels. This change does not alter sync state, notebook contents, keys or timestamps.
