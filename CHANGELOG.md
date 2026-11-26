@@ -1,5 +1,9 @@
 # Source change record
 
+## Unreleased — CHG-20261126-CN-OVERVIEW-SYNC-RESTART
+
+Requirement: retain the verified account email and notebook name when Obsidian is closed immediately after a sync. Record both during the verified sync connection, restore them during plugin startup, and keep settings refreshes for current values. Store only display fields and their connection fingerprint under a short device-local secret ID. Read the previous cache for the same credentials and clear both cache IDs on disconnect.
+
 ## 1.1.14 — CHG-20261126-CN-OVERVIEW-RETRY
 
 Promote China 1.1.14-alpha.2 to Stable. The account email refreshes after restart as soon as the account response is available. Verified pairing dismisses the connection dialog after saving the configuration.

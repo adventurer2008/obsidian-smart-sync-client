@@ -1,5 +1,13 @@
 # Cross-platform feature and scenario review
 
+## CHG-20261126-CN-OVERVIEW-SYNC-RESTART
+
+The reported Windows device reproduced the missing email and notebook name after successful synchronization and immediate restart on China Stable 1.1.14. That version persisted display details only during a settings refresh. The new code stores the account and verified notebook details during sync connection preparation and loads them during plugin startup. It uses the existing account and notebook responses, with no extra service reads. The current secret ID is shorter, and the previous cache is read only if its connection fingerprint matches. A credential change prevents restoration. Sign-out or notebook removal clears both cache entries.
+
+Windows, macOS, desktop Linux, Android, iPhone/iOS, and iPad/iPadOS conditionally support the same path through Obsidian secret storage. Windows regression uses an isolated SDK double, completes a connection without opening settings, and verifies offline restoration with a fresh plugin instance and rejection after credential replacement. Native immediate quit and reopen are pending on the reported Windows machine. Native restart and network recovery are unverified on macOS and Linux desktop. Native background, lock, shutdown and recovery are unverified on Android, iPhone and iPad. New touch controls or narrow-screen layout changes are inapplicable.
+
+The cache is device-local, requires a verified response for the current connection, and does not change sync data, keys, progress, protocol or source modification times. Older clients keep their normal live settings lookup and previous cache. A code rollback can repopulate that cache after an online refresh.
+
 ## CHG-20261126-CN-OVERVIEW-RETRY
 
 The China 1.1.14-alpha.2 candidate builds on the prior China Alpha. Windows, macOS, desktop Linux, Android, iPhone/iOS, and iPad/iPadOS conditionally use the same settings refresh and device-local Obsidian secret storage. The reported Windows restart failure is pending retest on the affected machine. Native restart and network recovery are unverified on macOS and Linux desktop. Native restart, network recovery, backgrounding and lock are unverified on Android, iPhone and iPad. The existing rows and their wrapping are used, so new narrow-screen and touch controls are inapplicable.
